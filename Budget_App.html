@@ -1,0 +1,2064 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Ledger — Monthly Budget</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,wght@0,500;0,600;0,700;1,500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+  :root{
+    --paper:#EEF1EC;
+    --paper-raised:#F6F8F4;
+    --ink:#1B3B36;
+    --ink-soft:#4B5F5A;
+    --line:#C7D0C6;
+    --teal:#2E7D6B;
+    --teal-deep:#1F5C4E;
+    --gold:#B9863E;
+    --rust:#A8492E;
+    --need:#3E5C76;
+    --want:#B9863E;
+    --save:#2E7D6B;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'IBM Plex Sans', sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:920px;margin:0 auto;padding:36px 24px 80px;}
+
+  header{margin-bottom:28px;border-bottom:2px solid var(--ink);padding-bottom:18px;}
+  header h1{
+    font-family:'Source Serif 4', serif;
+    font-weight:700;
+    font-style:italic;
+    font-size:34px;
+    margin:0 0 4px;
+    letter-spacing:-0.01em;
+  }
+  header p{margin:0;color:var(--ink-soft);font-size:14.5px;max-width:60ch;line-height:1.5;}
+
+  .month-row{display:flex;align-items:baseline;gap:10px;margin-top:18px;font-family:'IBM Plex Mono',monospace;font-size:14px;}
+  .month-row select{
+    font-family:'IBM Plex Mono',monospace;font-size:14px;background:var(--paper-raised);
+    border:1px solid var(--line);border-radius:3px;padding:5px 8px;color:var(--ink);
+  }
+
+  .ledger-strip{
+    display:flex;gap:0;margin:26px 0 34px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);
+  }
+  .ledger-cell{flex:1;padding:16px 18px;border-right:1px solid var(--line);}
+  .ledger-cell:last-child{border-right:none;}
+  .ledger-cell .label{font-size:11.5px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.06em;}
+  .ledger-cell .value{font-family:'IBM Plex Mono',monospace;font-size:24px;font-weight:600;margin-top:4px;}
+  .value.pos{color:var(--teal-deep);}
+  .value.neg{color:var(--rust);}
+
+  .overview-card{
+    display:flex;align-items:center;gap:36px;flex-wrap:wrap;
+    border:1px solid var(--ink);border-radius:8px;padding:24px 28px;background:var(--paper-raised);
+  }
+  .stats-col{flex:1 1 220px;display:flex;flex-direction:column;gap:12px;min-width:200px;}
+  .stat-row{display:flex;align-items:center;gap:10px;}
+  .stat-row .swatch{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+  .stat-label{flex:1;font-size:14px;color:var(--ink-soft);}
+  .stat-val{font-family:'IBM Plex Mono',monospace;font-size:17px;font-weight:600;}
+  .stat-row.total{border-top:1px solid var(--line);padding-top:10px;margin-top:2px;}
+  .stat-row.total .stat-label{color:var(--ink);font-weight:500;}
+  .stat-row.total .stat-val{font-size:19px;}
+  #lblLeftover.neg{color:var(--rust);}
+  #lblLeftover.pos{color:var(--teal-deep);}
+
+  .donut-wrap{display:flex;flex-direction:column;align-items:center;gap:12px;flex:0 0 auto;}
+  .donut{
+    width:150px;height:150px;border-radius:50%;position:relative;
+    background:conic-gradient(var(--line) 0 100%);
+  }
+  .donut::after{
+    content:'';position:absolute;inset:22%;background:var(--paper-raised);border-radius:50%;
+  }
+  .donut-center{
+    position:absolute;inset:22%;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    font-family:'IBM Plex Mono',monospace;text-align:center;z-index:1;
+  }
+  .donut-center span{font-size:15px;font-weight:600;}
+  .donut-center small{font-size:9.5px;color:var(--ink-soft);font-family:'IBM Plex Sans';text-transform:uppercase;letter-spacing:.04em;}
+  .donut-wrap .legend{margin-top:0;}
+
+  section{margin-bottom:40px;}
+  h2{
+    font-family:'Source Serif 4', serif;font-weight:600;font-size:19px;margin:0 0 14px;
+    display:flex;align-items:baseline;justify-content:space-between;
+  }
+  h2 .hint{font-family:'IBM Plex Sans';font-weight:400;font-size:12.5px;color:var(--ink-soft);}
+  h3{font-family:'Source Serif 4', serif;font-weight:600;font-size:16px;margin:0 0 10px;}
+  .section-intro{margin:-8px 0 16px;font-size:13.5px;color:var(--ink-soft);}
+
+  .legend{display:flex;gap:22px;margin-top:10px;font-size:12.5px;color:var(--ink-soft);}
+  .legend span{display:inline-flex;align-items:center;gap:6px;}
+  .swatch{width:10px;height:10px;border-radius:2px;display:inline-block;}
+
+  .targets-row{display:flex;gap:24px;margin-top:14px;font-size:13px;}
+  .targets-row label{display:flex;align-items:center;gap:6px;color:var(--ink-soft);}
+  .targets-row input{width:52px;font-family:'IBM Plex Mono',monospace;border:1px solid var(--line);border-radius:3px;padding:3px 5px;background:var(--paper-raised);}
+
+  .recommendation{
+    background:var(--paper-raised);border-left:3px solid var(--teal);padding:16px 18px;
+    font-size:14.5px;line-height:1.55;border-radius:0 4px 4px 0;
+  }
+
+  .entry-columns{display:grid;grid-template-columns:1fr 1fr;gap:26px;}
+  @media(max-width:720px){.entry-columns{grid-template-columns:1fr;}}
+
+  form.entry-form{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;}
+  form.entry-form input, form.entry-form select{
+    font-family:'IBM Plex Sans';font-size:13px;padding:7px 8px;border:1px solid var(--line);
+    border-radius:3px;background:var(--paper-raised);color:var(--ink);
+  }
+  form.entry-form input[type=date]{flex:1 1 128px;}
+  form.entry-form input[type=text]{flex:1 1 120px;}
+  form.entry-form select{flex:1 1 130px;}
+  form.entry-form input[type=number]{width:90px;}
+  form.entry-form button{
+    background:var(--ink);color:#fff;border:none;border-radius:3px;padding:7px 14px;
+    font-size:13px;cursor:pointer;font-family:'IBM Plex Sans';font-weight:500;
+  }
+  form.entry-form button:hover{background:var(--teal-deep);}
+
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  thead th{
+    text-align:left;font-weight:500;color:var(--ink-soft);font-size:11px;text-transform:uppercase;
+    letter-spacing:.04em;border-bottom:1px solid var(--ink);padding:6px 4px;
+  }
+  tbody td{padding:7px 4px;border-bottom:1px solid var(--line);font-family:'IBM Plex Mono',monospace;font-size:12.5px;}
+  tbody td.amt{text-align:right;}
+  tbody tr:hover{background:rgba(0,0,0,0.02);}
+  .del{cursor:pointer;color:var(--rust);font-family:'IBM Plex Sans';font-size:12px;background:none;border:none;padding:0 4px;}
+  .empty-row td{color:var(--ink-soft);font-style:italic;font-family:'IBM Plex Sans';padding:12px 4px;}
+
+  .tag{font-family:'IBM Plex Sans';font-size:10.5px;padding:2px 6px;border-radius:10px;color:#fff;}
+  .tag.Need{background:var(--need);}
+  .tag.Want{background:var(--want);}
+  .tag.Savings{background:var(--save);}
+
+  .sync-panel{
+    border:1px dashed var(--line);border-radius:6px;padding:18px 20px;display:flex;flex-wrap:wrap;
+    gap:14px;align-items:center;justify-content:space-between;background:var(--paper-raised);
+  }
+  .sync-panel p{margin:0;font-size:13px;color:var(--ink-soft);max-width:46ch;line-height:1.5;}
+  .sync-actions{display:flex;gap:10px;flex-wrap:wrap;}
+  .storage-status{font-size:12px;color:var(--teal-deep);font-family:'IBM Plex Sans';flex:0 0 100%;}
+  .storage-status.ok{color:var(--teal-deep);}
+  .storage-status.err{color:var(--rust);}
+  .btn-secondary{
+    background:#fff;border:1px solid var(--ink);color:var(--ink);border-radius:3px;
+    padding:8px 14px;font-size:13px;font-family:'IBM Plex Sans';font-weight:500;cursor:pointer;
+  }
+  .btn-secondary:hover{background:var(--ink);color:#fff;}
+  input[type=file]{display:none;}
+
+  .scan-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+  .scan-row .btn-secondary{padding:7px 12px;font-size:12.5px;}
+  #scanStatus{font-size:12.5px;color:var(--ink-soft);font-style:italic;}
+  #scanStatus.err{color:var(--rust);font-style:normal;}
+  #scanStatus.ok{color:var(--teal-deep);font-style:normal;}
+
+  footer{margin-top:10px;font-size:12px;color:var(--ink-soft);text-align:center;}
+
+.auth-panel{
+  margin:22px 0;
+  padding:18px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:var(--raised-paper);
+  display:flex;
+  gap:20px;
+  align-items:flex-end;
+  justify-content:space-between;
+}
+.auth-grid{
+  display:grid;
+  grid-template-columns:minmax(180px,1fr) minmax(180px,1fr) auto auto auto;
+  gap:8px;
+  align-items:center;
+}
+.auth-grid input{
+  min-width:0;
+  padding:11px 12px;
+  border:1px solid var(--line);
+  border-radius:6px;
+  background:var(--paper);
+  font:inherit;
+}
+.auth-message{font-size:13px;margin-top:8px;color:var(--ink-soft)}
+.auth-message.err{color:var(--rust)}
+.auth-message.ok{color:var(--deep-teal)}
+@media(max-width:850px){
+  .auth-panel{display:block}
+  .auth-grid{grid-template-columns:1fr 1fr}
+}
+@media(max-width:560px){
+  .auth-grid{grid-template-columns:1fr}
+}
+
+
+#authGate{position:fixed;inset:0;z-index:9999;background:var(--paper);display:flex;align-items:center;justify-content:center;padding:24px}
+#authGate.hidden{display:none}
+.auth-card{width:min(440px,100%);padding:32px;border:1px solid var(--line);border-radius:18px;background:var(--raised-paper);box-shadow:0 14px 40px rgba(0,0,0,.08)}
+.auth-card h1{margin:0 0 8px;font-size:34px}.auth-card .auth-subtitle{margin:0 0 24px;color:var(--soft-ink);line-height:1.5}.auth-card .auth-form{display:grid;gap:12px}.auth-card label{font-size:13px;font-weight:600}.auth-card input{width:100%;box-sizing:border-box;padding:12px 13px;border:1px solid var(--line);border-radius:8px;background:var(--paper);font:inherit}.auth-card button{width:100%;margin-top:4px}.auth-switch{margin-top:16px;text-align:center;font-size:13px;color:var(--soft-ink)}#authGateMessage{min-height:20px;margin-top:12px;font-size:13px}#authGateMessage.err{color:var(--rust)}#authGateMessage.ok{color:var(--deep-teal)}
+
+.account-bar{
+  margin:12px 0 22px;
+  padding:10px 14px;
+  border:1px solid var(--line);
+  border-radius:10px;
+  background:var(--raised-paper);
+  display:none;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+}
+.account-bar.visible{display:flex}
+.account-user{font-size:13px;color:var(--soft-ink)}
+.account-user strong{color:var(--ink)}
+
+
+.auth-password-toggle{
+  position:absolute;
+  right:8px;
+  top:50%;
+  transform:translateY(-50%);
+  border:0 !important;
+  background:transparent !important;
+  color:var(--deep-teal) !important;
+  width:auto !important;
+  padding:6px !important;
+  margin:0 !important;
+  cursor:pointer;
+  font:inherit;
+  font-size:12px;
+}
+
+
+.ledger-topbar{
+  display:none;
+  align-items:center;
+  justify-content:flex-end;
+  gap:10px;
+  margin:4px 0 12px;
+}
+.ledger-topbar.visible{display:flex}
+.ledger-account-label{
+  font-size:13px;
+  color:var(--soft-ink);
+  max-width:360px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+@media(max-width:560px){
+  .ledger-topbar{justify-content:space-between}
+  .ledger-account-label{max-width:220px}
+}
+
+
+.auth-link{
+  border:0 !important;
+  background:none !important;
+  color:var(--deep-teal) !important;
+  padding:0 !important;
+  margin:0 !important;
+  width:auto !important;
+  cursor:pointer;
+  font:inherit;
+  font-size:13px;
+}
+.auth-link:hover{text-decoration:underline}
+.auth-feedback{min-height:20px;margin-top:10px;font-size:13px;line-height:1.45}
+.auth-feedback.err{color:var(--rust)}
+.auth-feedback.ok{color:var(--deep-teal)}
+.forgot-row{text-align:right;margin-top:-2px}
+#resetPanel{display:none;margin-top:20px;padding-top:18px;border-top:1px solid var(--line)}
+#resetPanel.visible{display:block}
+
+
+/* Manual-entry chatbot */
+.chatbot-card{margin-top:24px;border:1px solid var(--line);border-radius:14px;background:var(--raised-paper);overflow:hidden}
+.chatbot-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 18px;border-bottom:1px solid var(--line)}
+.chatbot-head h3{margin:0}
+.chatbot-head p{margin:4px 0 0;color:var(--soft-ink);font-size:12.5px}
+.chatbot-body{padding:16px;display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:16px}
+.chat-messages{min-height:300px;max-height:360px;overflow:auto;padding:4px}
+.chat-msg{display:flex;margin:8px 0}
+.chat-msg.bot{justify-content:flex-start}.chat-msg.user{justify-content:flex-end}
+.chat-bubble{max-width:82%;padding:10px 12px;border-radius:12px;font-size:13px;line-height:1.45;border:1px solid var(--line);background:var(--paper)}
+.chat-msg.user .chat-bubble{background:var(--deep-teal);color:#fff;border-color:var(--deep-teal)}
+.chat-input-row{display:flex;gap:8px;margin-top:10px}
+.chat-input-row input{flex:1;min-width:0;padding:11px 12px;border:1px solid var(--line);border-radius:8px;background:var(--paper);font:inherit}
+.chat-input-row button{white-space:nowrap}
+.chat-preview{border:1px solid var(--line);border-radius:12px;padding:14px;background:var(--paper);align-self:start}
+.chat-preview h4{margin:0 0 10px}
+.chat-preview-row{display:flex;justify-content:space-between;gap:10px;padding:5px 0;font-size:12.5px;border-bottom:1px dotted var(--line)}
+.chat-preview-row:last-child{border-bottom:0}
+.chat-actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.chat-choice-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.chat-choice{border:1px solid var(--line);background:var(--paper);padding:8px 11px;border-radius:8px;cursor:pointer;font:inherit;font-size:12.5px}
+.chat-choice:hover{border-color:var(--deep-teal)}
+.chatbot-status{font-size:12px;color:var(--soft-ink);margin-top:8px;min-height:18px}
+.chatbot-status.ok{color:var(--deep-teal)}
+.chatbot-status.err{color:var(--rust)}
+@media(max-width:850px){.chatbot-body{grid-template-columns:1fr}.chat-preview{order:-1}}
+
+</style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.min.mjs" type="module"></script>
+</head>
+<body>
+<div id="authGate"><div class="auth-card"><h1>Ledger</h1><p class="auth-subtitle">Sign in to securely access your personal budget and transactions.</p><div class="auth-form"><label for="gateEmail">Email address</label><input type="email" id="gateEmail" placeholder="you@example.com" autocomplete="email"><label for="gatePassword">Password</label><div style="position:relative;">
+      <input type="password" id="gatePassword" placeholder="Enter your password" autocomplete="current-password" style="padding-right:58px;">
+      
+<button class="auth-password-toggle" id="toggleGatePassword" type="button" aria-label="Show password">Show</button>
+
+    </div><div class="forgot-row"><button class="auth-link" id="forgotPasswordBtn" type="button">Forgot password?</button></div>
+<button class="btn-primary" id="gateSignInBtn" type="button">Sign in</button><button class="btn-secondary" id="gateSignUpBtn" type="button">Create account</button></div><div id="authGateMessage" class="auth-feedback"></div>
+<div id="resetPanel">
+  <strong>Reset your password</strong>
+  <p class="auth-subtitle" style="margin:6px 0 12px;">Enter your account email and we'll send a password reset link.</p>
+  <input type="email" id="resetEmail" placeholder="you@example.com" autocomplete="email">
+  <button class="btn-primary" id="sendResetBtn" type="button" style="margin-top:10px;">Send reset email</button>
+  <div id="resetMessage" class="auth-feedback"></div>
+</div><div class="auth-switch">Your financial data stays tied to your account and is not shown until you sign in.</div></div></div>
+<div class="wrap">
+  <header>
+    <h1>Ledger</h1>
+    <p>Log what comes in and what goes out. Ledger sorts it into needs, wants, and savings, and tells you where to cut so more stays in your account.</p>
+    <div class="month-row">
+      <span>Reviewing —</span>
+      <select id="monthSel"></select>
+      <select id="yearSel"></select>
+      <span id="periodHint" style="font-size:12px;color:var(--ink-soft);align-self:center;"></span>
+    </div>
+  </header>
+
+<div id="ledgerTopbar" class="ledger-topbar">
+  <div class="ledger-account-label">Signed in as <strong id="signedInEmail"></strong></div>
+  <button class="btn-secondary" id="dashboardLogoutBtn" type="button">Sign out</button>
+</div>
+
+
+
+</div>
+
+
+  <section class="auth-panel" id="authPanel" style="display:none;" aria-hidden="true">
+    <div>
+      <h2 style="margin-bottom:6px;">Your secure Ledger account</h2>
+      <p class="section-intro" style="margin-bottom:10px;">
+        Each customer's transactions are stored separately in the database. Your transaction date determines its month.
+      </p>
+      <div id="dbStatus" class="storage-status">Database not configured yet.</div>
+    </div>
+    <div id="authControls">
+      <div class="auth-grid">
+        <input type="email" id="authEmail" placeholder="Email address" autocomplete="email">
+        <input type="password" id="authPassword" placeholder="Password" autocomplete="current-password">
+        <button class="btn-secondary" id="signInBtn" type="button">Sign in</button>
+        <button class="btn-secondary" id="signUpBtn" type="button">Create account</button>
+        <button class="btn-secondary" id="signOutBtn" type="button" style="display:none;">Sign out</button>
+      </div>
+      <div id="authMessage" class="auth-message"></div>
+    </div>
+  </section>
+
+  <section class="overview">
+    <div class="overview-card">
+      <div class="stats-col">
+        <div class="stat-row"><i class="swatch" style="background:var(--ink)"></i><span class="stat-label">Income</span><span class="stat-val" id="statIncome">$0.00</span></div>
+        <div class="stat-row"><i class="swatch" style="background:var(--want)"></i><span class="stat-label">Expenses</span><span class="stat-val" id="statExpenses">$0.00</span></div>
+        <div class="stat-row"><i class="swatch" style="background:var(--save)"></i><span class="stat-label">Savings</span><span class="stat-val" id="statSavings">$0.00</span></div>
+        <div class="stat-row total"><span class="stat-label">Left in account</span><span class="stat-val" id="lblLeftover">$0.00</span></div>
+      </div>
+      <div class="donut-wrap">
+        <div class="donut" id="donutChart">
+          <div class="donut-center"><span id="donutCenterVal">$0</span><small>tracked</small></div>
+        </div>
+        <div class="legend">
+          <span><i class="swatch" style="background:var(--need)"></i>Needs</span>
+          <span><i class="swatch" style="background:var(--want)"></i>Wants</span>
+          <span><i class="swatch" style="background:var(--save)"></i>Savings</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>What's your target?</h2>
+    <p class="section-intro">Set the split you're aiming for — Ledger checks your actual month against it.</p>
+    <div class="targets-row">
+      <label>Needs target <input type="number" id="tgtNeed" value="50" min="0" max="100">%</label>
+      <label>Wants target <input type="number" id="tgtWant" value="30" min="0" max="100">%</label>
+      <label>Savings target <input type="number" id="tgtSave" value="20" min="0" max="100">%</label>
+    </div>
+    <div class="recommendation" id="recommendation">Add income and expenses to see your plan.</div>
+  </section>
+
+  <section>
+    <h2>What expenses do you have?</h2>
+    <p class="section-intro">Log every payment in and every purchase out for the month.</p>
+    <div class="entry-columns">
+      <div>
+        <h3>Income</h3>
+        <form class="entry-form" id="incomeForm">
+          <input type="date" id="incDate" required>
+          <input type="text" id="incSource" placeholder="Source (e.g. Paycheck)" required>
+          <input type="number" id="incAmount" placeholder="Amount" step="0.01" min="0" required>
+          <button type="submit">Add</button>
+        </form>
+        <table>
+          <thead><tr><th>Date</th><th>Source</th><th style="text-align:right">Amount</th><th></th></tr></thead>
+          <tbody id="incomeBody"></tbody>
+        </table>
+      </div>
+      <div>
+        <h3>Expenses</h3>
+        <div class="scan-row">
+          <label class="btn-secondary" for="receiptFile">📷 Scan receipt</label>
+          <input type="file" id="receiptFile" accept="image/*" capture="environment">
+          <span id="scanStatus"></span>
+        </div>
+        <form class="entry-form" id="expenseForm">
+          <input type="date" id="expDate" required>
+          <select id="expCategory" required></select>
+          <input type="number" id="expAmount" placeholder="Amount" step="0.01" min="0" required>
+          <button type="submit">Add</button>
+        </form>
+        <table>
+          <thead><tr><th>Date</th><th>Category</th><th style="text-align:right">Amount</th><th></th></tr></thead>
+          <tbody id="expenseBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+
+  <section class="chatbot-card" id="manualChatbot">
+    <div class="chatbot-head">
+      <div>
+        <h3>💬 Add a transaction with Ledger Assistant</h3>
+        <p>Use the chat instead of the manual form. Ledger asks for the same information, sorts it into income or expenses, fills the manual section, and saves it to your account.</p>
+      </div>
+      <button class="btn-secondary" id="chatResetBtn" type="button">Start over</button>
+    </div>
+    <div class="chatbot-body">
+      <div>
+        <div class="chat-messages" id="chatMessages"></div>
+        <div class="chat-input-row" id="chatInputRow">
+          <input id="chatInput" type="text" placeholder="Type your answer…" autocomplete="off">
+          <button class="btn-primary" id="chatSendBtn" type="button">Send</button>
+        </div>
+        <div id="chatChoices" class="chat-choice-row"></div>
+        <div id="chatStatus" class="chatbot-status"></div>
+      </div>
+      <div class="chat-preview">
+        <h4>Transaction preview</h4>
+        <div class="chat-preview-row"><span>Type</span><strong id="chatPreviewType">—</strong></div>
+        <div class="chat-preview-row"><span>Date</span><strong id="chatPreviewDate">—</strong></div>
+        <div class="chat-preview-row"><span>Category/source</span><strong id="chatPreviewLabel">—</strong></div>
+        <div class="chat-preview-row"><span>Amount</span><strong id="chatPreviewAmount">—</strong></div>
+        <div class="chat-actions" id="chatConfirmActions" style="display:none;">
+          <button class="btn-primary" id="chatConfirmBtn" type="button">Add to Ledger</button>
+          <button class="btn-secondary" id="chatEditBtn" type="button">Change</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Import your bank or card statement</h2>
+    <p class="section-intro">Upload the statement CSV or PDF your bank already gives you — Ledger reads each transaction and guesses the category, so you review and confirm instead of typing every line.</p>
+    <div class="sync-panel">
+      <div style="flex:1 1 260px;">
+        <label class="btn-secondary" for="bankFile">Upload statement CSV</label>
+        <input type="file" id="bankFile" accept=".csv">
+        <span id="bankStatus" style="margin-left:10px;font-size:12.5px;color:var(--ink-soft);"></span>
+      </div>
+      <div style="flex:1 1 260px;">
+        <label class="btn-secondary" for="pdfBankFile">Upload statement PDF</label>
+        <input type="file" id="pdfBankFile" accept="application/pdf">
+        <span id="pdfBankStatus" style="margin-left:10px;font-size:12.5px;color:var(--ink-soft);"></span>
+      </div>
+      <div id="signToggle" style="display:none;flex:1 1 260px;">
+        <label style="font-size:13px;color:var(--ink-soft);">In this file, money spent shows as
+          <select id="signConvention" style="font-family:'IBM Plex Sans';font-size:13px;padding:5px 7px;border:1px solid var(--line);border-radius:3px;margin-left:6px;">
+            <option value="neg">Negative numbers (most checking accounts)</option>
+            <option value="pos">Positive numbers (most credit cards)</option>
+          </select>
+        </label>
+      </div>
+    </div>
+    <p style="font-size:12px;color:var(--ink-soft);margin-top:8px;">PDF reading uses Claude to pull out each transaction — it needs an internet connection, and very long statements may only capture the first couple dozen rows. If a statement comes back incomplete, the CSV export from your bank captures every row.</p>
+    <div id="bankPreviewWrap" style="display:none;margin-top:16px;">
+      <table>
+        <thead><tr><th>Date</th><th>Description</th><th style="text-align:right">Amount</th><th>Type</th><th>Category</th></tr></thead>
+        <tbody id="bankPreviewBody"></tbody>
+      </table>
+      <div style="margin-top:12px;display:flex;gap:10px;align-items:center;">
+        <button class="btn-secondary" id="bankConfirmBtn" style="background:var(--ink);color:#fff;">Add these transactions</button>
+        <button class="btn-secondary" id="bankCancelBtn">Cancel</button>
+        <span id="bankConfirmStatus" style="font-size:12.5px;color:var(--teal-deep);"></span>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Keep this in sync with your Excel sheet</h2>
+    <div class="sync-panel">
+      <p>Ledger saves your entries in this browser automatically. Use Export CSV for a normal spreadsheet file, or Export Excel for an Excel-compatible spreadsheet snapshot of your current Ledger data. Import CSV brings spreadsheet rows back into Ledger.</p>
+      <div class="sync-actions">
+        <button class="btn-secondary" id="exportBtn">Export CSV</button>
+        <button class="btn-secondary" id="migrateLocalBtn" type="button" title="One-time import of data from the old browser Ledger">Import old browser data</button>
+        <button class="btn-secondary" id="exportExcelBtn">Export Excel</button>
+        <label class="btn-secondary" for="importFile">Import CSV</label>
+        <input type="file" id="importFile" accept=".csv">
+      </div>
+      <span id="storageStatus" class="storage-status">Saved in this browser</span>
+    </div>
+  </section>
+
+  <footer>Transactions are stored per customer in the secure database. Uploaded bank PDFs and receipt images are processed in your browser and are not stored by Ledger.</footer>
+</div>
+
+<script>
+const CATEGORIES = [
+  ["Housing","Need"],["Utilities","Need"],["Groceries","Need"],["Transportation","Need"],
+  ["Insurance","Need"],["Debt Payments","Need"],["Health & Medical","Need"],["Education","Need"],
+  ["Childcare","Need"],["Subscriptions","Want"],["Entertainment","Want"],["Dining Out","Want"],
+  ["Personal Care","Want"],["Shopping","Want"],["Other","Want"],["Savings & Investments","Savings"]
+];
+const CAT_TYPE = Object.fromEntries(CATEGORIES);
+
+
+/* =========================
+   DATABASE CONFIGURATION
+   =========================
+   Replace these two placeholders with your Supabase project's
+   Project URL and anon/public key.
+
+   NEVER put a Supabase service_role key in this HTML file.
+   Row Level Security (RLS) protects each customer's rows.
+*/
+const SUPABASE_URL = '';
+const SUPABASE_ANON_KEY = '';
+let dbClient = null;
+let currentUser = null;
+let state = { income: [], expenses: [] };
+let storageOk = false;
+let databaseMode = false;
+
+const fmt = n => (n<0?'-$':'$') + Math.abs(Number(n)||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+
+function isDatabaseConfigured(){
+  return SUPABASE_URL.startsWith('https://') && !SUPABASE_URL.includes('YOUR_') &&
+         SUPABASE_ANON_KEY && !SUPABASE_ANON_KEY.includes('YOUR_');
+}
+
+function setDbStatus(message, kind=''){
+  const el = document.getElementById('dbStatus');
+  if(!el) return;
+  el.textContent = message;
+  el.className = 'storage-status' + (kind ? ' ' + kind : '');
+}
+
+function setAuthMessage(message, kind=''){
+  const el = document.getElementById('authMessage');
+  if(!el) return;
+  el.textContent = message || '';
+  el.className = 'auth-message' + (kind ? ' ' + kind : '');
+}
+
+function setAppEnabled(enabled){
+  document.querySelectorAll('main input, main select, main button, section:not(#authPanel) input, section:not(#authPanel) select, section:not(#authPanel) button').forEach(el=>{
+    if(el.closest('#authPanel')) return;
+    el.disabled = !enabled;
+  });
+}
+
+function normalizeDbRows(rows){
+  const income = [];
+  const expenses = [];
+  (rows || []).forEach(r=>{
+    const amount = Number(r.amount);
+    if(!r.id || !r.transaction_date || !Number.isFinite(amount) || amount < 0) return;
+    if(r.transaction_type === 'income'){
+      income.push({id:String(r.id), date:String(r.transaction_date), source:String(r.source || r.description || '(bank transaction)'), amount});
+    }else if(r.transaction_type === 'expense'){
+      expenses.push({id:String(r.id), date:String(r.transaction_date), category:String(r.category || 'Other'), amount});
+    }
+  });
+  return {income, expenses};
+}
+
+async function loadState(){
+  if(!databaseMode || !currentUser){
+    state = {income:[], expenses:[]};
+    render();
+    return;
+  }
+  try{
+    const {data, error} = await dbClient
+      .from('transactions')
+      .select('id,transaction_date,transaction_type,category,source,description,amount,created_at')
+      .eq('user_id', currentUser.id)
+      .order('transaction_date', {ascending:true})
+      .order('created_at', {ascending:true});
+    if(error) throw error;
+    state = normalizeDbRows(data);
+    storageOk = true;
+    render();
+    updateStorageStatus('Database synced ✓');
+  }catch(e){
+    storageOk = false;
+    console.error('Ledger database load failed:', e);
+    setDbStatus('Could not load your transactions. Check the database/RLS setup.', 'err');
+    updateStorageStatus('Database error');
+  }
+}
+
+/* Kept for compatibility with older parts of the UI.
+   Data is never serialized into localStorage in database mode. */
+function saveState(){
+  updateStorageStatus(databaseMode ? 'Database synced ✓' : 'Database not connected');
+  return databaseMode && !!currentUser;
+}
+
+function updateStorageStatus(message){
+  const el = document.getElementById('storageStatus');
+  if(!el) return;
+  if(message){
+    el.textContent = message;
+    el.className = message.toLowerCase().includes('error') || message.toLowerCase().includes('not connected')
+      ? 'storage-status err' : 'storage-status ok';
+    clearTimeout(updateStorageStatus.timer);
+    updateStorageStatus.timer = setTimeout(() => updateStorageStatus(), 3000);
+  } else {
+    el.textContent = databaseMode && currentUser ? 'Saved to secure database' : 'Sign in to save data';
+    el.className = databaseMode && currentUser ? 'storage-status ok' : 'storage-status err';
+  }
+}
+
+async function insertTransaction(entry, kind, fingerprint=null){
+  if(!databaseMode || !currentUser) throw new Error('Please sign in first.');
+  const row = {
+    id: entry.id || crypto.randomUUID(),
+    user_id: currentUser.id,
+    transaction_date: entry.date,
+    transaction_type: kind,
+    category: kind === 'expense' ? entry.category : null,
+    source: kind === 'income' ? entry.source : null,
+    description: entry.description || null,
+    amount: Math.abs(Number(entry.amount)),
+    fingerprint: fingerprint || null
+  };
+  const {data, error} = await dbClient.from('transactions').insert(row).select().single();
+  if(error) throw error;
+  return data;
+}
+
+async function deleteTransaction(id){
+  if(!databaseMode || !currentUser) throw new Error('Please sign in first.');
+  const {error} = await dbClient.from('transactions').delete().eq('id', id).eq('user_id', currentUser.id);
+  if(error) throw error;
+}
+
+function makeFingerprint(kind, entry){
+  const label = kind === 'income' ? entry.source : entry.category;
+  return `${kind}|${entry.date}|${String(label||'').trim().toLowerCase()}|${Number(entry.amount).toFixed(2)}`;
+}
+
+async function addEntriesToDatabase(entries){
+  if(!databaseMode || !currentUser) throw new Error('Please sign in first.');
+  let added = 0, skipped = 0;
+  for(const item of entries){
+    const kind = item.kind;
+    const entry = item.entry;
+    const fingerprint = makeFingerprint(kind, entry);
+
+    // Check the per-user fingerprint first. This prevents re-uploading the
+    // same statement from creating duplicate rows.
+    const {data: existing, error: findError} = await dbClient
+      .from('transactions')
+      .select('id')
+      .eq('user_id', currentUser.id)
+      .eq('fingerprint', fingerprint)
+      .limit(1);
+    if(findError) throw findError;
+    if(existing && existing.length){
+      skipped++;
+      continue;
+    }
+
+    try{
+      await insertTransaction(entry, kind, fingerprint);
+      added++;
+    }catch(err){
+      // A unique-index race is also treated as a duplicate.
+      if(String(err.message || '').toLowerCase().includes('duplicate') ||
+         String(err.code || '') === '23505'){
+        skipped++;
+      }else{
+        throw err;
+      }
+    }
+  }
+  await loadState();
+  return {added, skipped};
+}
+
+function requireSignedIn(){
+  if(!databaseMode){
+    setDbStatus('Database is not configured. Add your Supabase URL and anon key in the HTML first.', 'err');
+    return false;
+  }
+  if(!currentUser){
+    setAuthMessage('Please sign in before adding or importing transactions.', 'err');
+    return false;
+  }
+  return true;
+}
+
+
+function setAuthGateMessage(message,kind=''){const el=document.getElementById('authGateMessage');if(!el)return;el.textContent=message||'';el.className=kind}
+function showAuthGate(show){const gate=document.getElementById('authGate');if(!gate)return;gate.classList.toggle('hidden',!show);document.body.style.overflow=show?'hidden':''}
+async function signInFromGate(){if(!databaseMode){setAuthGateMessage('Database is not configured yet.','err');return}const email=document.getElementById('gateEmail').value.trim();const password=document.getElementById('gatePassword').value;if(!email||!password){setAuthGateMessage('Enter your email and password.','err');return}setAuthGateMessage('Signing in…');document.getElementById('gateSignInBtn').disabled=true;document.getElementById('gateSignUpBtn').disabled=true;const {error}=await dbClient.auth.signInWithPassword({email,password});document.getElementById('gateSignInBtn').disabled=false;document.getElementById('gateSignUpBtn').disabled=false;if(error)setAuthGateMessage(error.message,'err');else setAuthGateMessage('Signed in successfully.','ok')}
+async function signUpFromGate(){
+  if(!databaseMode){
+    setAuthGateMessage('Database is not configured yet.', 'err');
+    return;
+  }
+
+  const email = document.getElementById('gateEmail').value.trim();
+  const password = document.getElementById('gatePassword').value;
+  if(!email || !password){
+    setAuthGateMessage('Enter an email and password to create your account.', 'err');
+    return;
+  }
+  if(password.length < 8){
+    setAuthGateMessage('Use a password with at least 8 characters.', 'err');
+    return;
+  }
+
+  const signInBtn = document.getElementById('gateSignInBtn');
+  const signUpBtn = document.getElementById('gateSignUpBtn');
+  signInBtn.disabled = true;
+  signUpBtn.disabled = true;
+  setAuthGateMessage('Creating your account…');
+
+  try{
+    const {data, error} = await dbClient.auth.signUp({
+      email,
+      password,
+      options:{ emailRedirectTo:getAuthRedirectUrl() }
+    });
+
+    if(error){
+      setAuthGateMessage(error.message, 'err');
+      return;
+    }
+
+    if(data.session){
+      setAuthGateMessage('Account created and signed in.', 'ok');
+      await handleAuthSession(data.session);
+    }else{
+      setAuthGateMessage(
+        'Account created successfully. Check your email to verify it, then return here and sign in. You can see the account in Supabase under Authentication → Users.',
+        'ok'
+      );
+    }
+  }catch(err){
+    console.error('Sign-up failed:', err);
+    setAuthGateMessage('Could not create the account. Please try again.', 'err');
+  }finally{
+    signInBtn.disabled = false;
+    signUpBtn.disabled = false;
+  }
+}
+
+
+document.getElementById('toggleGatePassword').addEventListener('click', ()=>{
+  const input = document.getElementById('gatePassword');
+  const button = document.getElementById('toggleGatePassword');
+  const show = input.type === 'password';
+  input.type = show ? 'text' : 'password';
+  button.textContent = show ? 'Hide' : 'Show';
+});
+
+
+document.getElementById('forgotPasswordBtn').addEventListener('click', ()=>{
+  const panel = document.getElementById('resetPanel');
+  panel.classList.toggle('visible');
+  const email = document.getElementById('gateEmail').value.trim();
+  if(email) document.getElementById('resetEmail').value = email;
+});
+
+document.getElementById('sendResetBtn').addEventListener('click', async ()=>{
+  if(!databaseMode) return;
+
+  const email = document.getElementById('resetEmail').value.trim();
+  const msg = document.getElementById('resetMessage');
+
+  if(!email){
+    msg.textContent = 'Enter your email address.';
+    msg.className = 'auth-feedback err';
+    return;
+  }
+
+  msg.textContent = 'Sending reset email…';
+  msg.className = 'auth-feedback';
+
+  try{
+    const {error} = await dbClient.auth.resetPasswordForEmail(email, {
+      redirectTo:getAuthRedirectUrl()
+    });
+
+    if(error){
+      msg.textContent = error.message;
+      msg.className = 'auth-feedback err';
+    }else{
+      msg.textContent = 'Check your email for the password reset link.';
+      msg.className = 'auth-feedback ok';
+    }
+  }catch(err){
+    console.error(err);
+    msg.textContent = 'Could not send the reset email. Please try again.';
+    msg.className = 'auth-feedback err';
+  }
+});
+
+document.getElementById('gateSignInBtn').addEventListener('click',signInFromGate);document.getElementById('gateSignUpBtn').addEventListener('click',signUpFromGate);['gateEmail','gatePassword'].forEach(id=>document.getElementById(id).addEventListener('keydown',e=>{if(e.key==='Enter')signInFromGate()}));
+async function initDatabase(){
+  if(!isDatabaseConfigured()){
+    databaseMode = false;
+    setDbStatus('Database not configured — add your Supabase Project URL and anon/public key in the code.', 'err');
+    setAppEnabled(false);
+    updateStorageStatus();
+    return;
+  }
+
+  try{
+    dbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    databaseMode = true;
+
+    const {data:{session}} = await dbClient.auth.getSession();
+    await handleAuthSession(session);
+
+    dbClient.auth.onAuthStateChange((event, session)=>{
+      // Don't await directly inside Supabase's auth callback.
+      setTimeout(()=>{
+        if(event === 'PASSWORD_RECOVERY'){
+          handlePasswordRecovery();
+        }else{
+          handleAuthSession(session);
+        }
+      }, 0);
+    });
+  }catch(e){
+    console.error(e);
+    setDbStatus('Could not initialize the database connection.', 'err');
+    setAppEnabled(false);
+  }
+}
+
+
+async function handlePasswordRecovery(){
+  const newPassword = window.prompt('Enter your new password (at least 8 characters):');
+  if(newPassword === null) return;
+
+  if(newPassword.length < 8){
+    alert('Password must be at least 8 characters.');
+    return;
+  }
+
+  try{
+    const {error} = await dbClient.auth.updateUser({password:newPassword});
+    if(error){
+      alert('Could not update your password: ' + error.message);
+    }else{
+      alert('Your password has been updated successfully.');
+    }
+  }catch(err){
+    console.error(err);
+    alert('Could not update your password. Please try again.');
+  }
+}
+
+async function handleAuthSession(session){
+  currentUser=session?.user||null;
+  const signedIn=!!currentUser;
+  document.getElementById('signInBtn').style.display=signedIn?'none':'';
+  document.getElementById('signUpBtn').style.display=signedIn?'none':'';
+  document.getElementById('signOutBtn').style.display=signedIn?'':'none';
+  document.getElementById('authEmail').disabled=signedIn;document.getElementById('authPassword').disabled=signedIn;
+  showAuthGate(!signedIn);
+  const ledgerTopbar = document.getElementById('ledgerTopbar');
+  if(ledgerTopbar){
+    ledgerTopbar.classList.toggle('visible', signedIn);
+    if(signedIn) document.getElementById('signedInEmail').textContent = currentUser.email || 'Account';
+  }
+  if(signedIn){setDbStatus(`Signed in securely as ${currentUser.email}`,'ok');setAuthMessage('Your data is isolated to your account.');setAuthGateMessage('');setAppEnabled(true);await loadState()}else{setDbStatus('Database connected — sign in above to continue.','');setAuthMessage('');setAppEnabled(false);state={income:[],expenses:[]};render();updateStorageStatus()}}
+
+document.getElementById('signInBtn').addEventListener('click', async ()=>{
+  if(!databaseMode) return;
+  const email = document.getElementById('authEmail').value.trim();
+  const password = document.getElementById('authPassword').value;
+  if(!email || !password){
+    setAuthMessage('Enter your email and password.', 'err');
+    return;
+  }
+  setAuthMessage('Signing in…');
+  const {error} = await dbClient.auth.signInWithPassword({email,password});
+  if(error) setAuthMessage(error.message, 'err');
+});
+
+document.getElementById('signUpBtn').addEventListener('click', async ()=>{
+  if(!databaseMode) return;
+  const email = document.getElementById('authEmail').value.trim();
+  const password = document.getElementById('authPassword').value;
+  if(!email || !password){
+    setAuthMessage('Enter an email and password to create your account.', 'err');
+    return;
+  }
+  if(password.length < 8){
+    setAuthMessage('Use a password with at least 8 characters.', 'err');
+    return;
+  }
+  setAuthMessage('Creating your account…');
+  const {data, error} = await dbClient.auth.signUp({email,password});
+  if(error){
+    setAuthMessage(error.message, 'err');
+  }else if(data.session){
+    setAuthMessage('Account created and signed in.', 'ok');
+  }else{
+    setAuthMessage('Account created. Check your email if email confirmation is enabled.', 'ok');
+  }
+});
+
+async function logoutLedger(){
+  if(!databaseMode) return;
+  const {error} = await dbClient.auth.signOut({scope:'local'});
+  if(error){
+    setAuthMessage(error.message, 'err');
+    setAuthGateMessage(error.message, 'err');
+  }else{
+    // handleAuthSession() is triggered by SIGNED_OUT and returns the user to the login gate.
+    setAuthGateMessage('');
+  }
+}
+
+document.getElementById('signOutBtn').addEventListener('click', logoutLedger);
+document.getElementById('dashboardLogoutBtn').addEventListener('click', logoutLedger);
+
+function updateStorageStatus(message){
+  const el = document.getElementById('storageStatus');
+  if(!el) return;
+  if(message){
+    el.textContent = message;
+    el.className = message.includes('Could') ? 'storage-status err' : 'storage-status ok';
+    clearTimeout(updateStorageStatus.timer);
+    updateStorageStatus.timer = setTimeout(() => updateStorageStatus(), 2200);
+  } else {
+    el.textContent = storageOk ? 'Saved in this browser' : 'Storage unavailable';
+    el.className = storageOk ? 'storage-status' : 'storage-status err';
+  }
+}
+
+function populateSelectors(){
+  const monthSel = document.getElementById('monthSel');
+  const months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  const allMonthOpt = document.createElement('option');
+  allMonthOpt.value = 0;
+  allMonthOpt.textContent = 'All months';
+  monthSel.appendChild(allMonthOpt);
+  months.forEach((m,i)=>{
+    const opt = document.createElement('option'); opt.value = i+1; opt.textContent = m;
+    monthSel.appendChild(opt);
+  });
+  const now = new Date();
+  monthSel.value = now.getMonth()+1;
+
+  const yearSel = document.getElementById('yearSel');
+  const thisYear = now.getFullYear();
+  const allYearOpt = document.createElement('option');
+  allYearOpt.value = 0;
+  allYearOpt.textContent = 'All years';
+  yearSel.appendChild(allYearOpt);
+  for(let y=thisYear-2; y<=thisYear+1; y++){
+    const opt = document.createElement('option'); opt.value = y; opt.textContent = y;
+    yearSel.appendChild(opt);
+  }
+  yearSel.value = thisYear;
+
+  const catSel = document.getElementById('expCategory');
+  CATEGORIES.forEach(([name])=>{
+    const opt = document.createElement('option'); opt.value = name; opt.textContent = name;
+    catSel.appendChild(opt);
+  });
+
+  const today = new Date().toISOString().slice(0,10);
+  document.getElementById('incDate').value = today;
+  document.getElementById('expDate').value = today;
+
+  monthSel.addEventListener('change', render);
+  yearSel.addEventListener('change', render);
+  ['tgtNeed','tgtWant','tgtSave'].forEach(id=>{
+    document.getElementById(id).addEventListener('input', render);
+  });
+}
+
+function currentPeriod(){
+  return { year: parseInt(document.getElementById('yearSel').value), month: parseInt(document.getElementById('monthSel').value) };
+}
+function inPeriod(dateStr, year, month){
+  const d = new Date(dateStr + 'T00:00:00');
+  return (year === 0 || d.getFullYear() === year) && (month === 0 || (d.getMonth()+1) === month);
+}
+
+function render(){
+  const {year, month} = currentPeriod();
+  const hint = document.getElementById('periodHint');
+  if(hint) hint.textContent = (year === 0 || month === 0) ? 'Showing all saved transactions' : 'Showing this month';
+  const incomeThis = state.income.filter(e => inPeriod(e.date, year, month));
+  const expenseThis = state.expenses.filter(e => inPeriod(e.date, year, month));
+
+  const totalIncome = incomeThis.reduce((s,e)=>s+e.amount,0);
+  const byType = {Need:0, Want:0, Savings:0};
+  expenseThis.forEach(e=>{ byType[CAT_TYPE[e.category]||'Want'] += e.amount; });
+  const totalExpenses = byType.Need + byType.Want + byType.Savings;
+  const leftover = totalIncome - totalExpenses;
+
+  document.getElementById('statIncome').textContent = fmt(totalIncome);
+  document.getElementById('statExpenses').textContent = fmt(byType.Need + byType.Want);
+  document.getElementById('statSavings').textContent = fmt(byType.Savings);
+  const leftEl = document.getElementById('lblLeftover');
+  leftEl.textContent = fmt(leftover);
+  leftEl.className = 'stat-val ' + (leftover>=0?'pos':'neg');
+
+  const tgtNeed = parseFloat(document.getElementById('tgtNeed').value)||0;
+  const tgtWant = parseFloat(document.getElementById('tgtWant').value)||0;
+  const tgtSave = parseFloat(document.getElementById('tgtSave').value)||0;
+
+  // Donut chart: how the tracked money (Needs + Wants + Savings) actually split this month
+  const donut = document.getElementById('donutChart');
+  const centerVal = document.getElementById('donutCenterVal');
+  if(totalExpenses > 0){
+    const needPct = byType.Need/totalExpenses*100;
+    const wantPct = byType.Want/totalExpenses*100;
+    const needEnd = needPct;
+    const wantEnd = needPct + wantPct;
+    donut.style.background = `conic-gradient(var(--need) 0% ${needEnd}%, var(--want) ${needEnd}% ${wantEnd}%, var(--save) ${wantEnd}% 100%)`;
+    centerVal.textContent = fmt(totalExpenses);
+  } else {
+    donut.style.background = 'conic-gradient(var(--line) 0 100%)';
+    centerVal.textContent = '$0';
+  }
+
+  // recommendation engine
+  const targetSavingsAmt = totalIncome * (tgtSave/100);
+  const gap = byType.Savings - targetSavingsAmt;
+  const periodLabel = (year === 0 || month === 0) ? 'the selected data' : 'the month';
+  const needsVsTarget = byType.Need - totalIncome*(tgtNeed/100);
+  const wantsVsTarget = byType.Want - totalIncome*(tgtWant/100);
+  let rec;
+  if(totalIncome === 0){
+    rec = "Add income and expenses to see your plan.";
+  } else if(gap >= 0){
+    rec = `You're at or above your savings target for ${periodLabel} — nice work. Consider moving the extra ${fmt(gap)} into savings or investments before it gets spent.`;
+  } else if(wantsVsTarget > 0){
+    rec = `You're ${fmt(wantsVsTarget)} over your Wants target. Trimming dining out, subscriptions, or shopping by that amount would close most of your ${fmt(-gap)} savings gap.`;
+  } else if(needsVsTarget > 0){
+    rec = `You're ${fmt(needsVsTarget)} over your Needs target. Look for a recurring cost to renegotiate or cut (a subscription, insurance shop-around, or a cheaper plan) rather than a one-time fix.`;
+  } else {
+    rec = `Your spending fits your Needs/Wants split, but savings are still ${fmt(-gap)} short of target — automating a transfer to savings on payday is the most reliable fix.`;
+  }
+  document.getElementById('recommendation').textContent = rec;
+
+  // tables
+  const incomeBody = document.getElementById('incomeBody');
+  incomeBody.innerHTML = '';
+  if(incomeThis.length===0){
+    incomeBody.innerHTML = '<tr class="empty-row"><td colspan="4">No income logged for this month yet.</td></tr>';
+  } else {
+    incomeThis.slice().sort((a,b)=>a.date.localeCompare(b.date)).forEach(e=>{
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${e.date}</td><td style="font-family:'IBM Plex Sans'">${escapeHtml(e.source)}</td><td class="amt">${fmt(e.amount)}</td><td><button class="del" data-id="${e.id}" data-kind="income">✕</button></td>`;
+      incomeBody.appendChild(tr);
+    });
+  }
+
+  const expenseBody = document.getElementById('expenseBody');
+  expenseBody.innerHTML = '';
+  if(expenseThis.length===0){
+    expenseBody.innerHTML = '<tr class="empty-row"><td colspan="4">No expenses logged for this month yet.</td></tr>';
+  } else {
+    expenseThis.slice().sort((a,b)=>a.date.localeCompare(b.date)).forEach(e=>{
+      const type = CAT_TYPE[e.category]||'Want';
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${e.date}</td><td style="font-family:'IBM Plex Sans'">${escapeHtml(e.category)} <span class="tag ${type}">${type}</span></td><td class="amt">${fmt(e.amount)}</td><td><button class="del" data-id="${e.id}" data-kind="expense">✕</button></td>`;
+      expenseBody.appendChild(tr);
+    });
+  }
+
+  document.querySelectorAll('.del').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      const id = btn.dataset.id, kind = btn.dataset.kind;
+      if(!requireSignedIn()) return;
+      try{
+        btn.disabled = true;
+        await deleteTransaction(id);
+        if(kind==='income') state.income = state.income.filter(e=>e.id!==id);
+        else state.expenses = state.expenses.filter(e=>e.id!==id);
+        updateStorageStatus('Deleted ✓');
+        render();
+      }catch(err){
+        console.error(err);
+        updateStorageStatus('Delete failed');
+        btn.disabled = false;
+        alert('Could not delete this transaction: ' + (err.message || 'Unknown error'));
+      }
+    });
+  });
+}
+
+function escapeHtml(s){
+  return String(s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+}
+function uid(){ return Math.random().toString(36).slice(2,10); }
+function transactionKey(r, kind){
+  if(kind === 'income') return `I|${r.date}|${String(r.source).trim().toLowerCase()}|${Number(r.amount).toFixed(2)}`;
+  return `E|${r.date}|${String(r.category).trim().toLowerCase()}|${Number(r.amount).toFixed(2)}`;
+}
+function hasTransaction(r, kind){
+  const list = kind === 'income' ? state.income : state.expenses;
+  const key = transactionKey(r, kind);
+  return list.some(x => transactionKey(x, kind) === key);
+}
+
+
+// If the entry's date falls in a month/year not currently on screen, jump the
+// viewer there so the numbers you just added are the ones you see change.
+function jumpToDate(dateStr){
+  const monthSel = document.getElementById('monthSel');
+  const yearSel = document.getElementById('yearSel');
+  if(monthSel.value === '0' || yearSel.value === '0') return;
+  const d = new Date(dateStr + 'T00:00:00');
+  const y = d.getFullYear(), m = d.getMonth()+1;
+  if(![...yearSel.options].some(o => parseInt(o.value) === y)){
+    const opt = document.createElement('option'); opt.value = y; opt.textContent = y;
+    yearSel.appendChild(opt);
+    yearSel.innerHTML = [...yearSel.options].sort((a,b)=>a.value-b.value)
+      .map(o=>`<option value="${o.value}">${o.textContent}</option>`).join('');
+  }
+  yearSel.value = y;
+  document.getElementById('monthSel').value = m;
+}
+
+document.getElementById('incomeForm').addEventListener('submit', async e=>{
+  e.preventDefault();
+  if(!requireSignedIn()) return;
+
+  const date = document.getElementById('incDate').value;
+  const source = document.getElementById('incSource').value.trim();
+  const amount = parseFloat(document.getElementById('incAmount').value);
+  if(!date || !source || !Number.isFinite(amount) || amount <= 0){
+    updateStorageStatus('Enter date, source, and a valid amount');
+    return;
+  }
+
+  const entry = {id:crypto.randomUUID(), date, source, amount};
+  if(hasTransaction(entry, 'income')){
+    updateStorageStatus('That income entry already exists');
+    return;
+  }
+
+  try{
+    await insertTransaction(entry, 'income', makeFingerprint('income', entry));
+    state.income.push(entry);
+    jumpToDate(date);
+    render();
+    updateStorageStatus('Income saved ✓');
+    e.target.reset();
+    document.getElementById('incDate').value = new Date().toISOString().slice(0,10);
+  }catch(err){
+    console.error(err);
+    updateStorageStatus('Could not save income');
+    alert('Could not save income: ' + (err.message || 'Unknown error'));
+  }
+});
+
+document.getElementById('expenseForm').addEventListener('submit', async e=>{
+  e.preventDefault();
+  if(!requireSignedIn()) return;
+
+  const date = document.getElementById('expDate').value;
+  const category = document.getElementById('expCategory').value;
+  const amount = parseFloat(document.getElementById('expAmount').value);
+  if(!date || !category || !Number.isFinite(amount) || amount <= 0){
+    updateStorageStatus('Enter date, category, and a valid amount');
+    return;
+  }
+
+  const entry = {id:crypto.randomUUID(), date, category, amount};
+  if(hasTransaction(entry, 'expense')){
+    updateStorageStatus('That expense entry already exists');
+    return;
+  }
+
+  try{
+    await insertTransaction(entry, 'expense', makeFingerprint('expense', entry));
+    state.expenses.push(entry);
+    jumpToDate(date);
+    render();
+    updateStorageStatus('Expense saved ✓');
+    document.getElementById('expDate').value = new Date().toISOString().slice(0,10);
+    document.getElementById('expAmount').value='';
+  }catch(err){
+    console.error(err);
+    updateStorageStatus('Could not save expense');
+    alert('Could not save expense: ' + (err.message || 'Unknown error'));
+  }
+});
+
+
+/* =========================
+   MANUAL ENTRY CHATBOT
+   =========================
+   This assistant is deliberately rule-based: it does not send chat content
+   to a third-party AI service. It collects exactly the same fields as the
+   manual income/expense forms, previews the record, fills the manual form,
+   and saves it through the same database functions.
+*/
+class LedgerChatbot {
+  constructor(){
+    this.reset();
+    this.messagesEl=document.getElementById('chatMessages');
+    this.inputEl=document.getElementById('chatInput');
+    this.choicesEl=document.getElementById('chatChoices');
+    this.statusEl=document.getElementById('chatStatus');
+    this.confirmActions=document.getElementById('chatConfirmActions');
+    this.preview={type:document.getElementById('chatPreviewType'),date:document.getElementById('chatPreviewDate'),label:document.getElementById('chatPreviewLabel'),amount:document.getElementById('chatPreviewAmount')};
+  }
+
+  reset(){
+    this.step='type';
+    this.data={type:null,date:null,label:null,amount:null,category:null};
+  }
+
+  start(){
+    this.reset();
+    if(!this.messagesEl) return;
+    this.messagesEl.innerHTML='';
+    this.setStatus('');
+    this.hideConfirm();
+    this.addBot('Hi! I can add a manual transaction for you. Do you want to add income or an expense?');
+    this.showChoices([
+      ['Income','income'],
+      ['Expense','expense']
+    ]);
+    this.inputEl.focus();
+    this.updatePreview();
+  }
+
+  addBot(text){
+    this.addMessage('bot',text);
+  }
+  addUser(text){
+    this.addMessage('user',text);
+  }
+  addMessage(who,text){
+    const wrap=document.createElement('div'); wrap.className='chat-msg '+who;
+    const bubble=document.createElement('div'); bubble.className='chat-bubble'; bubble.textContent=text;
+    wrap.appendChild(bubble); this.messagesEl.appendChild(wrap); this.messagesEl.scrollTop=this.messagesEl.scrollHeight;
+  }
+  setStatus(text,kind=''){
+    this.statusEl.textContent=text||'';
+    this.statusEl.className='chatbot-status '+kind;
+  }
+  showChoices(items){
+    this.choicesEl.innerHTML='';
+    items.forEach(([label,value])=>{
+      const btn=document.createElement('button'); btn.type='button'; btn.className='chat-choice'; btn.textContent=label;
+      btn.addEventListener('click',()=>this.handle(value,true));
+      this.choicesEl.appendChild(btn);
+    });
+  }
+  clearChoices(){this.choicesEl.innerHTML='';}
+  hideConfirm(){this.confirmActions.style.display='none';}
+  showConfirm(){this.confirmActions.style.display='flex';}
+
+  parseDate(text){
+    const t=String(text).trim().toLowerCase();
+    const today=new Date();
+    if(t==='today') return today.toISOString().slice(0,10);
+    if(t==='yesterday') { const d=new Date(today); d.setDate(d.getDate()-1); return d.toISOString().slice(0,10); }
+    const m1=t.match(/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})$/);
+    if(m1){const y=+m1[1],m=+m1[2],d=+m1[3]; if(m>=1&&m<=12&&d>=1&&d<=31)return `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;}
+    const m2=t.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})$/);
+    if(m2){const m=+m2[1],d=+m2[2],y=+m2[3]; if(m>=1&&m<=12&&d>=1&&d<=31)return `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;}
+    return null;
+  }
+
+  parseAmount(text){
+    const cleaned=String(text).replace(/[$,\s]/g,'');
+    const m=cleaned.match(/-?\d+(?:\.\d{1,2})?/);
+    if(!m) return null;
+    const n=Math.abs(parseFloat(m[0]));
+    return Number.isFinite(n)&&n>0?n:null;
+  }
+
+  normalizeCategory(text){
+    const input=String(text).trim().toLowerCase();
+    const exact=CATEGORIES.find(([name])=>name.toLowerCase()===input);
+    if(exact) return exact[0];
+    const aliases={
+      'food':'Groceries','grocery':'Groceries','groceries':'Groceries','rent':'Housing','utilities':'Utilities',
+      'gas':'Transportation','transport':'Transportation','bus':'Transportation','uber':'Transportation',
+      'shopping':'Shopping','restaurant':'Dining Out','dining':'Dining Out','netflix':'Subscriptions',
+      'subscription':'Subscriptions','health':'Health & Medical','medical':'Health & Medical','doctor':'Health & Medical',
+      'insurance':'Insurance','debt':'Debt Payments','school':'Education','tuition':'Education','childcare':'Childcare',
+      'personal':'Personal Care','entertainment':'Entertainment','savings':'Savings & Investments'
+    };
+    return aliases[input] || null;
+  }
+
+  handle(raw, fromChoice=false){
+    const text=String(raw??'').trim();
+    if(!text) return;
+    if(!fromChoice) this.addUser(text);
+
+    if(this.step==='type'){
+      const type=/^(income|earn|salary|paycheck|money in|deposit)$/i.test(text)?'income':/^(expense|spend|purchase|money out)$/i.test(text)?'expense':null;
+      if(!type){
+        this.addBot('Please choose Income or Expense.');
+        this.showChoices([['Income','income'],['Expense','expense']]);
+        return;
+      }
+      this.data.type=type; this.step='date'; this.clearChoices();
+      this.addBot('Great. What is the transaction date? You can say “today”, “yesterday”, or type a date such as 2026-09-05.');
+      return;
+    }
+
+    if(this.step==='date'){
+      const date=this.parseDate(text);
+      if(!date){this.addBot('I could not read that date. Please use YYYY-MM-DD or MM/DD/YYYY.');return;}
+      this.data.date=date; this.step=this.data.type==='income'?'label':'category';
+      this.addBot(this.data.type==='income' ? 'What is the income source? For example, Paycheck, Freelance, or Scholarship.' : 'What category is this expense?');
+      if(this.data.type==='expense') this.showChoices(CATEGORIES.map(([name])=>[name,name]));
+      return;
+    }
+
+    if(this.step==='label'){
+      if(text.length<2){this.addBot('Please enter an income source.');return;}
+      this.data.label=text; this.step='amount'; this.clearChoices();
+      this.addBot('How much was the income?');
+      return;
+    }
+
+    if(this.step==='category'){
+      const cat=this.normalizeCategory(text);
+      if(!cat){this.addBot('I could not match that category. Please pick one from the list.'); this.showChoices(CATEGORIES.map(([name])=>[name,name])); return;}
+      this.data.category=cat; this.data.label=cat; this.step='amount'; this.clearChoices();
+      this.addBot(`Got it — ${cat}. How much was the expense?`);
+      return;
+    }
+
+    if(this.step==='amount'){
+      const amount=this.parseAmount(text);
+      if(amount===null){this.addBot('Please enter a valid positive amount, such as 24.50.');return;}
+      this.data.amount=amount; this.step='confirm';
+      this.addBot(`I have ${this.data.type==='income'?'income':'expense'} on ${this.data.date} for ${fmt(amount)}. Please review the preview on the right, then choose Add to Ledger.`);
+      this.updatePreview(); this.showConfirm(); this.inputEl.disabled=true; this.clearChoices();
+      return;
+    }
+  }
+
+  updatePreview(){
+    this.preview.type.textContent=this.data.type ? (this.data.type==='income'?'Income':'Expense') : '—';
+    this.preview.date.textContent=this.data.date||'—';
+    this.preview.label.textContent=this.data.label||'—';
+    this.preview.amount.textContent=this.data.amount!==null ? fmt(this.data.amount) : '—';
+  }
+
+  async confirm(){
+    if(this.step!=='confirm') return;
+    if(!requireSignedIn()){return;}
+    const entry=this.data.type==='income'
+      ? {id:crypto.randomUUID(),date:this.data.date,source:this.data.label,amount:this.data.amount}
+      : {id:crypto.randomUUID(),date:this.data.date,category:this.data.category,amount:this.data.amount};
+    if(hasTransaction(entry,this.data.type)){
+      this.setStatus('That exact transaction already exists in this account.','err');
+      this.addBot('I found the same transaction already in your Ledger, so I did not add a duplicate.');
+      return;
+    }
+
+    this.setStatus('Saving transaction…');
+    try{
+      await insertTransaction(entry,this.data.type,makeFingerprint(this.data.type,entry));
+      if(this.data.type==='income'){
+        state.income.push(entry);
+        const form=document.getElementById('incomeForm');
+        document.getElementById('incDate').value=this.data.date;
+        document.getElementById('incSource').value=this.data.label;
+        document.getElementById('incAmount').value=this.data.amount.toFixed(2);
+      }else{
+        state.expenses.push(entry);
+        document.getElementById('expDate').value=this.data.date;
+        document.getElementById('expCategory').value=this.data.category;
+        document.getElementById('expAmount').value=this.data.amount.toFixed(2);
+      }
+      jumpToDate(this.data.date);
+      render();
+      this.setStatus('Saved to Ledger ✓','ok');
+      this.addBot('Done — I added it to your Ledger and filled the matching manual-entry fields. It was saved under its transaction date, so the month stays correct.');
+      document.getElementById('chatConfirmActions').style.display='none';
+      this.inputEl.disabled=false;
+      this.inputEl.value='';
+      setTimeout(()=>this.start(),700);
+    }catch(err){
+      console.error(err);
+      this.setStatus('Could not save the transaction.','err');
+      this.addBot('I could not save that transaction. Please check your account/database connection and try again.');
+    }
+  }
+
+  edit(){
+    this.step=this.data.type==='income'?(this.data.amount!==null?'amount':'label'):'amount';
+    this.inputEl.disabled=false; this.hideConfirm(); this.setStatus(''); this.inputEl.focus();
+    this.addBot(this.step==='amount'?'Okay — what should the amount be?': 'Okay — what is the income source?');
+  }
+}
+
+let ledgerChatbot=null;
+function initLedgerChatbot(){
+  if(typeof LedgerChatbot==='undefined') return;
+  ledgerChatbot=new LedgerChatbot();
+  document.getElementById('chatSendBtn').addEventListener('click',()=>{
+    const value=ledgerChatbot.inputEl.value.trim();
+    if(!value || ledgerChatbot.inputEl.disabled) return;
+    ledgerChatbot.inputEl.value='';
+    ledgerChatbot.handle(value,false);
+  });
+  ledgerChatbot.inputEl.addEventListener('keydown',e=>{
+    if(e.key==='Enter') document.getElementById('chatSendBtn').click();
+  });
+  document.getElementById('chatResetBtn').addEventListener('click',()=>ledgerChatbot.start());
+  document.getElementById('chatConfirmBtn').addEventListener('click',()=>ledgerChatbot.confirm());
+  document.getElementById('chatEditBtn').addEventListener('click',()=>ledgerChatbot.edit());
+  ledgerChatbot.start();
+}
+
+// Spreadsheet export
+function csvEscape(value){
+  const s = String(value ?? '');
+  return /[",\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+}
+
+function buildCsv(){
+  const rows = [['SECTION','Date','Source or Category','Amount','Type']];
+  state.income.forEach(e => rows.push(['Income', e.date, e.source, Number(e.amount).toFixed(2), '']));
+  state.expenses.forEach(e => rows.push(['Expense', e.date, e.category, Number(e.amount).toFixed(2), CAT_TYPE[e.category] || 'Want']));
+  return rows.map(row => row.map(csvEscape).join(',')).join('\r\n') + '\r\n';
+}
+
+function downloadBlob(content, filename, type){
+  const blob = new Blob([content], {type});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+document.getElementById('exportBtn').addEventListener('click', ()=>{
+  if(!requireSignedIn()) return;
+  downloadBlob(buildCsv(), 'ledger-export.csv', 'text/csv;charset=utf-8');
+});
+
+// Excel-compatible workbook export. This creates a real spreadsheet-readable .xls file
+// without requiring an external library or internet connection.
+document.getElementById('exportExcelBtn').addEventListener('click', ()=>{
+  if(!requireSignedIn()) return;
+  const rows = [
+    ['SECTION','Date','Source or Category','Amount','Type'],
+    ...state.income.map(e => ['Income', e.date, e.source, Number(e.amount).toFixed(2), '']),
+    ...state.expenses.map(e => ['Expense', e.date, e.category, Number(e.amount).toFixed(2), CAT_TYPE[e.category] || 'Want'])
+  ];
+  const esc = v => String(v ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  const xml = '<?xml version="1.0"?>' +
+    '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">' +
+    '<Worksheet ss:Name="Ledger"><Table>' +
+    rows.map((row, ri) => '<Row>' + row.map((v, ci) => '<Cell' + (ri===0 ? ' ss:StyleID="Header"' : '') + '><Data ss:Type="' + (ci===3 && ri>0 ? 'Number' : 'String') + '">' + esc(v) + '</Data></Cell>').join('') + '</Row>').join('') +
+    '</Table></Worksheet><Styles><Style ss:ID="Header"><Font ss:Bold="1"/></Style></Styles></Workbook>';
+  downloadBlob(xml, 'ledger-export.xls', 'application/vnd.ms-excel;charset=utf-8');
+});
+
+// CSV import: imports into the current signed-in customer's database.
+// It never replaces existing transactions.
+document.getElementById('importFile').addEventListener('change', async e=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  if(!requireSignedIn()){ e.target.value=''; return; }
+
+  const reader = new FileReader();
+  reader.onload = async ()=>{
+    try{
+      const lines = reader.result.split(/\r?\n/).filter(l=>l.trim().length);
+      const entries = [];
+      lines.slice(1).forEach(line=>{
+        const parts = parseCsvLine(line);
+        if(parts.length < 4) return;
+        const [section, date, label, amountStr] = parts;
+        const amount = parseFloat(amountStr);
+        if(!date || !Number.isFinite(amount) || !label.trim()) return;
+
+        if(/income/i.test(section)){
+          entries.push({kind:'income', entry:{id:crypto.randomUUID(), date, source:label.trim(), amount:Math.abs(amount)}});
+        }else if(/expense/i.test(section)){
+          const match = CATEGORIES.find(([name]) => name.toLowerCase() === label.trim().toLowerCase());
+          entries.push({kind:'expense', entry:{id:crypto.randomUUID(), date, category:match ? match[0] : label.trim(), amount:Math.abs(amount)}});
+        }
+      });
+
+      if(!entries.length){
+        updateStorageStatus('No valid CSV transactions found');
+        return;
+      }
+
+      const result = await addEntriesToDatabase(entries);
+      updateStorageStatus(`CSV import: ${result.added} added${result.skipped ? `, ${result.skipped} duplicates skipped` : ''} ✓`);
+      document.getElementById('monthSel').value='0';
+      document.getElementById('yearSel').value='0';
+      await loadState();
+    }catch(err){
+      console.error(err);
+      updateStorageStatus('CSV import failed');
+      alert('CSV import failed: ' + (err.message || 'Unknown error'));
+    }finally{
+      e.target.value = '';
+    }
+  };
+  reader.readAsText(file);
+});
+
+// Receipt scanning — sends the photo to Claude, which reads the total, date,
+// and merchant off the receipt and suggests one of our fixed categories.
+const CATEGORY_NAMES = CATEGORIES.map(c=>c[0]);
+
+document.getElementById('receiptFile').addEventListener('change', async (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+
+  const statusEl = document.getElementById('scanStatus');
+  statusEl.className = '';
+  statusEl.textContent = 'Reading receipt… this can take a little while.';
+
+  try{
+    if(typeof Tesseract === 'undefined'){
+      throw new Error('OCR library did not load');
+    }
+
+    const result = await Tesseract.recognize(file, 'eng', {
+      logger: info => {
+        if(info.status === 'recognizing text' && typeof info.progress === 'number'){
+          statusEl.textContent = `Reading receipt… ${Math.round(info.progress * 100)}%`;
+        }
+      }
+    });
+
+    const text = result.data.text || '';
+    if(!text.trim()) throw new Error('No text found');
+
+    const parsed = parseReceiptOcr(text);
+    const today = new Date().toISOString().slice(0,10);
+
+    document.getElementById('expDate').value = parsed.date || today;
+    if(parsed.category) document.getElementById('expCategory').value = parsed.category;
+    if(parsed.amount !== null) document.getElementById('expAmount').value = parsed.amount.toFixed(2);
+
+    statusEl.className = 'ok';
+    if(parsed.amount !== null){
+      statusEl.textContent = `Receipt scanned — found ${fmt(parsed.amount)}. Check the fields below, then click Add.`;
+    } else {
+      statusEl.textContent = 'Receipt text found, but the total was unclear — check the fields below and enter the amount manually if needed.';
+    }
+  }catch(err){
+    console.error('Receipt OCR failed:', err);
+    statusEl.className = 'err';
+    statusEl.textContent = "Couldn't read that receipt automatically. Enter the date, category, and amount manually below.";
+  }finally{
+    e.target.value = '';
+  }
+});
+
+function parseReceiptOcr(text){
+  const lines = text.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
+  const joined = lines.join(' ');
+
+  // Date detection: supports common receipt formats such as MM/DD/YYYY,
+  // YYYY-MM-DD, and MM-DD-YYYY.
+  let date = null;
+  const datePatterns = [
+    /\b(20\d{2})[-\/](\d{1,2})[-\/](\d{1,2})\b/,
+    /\b(\d{1,2})[-\/](\d{1,2})[-\/](20\d{2})\b/
+  ];
+  for(const re of datePatterns){
+    const m = joined.match(re);
+    if(m){
+      let y, mo, d;
+      if(m[1].length === 4){ y=+m[1]; mo=+m[2]; d=+m[3]; }
+      else { mo=+m[1]; d=+m[2]; y=+m[3]; }
+      if(mo>=1 && mo<=12 && d>=1 && d<=31){
+        date = `${y}-${String(mo).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        break;
+      }
+    }
+  }
+
+  // Prefer amounts on lines containing TOTAL/GRAND TOTAL/AMOUNT DUE.
+  const moneyMatches = [];
+  const moneyRe = /(?:\$|USD\s*)?(\d{1,5}(?:[,\s]\d{3})*\.\d{2})\b/g;
+  lines.forEach(line=>{
+    let m;
+    while((m=moneyRe.exec(line)) !== null){
+      const value = parseFloat(m[1].replace(/[,\s]/g,''));
+      if(Number.isFinite(value)) moneyMatches.push({value, line});
+    }
+  });
+
+  let amount = null;
+  const priority = moneyMatches.filter(x =>
+    /\b(grand\s+total|total|amount\s+due|balance\s+due|net\s+total)\b/i.test(x.line)
+  );
+  if(priority.length) amount = priority[priority.length-1].value;
+  else if(moneyMatches.length) amount = Math.max(...moneyMatches.map(x=>x.value));
+
+  // Basic category suggestion from receipt text.
+  const lower = joined.toLowerCase();
+  let category = 'Groceries';
+  if(/\b(restaurant|cafe|coffee|pizza|burger|food|diner|takeout|delivery)\b/.test(lower)) category='Dining Out';
+  else if(/\b(pharmacy|drug|clinic|dental|medical|hospital)\b/.test(lower)) category='Health & Medical';
+  else if(/\b(gas|fuel|shell|esso|petro|uber|lyft|transit|bus|taxi)\b/.test(lower)) category='Transportation';
+  else if(/\b(amazon|walmart|target|clothing|shoes|store)\b/.test(lower)) category='Shopping';
+  else if(/\b(netflix|spotify|disney|prime video|subscription)\b/.test(lower)) category='Subscriptions';
+
+  return {date, amount, category};
+}
+
+function fileToBase64(file){
+  return new Promise((resolve, reject)=>{
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result.split(',')[1]);
+    reader.onerror = () => reject(new Error('Could not read file'));
+    reader.readAsDataURL(file);
+  });
+}
+
+function parseCsvLine(line){
+  const out = []; let cur=''; let inQ=false;
+  for(let i=0;i<line.length;i++){
+    const c = line[i];
+    if(c === '"'){
+      if(inQ && line[i+1] === '"'){ cur += '"'; i++; }
+      else inQ = !inQ;
+      continue;
+    }
+    if(c === ',' && !inQ){ out.push(cur.trim()); cur=''; continue; }
+    cur += c;
+  }
+  out.push(cur.trim());
+  return out;
+}
+
+// ---------------------------------------------------------------------
+// Bank / card statement import: detects common column layouts, guesses
+// Income vs Expense and a category per row, then shows a review table
+// before anything is added — heuristics on real bank exports are good
+// but not perfect, so confirmation matters more than for a manual entry.
+// ---------------------------------------------------------------------
+const CATEGORY_KEYWORDS = [
+  ["Groceries", ["walmart","target","costco","kroger","safeway","trader joe","whole foods","aldi","publix","grocery","supermarket"]],
+  ["Transportation", ["uber","lyft","shell","chevron","exxon","mobil","gas station","transit","parking","dmv","auto repair","tesla supercharge"]],
+  ["Dining Out", ["restaurant","mcdonald","starbucks","chipotle","doordash","grubhub","ubereats","cafe","coffee","pizza","taco","diner"]],
+  ["Subscriptions", ["netflix","spotify","hulu","disney+","apple.com/bill","prime video","subscription","icloud","youtube premium"]],
+  ["Housing", ["rent","mortgage","hoa","property mgmt","landlord"]],
+  ["Utilities", ["electric","water utility","gas utility","comcast","xfinity","verizon","at&t","t-mobile","internet","spectrum","utility"]],
+  ["Insurance", ["insurance","geico","progressive","state farm","allstate"]],
+  ["Health & Medical", ["pharmacy","cvs","walgreens","medical","dental","clinic","doctor","hospital"]],
+  ["Personal Care", ["gym","fitness","salon","spa","barber","haircut"]],
+  ["Shopping", ["amazon","best buy","clothing","ebay","etsy","macy","nordstrom","ikea"]],
+  ["Debt Payments", ["loan payment","credit card payment","student loan","auto loan"]],
+  ["Education", ["tuition","university","college","school fee"]],
+  ["Childcare", ["daycare","childcare","babysit"]],
+];
+const INCOME_KEYWORDS = ["payroll","salary","paycheck","direct dep","deposit from","employer","refund","reimbursement"];
+
+function guessCategory(desc){
+  const d = desc.toLowerCase();
+  for(const [cat, words] of CATEGORY_KEYWORDS){
+    if(words.some(w => d.includes(w))) return cat;
+  }
+  return "Other";
+}
+function looksLikeIncome(desc){
+  const d = desc.toLowerCase();
+  return INCOME_KEYWORDS.some(w => d.includes(w));
+}
+
+function findColumn(headerRow, candidates){
+  const lower = headerRow.map(h => h.trim().toLowerCase());
+  for(const cand of candidates){
+    const idx = lower.findIndex(h => h === cand);
+    if(idx !== -1) return idx;
+  }
+  for(const cand of candidates){
+    const idx = lower.findIndex(h => h.includes(cand));
+    if(idx !== -1) return idx;
+  }
+  return -1;
+}
+
+let bankPreviewRows = [];
+
+function parseBankCsv(text){
+  const lines = text.split(/\r?\n/).filter(l => l.trim().length);
+  if(lines.length < 2) return { rows: [], needsSignChoice: false };
+  const header = parseCsvLine(lines[0]);
+  const dateIdx = findColumn(header, ["date","transaction date","posted date","trans date"]);
+  const descIdx = findColumn(header, ["description","merchant","payee","details","memo","name"]);
+  const amtIdx = findColumn(header, ["amount","amt"]);
+  const debitIdx = findColumn(header, ["debit","withdrawal","money out"]);
+  const creditIdx = findColumn(header, ["credit","deposit","money in"]);
+
+  const rows = [];
+  for(let i=1;i<lines.length;i++){
+    const cells = parseCsvLine(lines[i]);
+    if(cells.length < 2) continue;
+    const rawDate = dateIdx !== -1 ? cells[dateIdx] : '';
+    const desc = descIdx !== -1 ? cells[descIdx] : (cells[1] || '');
+    const isoDate = toIsoDate(rawDate);
+    if(!isoDate) continue;
+
+    let signedAmount = null; // negative = money out, positive = money in (normalized)
+    if(debitIdx !== -1 || creditIdx !== -1){
+      const debitVal = debitIdx !== -1 ? parseFloat((cells[debitIdx]||'').replace(/[^0-9.-]/g,'')) : NaN;
+      const creditVal = creditIdx !== -1 ? parseFloat((cells[creditIdx]||'').replace(/[^0-9.-]/g,'')) : NaN;
+      if(!isNaN(debitVal) && debitVal !== 0) signedAmount = -Math.abs(debitVal);
+      else if(!isNaN(creditVal) && creditVal !== 0) signedAmount = Math.abs(creditVal);
+    } else if(amtIdx !== -1){
+      const v = parseFloat((cells[amtIdx]||'').replace(/[^0-9.-]/g,''));
+      if(!isNaN(v)) signedAmount = v; // sign meaning resolved after user picks convention
+    }
+    if(signedAmount === null || signedAmount === 0) continue;
+    rows.push({ date: isoDate, desc: desc.trim() || '(no description)', signedAmount });
+  }
+  const needsSignChoice = (debitIdx === -1 && creditIdx === -1 && amtIdx !== -1);
+  return { rows, needsSignChoice };
+}
+
+function toIsoDate(raw){
+  if(!raw) return null;
+  raw = raw.trim();
+  if(/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
+  let m = raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/); // MM/DD/YYYY
+  if(m){
+    let [_, mo, da, yr] = m;
+    if(yr.length === 2) yr = '20'+yr;
+    return `${yr}-${mo.padStart(2,'0')}-${da.padStart(2,'0')}`;
+  }
+  const d = new Date(raw);
+  if(!isNaN(d.getTime())) return d.toISOString().slice(0,10);
+  return null;
+}
+
+function renderBankPreview(rows, convention){
+  const body = document.getElementById('bankPreviewBody');
+  body.innerHTML = '';
+  bankPreviewRows = rows.map((r, i) => {
+    const isExpense = convention === 'debit-credit' ? r.signedAmount < 0 : (convention === 'pos' ? r.signedAmount > 0 : r.signedAmount < 0);
+    const type = isExpense ? 'Expense' : 'Income';
+    const category = looksLikeIncome(r.desc) && type === 'Income' ? null : guessCategory(r.desc);
+    return { ...r, id: i, type, category: category || 'Other', amount: Math.abs(r.signedAmount) };
+  });
+  bankPreviewRows.forEach(r => {
+    const tr = document.createElement('tr');
+    const typeOpts = ['Expense','Income'].map(t => `<option value="${t}" ${t===r.type?'selected':''}>${t}</option>`).join('');
+    const catOpts = CATEGORIES.map(([name]) => `<option value="${name}" ${name===r.category?'selected':''}>${name}</option>`).join('');
+    tr.innerHTML = `<td>${r.date}</td><td style="font-family:'IBM Plex Sans'">${escapeHtml(r.desc)}</td>` +
+      `<td class="amt">${fmt(r.amount)}</td>` +
+      `<td><select data-id="${r.id}" data-field="type" style="font-size:12px;">${typeOpts}</select></td>` +
+      `<td><select data-id="${r.id}" data-field="category" style="font-size:12px;" ${r.type==='Income'?'disabled':''}>${catOpts}</select></td>`;
+    body.appendChild(tr);
+  });
+  body.querySelectorAll('select').forEach(sel => {
+    sel.addEventListener('change', () => {
+      const row = bankPreviewRows.find(r => r.id === parseInt(sel.dataset.id));
+      row[sel.dataset.field] = sel.value;
+      if(sel.dataset.field === 'type'){
+        const tr = sel.closest('tr');
+        const catSelect = tr.querySelector('select[data-field="category"]');
+        catSelect.disabled = (sel.value === 'Income');
+      }
+    });
+  });
+  document.getElementById('bankPreviewWrap').style.display = rows.length ? 'block' : 'none';
+}
+
+document.getElementById('bankFile').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if(!file) return;
+  const statusEl = document.getElementById('bankStatus');
+  statusEl.textContent = 'Reading file…';
+  const reader = new FileReader();
+  reader.onload = () => {
+    const { rows, needsSignChoice } = parseBankCsv(reader.result);
+    if(rows.length === 0){
+      statusEl.textContent = "Couldn't find transaction rows — check the file has Date/Description/Amount columns.";
+      document.getElementById('bankPreviewWrap').style.display = 'none';
+      return;
+    }
+    document.getElementById('signToggle').style.display = needsSignChoice ? 'block' : 'none';
+    statusEl.textContent = `Found ${rows.length} transactions — review below.`;
+    const convention = needsSignChoice ? document.getElementById('signConvention').value : 'debit-credit';
+    renderBankPreview(rows, convention);
+  };
+  reader.readAsText(file);
+});
+
+document.getElementById('signConvention').addEventListener('change', (e) => {
+  const fileInput = document.getElementById('bankFile');
+  if(fileInput.files[0]){
+    const reader = new FileReader();
+    reader.onload = () => {
+      const { rows } = parseBankCsv(reader.result);
+      renderBankPreview(rows, e.target.value);
+    };
+    reader.readAsText(fileInput.files[0]);
+  }
+});
+
+document.getElementById('bankConfirmBtn').addEventListener('click', async () => {
+  if(!bankPreviewRows.length || !requireSignedIn()) return;
+
+  try{
+    const entries = bankPreviewRows.map(r=>{
+      if(r.type === 'Expense'){
+        return {
+          kind:'expense',
+          entry:{
+            id:crypto.randomUUID(),
+            date:r.date,
+            category:r.category || 'Other',
+            amount:Math.abs(Number(r.amount)),
+            description:r.desc || null
+          }
+        };
+      }
+      return {
+        kind:'income',
+        entry:{
+          id:crypto.randomUUID(),
+          date:r.date,
+          source:r.desc || '(bank transaction)',
+          amount:Math.abs(Number(r.amount)),
+          description:r.desc || null
+        }
+      };
+    }).filter(x=>x.entry.date && Number.isFinite(x.entry.amount) && x.entry.amount > 0);
+
+    const result = await addEntriesToDatabase(entries);
+
+    document.getElementById('monthSel').value = '0';
+    document.getElementById('yearSel').value = '0';
+    await loadState();
+
+    document.getElementById('bankConfirmStatus').textContent =
+      `Added ${result.added} transactions${result.skipped ? `; skipped ${result.skipped} exact duplicates` : ''}. Showing all months.`;
+    updateStorageStatus(`Bank import: ${result.added} added ✓`);
+    document.getElementById('bankPreviewWrap').style.display = 'none';
+    document.getElementById('bankFile').value = '';
+    document.getElementById('pdfBankFile').value = '';
+    bankPreviewRows = [];
+    setTimeout(() => { document.getElementById('bankConfirmStatus').textContent = ''; }, 5000);
+  }catch(err){
+    console.error(err);
+    document.getElementById('bankConfirmStatus').textContent = 'Could not save imported transactions.';
+    updateStorageStatus('Bank import failed');
+    alert('Could not save the bank transactions: ' + (err.message || 'Unknown error'));
+  }
+});
+
+document.getElementById('bankCancelBtn').addEventListener('click', () => {
+  document.getElementById('bankPreviewWrap').style.display = 'none';
+  document.getElementById('bankFile').value = '';
+  bankPreviewRows = [];
+});
+
+// PDF statement import — browser-side PDF text extraction. This avoids requiring
+// an Anthropic API key in the HTML file and works with normal text-based bank PDFs.
+let pdfjsReady = null;
+async function getPdfJs(){
+  if(pdfjsReady) return pdfjsReady;
+  pdfjsReady = import('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.min.mjs').then(pdfjsLib=>{
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs';
+    return pdfjsLib;
+  });
+  return pdfjsReady;
+}
+
+async function extractPdfText(file, statusEl){
+  const pdfjsLib = await getPdfJs();
+  const buffer = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({data: buffer}).promise;
+  let allText = '';
+  for(let pageNo=1; pageNo<=pdf.numPages; pageNo++){
+    statusEl.textContent = `Reading statement… page ${pageNo} of ${pdf.numPages}`;
+    const page = await pdf.getPage(pageNo);
+    const content = await page.getTextContent();
+    const items = content.items || [];
+    let pageText = '';
+    let lastY = null;
+    for(const item of items){
+      const y = item.transform ? item.transform[5] : null;
+      if(lastY !== null && y !== null && Math.abs(y-lastY) > 3) pageText += '\n';
+      pageText += (item.str || '') + ' ';
+      if(y !== null) lastY = y;
+    }
+    allText += pageText + '\n';
+  }
+  return allText;
+}
+
+function parseBankPdfText(text){
+  const lines = text.split(/\r?\n/).map(x=>x.replace(/\s+/g,' ').trim()).filter(Boolean);
+  const rows = [];
+  let currentYear = new Date().getFullYear();
+  const dateAtStart = /^(\d{1,2}[\/-]\d{1,2}(?:[\/-]\d{2,4})?|\d{4}[\/-]\d{1,2}[\/-]\d{1,2}|(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{1,2}(?:,?\s+\d{2,4})?)/i;
+  const money = /(?:\$\s*)?\(?-?\d{1,3}(?:,\d{3})*(?:\.\d{2})\)?|(?:\$\s*)?\(?-?\d+(?:\.\d{2})\)?/g;
+  const skip = /^(date|transaction date|posted|description|details|merchant|amount|balance|opening balance|closing balance|account|statement|page \d|total|subtotal|summary|debits?|credits?)/i;
+
+  for(let i=0;i<lines.length;i++){
+    const line = lines[i];
+    if(skip.test(line)) continue;
+    const dm = line.match(dateAtStart);
+    if(!dm) continue;
+    let dateText = dm[1];
+    let rest = line.slice(dm[0].length).trim();
+    // Add the year when a statement prints only month/day.
+    if(/^\d{1,2}[\/-]\d{1,2}$/.test(dateText)) dateText += '/' + currentYear;
+    if(/^(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)/i.test(dateText) && !/\d{4}/.test(dateText)) dateText += ' ' + currentYear;
+    const iso = toIsoDate(dateText);
+    if(!iso) continue;
+
+    const amounts = rest.match(money) || [];
+    if(!amounts.length) continue;
+    // Usually the last monetary value is the transaction amount; a trailing
+    // balance is common, so when there are two+ values use the first as amount.
+    let rawAmount = amounts[amounts.length > 1 ? amounts.length-2 : 0];
+    let amount = parseFloat(rawAmount.replace(/[$,\s]/g,'').replace(/^\((.*)\)$/,'-$1'));
+    if(!Number.isFinite(amount) || amount===0) continue;
+
+    const amountIndex = rest.lastIndexOf(rawAmount);
+    let desc = rest.slice(0, amountIndex).trim();
+    if(!desc) desc = '(no description)';
+    const lower = line.toLowerCase();
+    const negative = /^-/.test(rawAmount) || /^\(/.test(rawAmount) || /\b(debit|withdrawal|purchase|payment|fee|charge)\b/.test(lower);
+    const positive = /\b(deposit|credit|refund|interest|payroll|salary)\b/.test(lower);
+    const type = positive && !negative ? 'Income' : 'Expense';
+    rows.push({date: iso, desc, signedAmount: type==='Income' ? Math.abs(amount) : -Math.abs(amount)});
+  }
+
+  // Remove duplicate lines that can occur in PDFs with repeated headers/text layers.
+  const seen = new Set();
+  return rows.filter(r=>{
+    const k = `${r.date}|${r.desc}|${r.signedAmount}`;
+    if(seen.has(k)) return false;
+    seen.add(k); return true;
+  });
+}
+
+document.getElementById('pdfBankFile').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if(!file) return;
+  const statusEl = document.getElementById('pdfBankStatus');
+  statusEl.className = '';
+  statusEl.textContent = 'Opening PDF…';
+  try{
+    if(file.type && file.type !== 'application/pdf' && !/\.pdf$/i.test(file.name)) throw new Error('Please choose a PDF file');
+    const text = await extractPdfText(file, statusEl);
+    if(!text.trim()) throw new Error('This PDF contains no selectable text');
+    const rows = parseBankPdfText(text);
+    if(!rows.length) throw new Error('No transaction rows found');
+
+    document.getElementById('signToggle').style.display = 'none';
+    document.getElementById('bankStatus').textContent = '';
+    statusEl.className = 'ok';
+    statusEl.textContent = `Found ${rows.length} transactions — review below, then click Add these transactions.`;
+    renderBankPreview(rows, 'debit-credit');
+  }catch(err){
+    console.error('PDF import failed:', err);
+    statusEl.className = 'err';
+    statusEl.textContent = err.message === 'This PDF contains no selectable text'
+      ? 'This PDF is image/scanned-only. Export a CSV from your bank instead, or use a text-based PDF.'
+      : "Couldn't read that statement. Make sure it is a bank PDF with selectable transaction text, then try again.";
+  }finally{
+    e.target.value = '';
+  }
+});
+
+populateSelectors();
+setAppEnabled(false);
+initDatabase();
+
+document.getElementById('migrateLocalBtn').addEventListener('click', async ()=>{
+  if(!requireSignedIn()) return;
+  const oldKeys = ['ledger-data','ledger-data-v2','ledger-data-v3'];
+  let raw = null;
+  for(const key of oldKeys){
+    const candidate = localStorage.getItem(key);
+    if(candidate){ raw = candidate; break; }
+  }
+  if(!raw){
+    alert('No old browser Ledger data was found on this computer.');
+    return;
+  }
+  try{
+    const old = JSON.parse(raw);
+    const entries = [];
+    (old.income || []).forEach(e=>entries.push({
+      kind:'income',
+      entry:{id:crypto.randomUUID(),date:String(e.date),source:String(e.source||''),amount:Math.abs(Number(e.amount))}
+    }));
+    (old.expenses || []).forEach(e=>entries.push({
+      kind:'expense',
+      entry:{id:crypto.randomUUID(),date:String(e.date),category:String(e.category||'Other'),amount:Math.abs(Number(e.amount))}
+    }));
+    const valid = entries.filter(x=>x.entry.date && Number.isFinite(x.entry.amount) && x.entry.amount > 0);
+    const result = await addEntriesToDatabase(valid);
+    updateStorageStatus(`Old data migrated: ${result.added} added, ${result.skipped} duplicates skipped ✓`);
+    alert(`Migration complete.\n\nAdded: ${result.added}\nDuplicates skipped: ${result.skipped}`);
+  }catch(err){
+    console.error(err);
+    alert('Migration failed: ' + (err.message || 'Unknown error'));
+  }
+});
+
+
+initLedgerChatbot();
+</script>
+</body>
+</html>
