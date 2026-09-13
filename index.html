@@ -1,38 +1,48 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta charset="UTF-8">
+<link rel="manifest" href="./manifest.webmanifest">
+<meta name="theme-color" content="#1B3B36">
 <title>Ledger — Monthly Budget</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,wght@0,500;0,600;0,700;1,500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
 
   :root{
-    --paper:#EEF1EC;
-    --paper-raised:#F6F8F4;
-    --ink:#1B3B36;
-    --ink-soft:#4B5F5A;
-    --line:#C7D0C6;
-    --teal:#2E7D6B;
-    --teal-deep:#1F5C4E;
-    --gold:#B9863E;
-    --rust:#A8492E;
-    --need:#3E5C76;
-    --want:#B9863E;
-    --save:#2E7D6B;
+    /* Notebook cream theme */
+    --paper:#F8F4E8;
+    --paper-raised:#FFFDF7;
+    --paper-dark:#F1EBDA;
+    --ink:#2E2A24;
+    --ink-soft:#736C5F;
+    --line:#E6DDC6;
+    --teal:#5E9A6A;        /* success / positive */
+    --teal-deep:#4A7F56;
+    --gold:#E7AE48;
+    --rust:#C4553A;
+    --need:#7D9CC8;
+    --want:#E7AE48;
+    --save:#7DB587;
+    --accent:#D8704B;      /* coral: buttons, active tab */
+    --accent-deep:#B95A38;
+    --radius:18px;
+    --radius-sm:10px;
+    --shadow:0 3px 14px rgba(80,64,30,.07);
   }
   *{box-sizing:border-box;}
   body{
     margin:0;
     background:var(--paper);
     color:var(--ink);
-    font-family:'IBM Plex Sans', sans-serif;
+    font-family:'Nunito', sans-serif;
     -webkit-font-smoothing:antialiased;
   }
   .wrap{max-width:920px;margin:0 auto;padding:36px 24px 80px;}
 
   header{margin-bottom:28px;border-bottom:2px solid var(--ink);padding-bottom:18px;}
   header h1{
-    font-family:'Source Serif 4', serif;
+    font-family:'Nunito', serif;
     font-weight:700;
     font-style:italic;
     font-size:34px;
@@ -85,23 +95,23 @@
     font-family:'IBM Plex Mono',monospace;text-align:center;z-index:1;
   }
   .donut-center span{font-size:15px;font-weight:600;}
-  .donut-center small{font-size:9.5px;color:var(--ink-soft);font-family:'IBM Plex Sans';text-transform:uppercase;letter-spacing:.04em;}
+  .donut-center small{font-size:9.5px;color:var(--ink-soft);font-family:'Nunito';text-transform:uppercase;letter-spacing:.04em;}
   .donut-wrap .legend{margin-top:0;}
 
   section{margin-bottom:40px;}
   h2{
-    font-family:'Source Serif 4', serif;font-weight:600;font-size:19px;margin:0 0 14px;
+    font-family:'Nunito', serif;font-weight:600;font-size:19px;margin:0 0 14px;
     display:flex;align-items:baseline;justify-content:space-between;
   }
-  h2 .hint{font-family:'IBM Plex Sans';font-weight:400;font-size:12.5px;color:var(--ink-soft);}
-  h3{font-family:'Source Serif 4', serif;font-weight:600;font-size:16px;margin:0 0 10px;}
+  h2 .hint{font-family:'Nunito';font-weight:400;font-size:12.5px;color:var(--ink-soft);}
+  h3{font-family:'Nunito', serif;font-weight:600;font-size:16px;margin:0 0 10px;}
   .section-intro{margin:-8px 0 16px;font-size:13.5px;color:var(--ink-soft);}
 
   .legend{display:flex;gap:22px;margin-top:10px;font-size:12.5px;color:var(--ink-soft);}
   .legend span{display:inline-flex;align-items:center;gap:6px;}
   .swatch{width:10px;height:10px;border-radius:2px;display:inline-block;}
 
-  .targets-row{display:flex;gap:24px;margin-top:14px;font-size:13px;}
+  .targets-row{display:flex;flex-wrap:wrap;gap:10px 24px;margin-top:14px;font-size:13px;}
   .targets-row label{display:flex;align-items:center;gap:6px;color:var(--ink-soft);}
   .targets-row input{width:52px;font-family:'IBM Plex Mono',monospace;border:1px solid var(--line);border-radius:3px;padding:3px 5px;background:var(--paper-raised);}
 
@@ -115,7 +125,7 @@
 
   form.entry-form{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;}
   form.entry-form input, form.entry-form select{
-    font-family:'IBM Plex Sans';font-size:13px;padding:7px 8px;border:1px solid var(--line);
+    font-family:'Nunito';font-size:13px;padding:7px 8px;border:1px solid var(--line);
     border-radius:3px;background:var(--paper-raised);color:var(--ink);
   }
   form.entry-form input[type=date]{flex:1 1 128px;}
@@ -124,11 +134,12 @@
   form.entry-form input[type=number]{width:90px;}
   form.entry-form button{
     background:var(--ink);color:#fff;border:none;border-radius:3px;padding:7px 14px;
-    font-size:13px;cursor:pointer;font-family:'IBM Plex Sans';font-weight:500;
+    font-size:13px;cursor:pointer;font-family:'Nunito';font-weight:500;
   }
   form.entry-form button:hover{background:var(--teal-deep);}
 
   table{width:100%;border-collapse:collapse;font-size:13px;}
+  .table-wrap{max-width:100%;overflow-x:auto;}
   thead th{
     text-align:left;font-weight:500;color:var(--ink-soft);font-size:11px;text-transform:uppercase;
     letter-spacing:.04em;border-bottom:1px solid var(--ink);padding:6px 4px;
@@ -136,10 +147,10 @@
   tbody td{padding:7px 4px;border-bottom:1px solid var(--line);font-family:'IBM Plex Mono',monospace;font-size:12.5px;}
   tbody td.amt{text-align:right;}
   tbody tr:hover{background:rgba(0,0,0,0.02);}
-  .del{cursor:pointer;color:var(--rust);font-family:'IBM Plex Sans';font-size:12px;background:none;border:none;padding:0 4px;}
-  .empty-row td{color:var(--ink-soft);font-style:italic;font-family:'IBM Plex Sans';padding:12px 4px;}
+  .del{cursor:pointer;color:var(--rust);font-family:'Nunito';font-size:12px;background:none;border:none;padding:0 4px;}
+  .empty-row td{color:var(--ink-soft);font-style:italic;font-family:'Nunito';padding:12px 4px;}
 
-  .tag{font-family:'IBM Plex Sans';font-size:10.5px;padding:2px 6px;border-radius:10px;color:#fff;}
+  .tag{font-family:'Nunito';font-size:10.5px;padding:2px 6px;border-radius:10px;color:#fff;}
   .tag.Need{background:var(--need);}
   .tag.Want{background:var(--want);}
   .tag.Savings{background:var(--save);}
@@ -150,21 +161,45 @@
   }
   .sync-panel p{margin:0;font-size:13px;color:var(--ink-soft);max-width:46ch;line-height:1.5;}
   .sync-actions{display:flex;gap:10px;flex-wrap:wrap;}
-  .storage-status{font-size:12px;color:var(--teal-deep);font-family:'IBM Plex Sans';flex:0 0 100%;}
+  .storage-status{font-size:12px;color:var(--teal-deep);font-family:'Nunito';flex:0 0 100%;}
   .storage-status.ok{color:var(--teal-deep);}
   .storage-status.err{color:var(--rust);}
+  .btn-primary{
+    background:var(--ink);border:1px solid var(--ink);color:#fff;border-radius:3px;
+    padding:8px 14px;font-size:13px;font-family:'Nunito';font-weight:500;cursor:pointer;
+  }
+  .btn-primary:hover{background:var(--teal-deep);border-color:var(--teal-deep);}
   .btn-secondary{
     background:#fff;border:1px solid var(--ink);color:var(--ink);border-radius:3px;
-    padding:8px 14px;font-size:13px;font-family:'IBM Plex Sans';font-weight:500;cursor:pointer;
+    padding:8px 14px;font-size:13px;font-family:'Nunito';font-weight:500;cursor:pointer;
   }
   .btn-secondary:hover{background:var(--ink);color:#fff;}
+  .btn-primary:disabled,.btn-secondary:disabled{opacity:.5;cursor:not-allowed;}
+  .btn-primary:disabled:hover{background:var(--ink);border-color:var(--ink);}
+  .btn-secondary:disabled:hover{background:#fff;color:var(--ink);}
   input[type=file]{display:none;}
 
+  .entry-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;}
+  .entry-heading h3{margin:0;}
+  .entry-tools{display:flex;align-items:center;gap:7px;flex-wrap:wrap;justify-content:flex-end;}
+  .compact-pdf-btn,.compact-scan-btn{display:inline-flex;align-items:center;gap:5px;white-space:nowrap;background:var(--paper-raised);border:1px solid var(--line);border-radius:4px;padding:6px 9px;font-size:11.5px;color:var(--ink);cursor:pointer;font-family:'Nunito';font-weight:500;}
+  .compact-pdf-btn:hover,.compact-scan-btn:hover{background:var(--ink);color:#fff;border-color:var(--ink);}
+  .inline-import-status{font-size:11.5px;color:var(--ink-soft);font-style:italic;}
   .scan-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
   .scan-row .btn-secondary{padding:7px 12px;font-size:12.5px;}
   #scanStatus{font-size:12.5px;color:var(--ink-soft);font-style:italic;}
   #scanStatus.err{color:var(--rust);font-style:normal;}
   #scanStatus.ok{color:var(--teal-deep);font-style:normal;}
+
+
+  .bank-review{margin-top:18px;border:1px solid var(--line);border-radius:7px;background:var(--paper-raised);padding:14px 16px;}
+  .bank-review-head{display:flex;justify-content:space-between;gap:14px;align-items:baseline;margin-bottom:10px;font-size:12px;color:var(--ink-soft);}
+  .bank-review-head strong{display:block;color:var(--ink);font-family:'Nunito',serif;font-size:16px;margin-bottom:3px;}
+  #bankConfirmStatus{margin-left:9px;color:var(--teal-deep);font-size:12px;}
+  .bank-review-table{overflow-x:auto;max-height:360px;overflow-y:auto;}
+  .bank-review-actions{display:flex;gap:9px;align-items:center;margin-top:12px;}
+  .bank-review select{font-family:'Nunito';font-size:12px;padding:4px 5px;border:1px solid var(--line);border-radius:3px;background:var(--paper);color:var(--ink);}
+  @media(max-width:720px){.bank-review-head{display:block}.bank-review-head>span{display:block;margin-top:5px;}.entry-tools{justify-content:flex-start;}}
 
   footer{margin-top:10px;font-size:12px;color:var(--ink-soft);text-align:center;}
 
@@ -173,7 +208,7 @@
   padding:18px;
   border:1px solid var(--line);
   border-radius:12px;
-  background:var(--raised-paper);
+  background:var(--paper-raised);
   display:flex;
   gap:20px;
   align-items:flex-end;
@@ -195,7 +230,7 @@
 }
 .auth-message{font-size:13px;margin-top:8px;color:var(--ink-soft)}
 .auth-message.err{color:var(--rust)}
-.auth-message.ok{color:var(--deep-teal)}
+.auth-message.ok{color:var(--teal-deep)}
 @media(max-width:850px){
   .auth-panel{display:block}
   .auth-grid{grid-template-columns:1fr 1fr}
@@ -207,22 +242,22 @@
 
 #authGate{position:fixed;inset:0;z-index:9999;background:var(--paper);display:flex;align-items:center;justify-content:center;padding:24px}
 #authGate.hidden{display:none}
-.auth-card{width:min(440px,100%);padding:32px;border:1px solid var(--line);border-radius:18px;background:var(--raised-paper);box-shadow:0 14px 40px rgba(0,0,0,.08)}
-.auth-card h1{margin:0 0 8px;font-size:34px}.auth-card .auth-subtitle{margin:0 0 24px;color:var(--soft-ink);line-height:1.5}.auth-card .auth-form{display:grid;gap:12px}.auth-card label{font-size:13px;font-weight:600}.auth-card input{width:100%;box-sizing:border-box;padding:12px 13px;border:1px solid var(--line);border-radius:8px;background:var(--paper);font:inherit}.auth-card button{width:100%;margin-top:4px}.auth-switch{margin-top:16px;text-align:center;font-size:13px;color:var(--soft-ink)}#authGateMessage{min-height:20px;margin-top:12px;font-size:13px}#authGateMessage.err{color:var(--rust)}#authGateMessage.ok{color:var(--deep-teal)}
+.auth-card{width:min(440px,100%);padding:32px;border:1px solid var(--line);border-radius:18px;background:var(--paper-raised);box-shadow:0 14px 40px rgba(0,0,0,.08)}
+.auth-card h1{margin:0 0 8px;font-size:34px}.auth-card .auth-subtitle{margin:0 0 24px;color:var(--ink-soft);line-height:1.5}.auth-card .auth-form{display:grid;gap:12px}.auth-card label{font-size:13px;font-weight:600}.auth-card input{width:100%;box-sizing:border-box;padding:12px 13px;border:1px solid var(--line);border-radius:8px;background:var(--paper);font:inherit}.auth-card button{width:100%;margin-top:4px}.auth-switch{margin-top:16px;text-align:center;font-size:13px;color:var(--ink-soft)}#authGateMessage{min-height:20px;margin-top:12px;font-size:13px}#authGateMessage.err{color:var(--rust)}#authGateMessage.ok{color:var(--teal-deep)}
 
 .account-bar{
   margin:12px 0 22px;
   padding:10px 14px;
   border:1px solid var(--line);
   border-radius:10px;
-  background:var(--raised-paper);
+  background:var(--paper-raised);
   display:none;
   align-items:center;
   justify-content:space-between;
   gap:12px;
 }
 .account-bar.visible{display:flex}
-.account-user{font-size:13px;color:var(--soft-ink)}
+.account-user{font-size:13px;color:var(--ink-soft)}
 .account-user strong{color:var(--ink)}
 
 
@@ -233,7 +268,7 @@
   transform:translateY(-50%);
   border:0 !important;
   background:transparent !important;
-  color:var(--deep-teal) !important;
+  color:var(--teal-deep) !important;
   width:auto !important;
   padding:6px !important;
   margin:0 !important;
@@ -244,31 +279,23 @@
 
 
 .ledger-topbar{
-  display:none;
-  align-items:center;
-  justify-content:flex-end;
-  gap:10px;
-  margin:4px 0 12px;
+  display:none;position:relative;align-items:center;justify-content:flex-start;margin:2px 0 18px;
 }
 .ledger-topbar.visible{display:flex}
-.ledger-account-label{
-  font-size:13px;
-  color:var(--soft-ink);
-  max-width:360px;
-  overflow:hidden;
-  text-overflow:ellipsis;
-  white-space:nowrap;
-}
-@media(max-width:560px){
-  .ledger-topbar{justify-content:space-between}
-  .ledger-account-label{max-width:220px}
-}
+.account-menu-trigger{display:inline-flex;align-items:center;gap:7px;border:0;background:transparent;color:var(--ink);padding:4px 2px;font:500 13px 'Nunito';cursor:pointer;}
+.account-menu-trigger:hover{color:var(--teal-deep)}
+.account-chevron{font-size:15px;line-height:1;transform:translateY(-1px)}
+.account-menu{position:absolute;left:0;top:34px;z-index:1000;min-width:190px;padding:7px;border:1px solid var(--line);border-radius:7px;background:var(--paper-raised);box-shadow:0 10px 24px rgba(0,0,0,.08);}
+.account-menu-email{padding:7px 9px 8px;font-size:11.5px;color:var(--ink-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-bottom:1px solid var(--line);margin-bottom:5px;}
+.account-menu-item{width:100%;text-align:left;border:0;background:transparent;color:var(--ink);padding:8px 9px;border-radius:4px;font:500 13px 'Nunito';cursor:pointer;}
+.account-menu-item:hover{background:var(--ink);color:#fff;}
+@media(max-width:560px){.account-menu{min-width:180px}}
 
 
 .auth-link{
   border:0 !important;
   background:none !important;
-  color:var(--deep-teal) !important;
+  color:var(--teal-deep) !important;
   padding:0 !important;
   margin:0 !important;
   width:auto !important;
@@ -279,23 +306,23 @@
 .auth-link:hover{text-decoration:underline}
 .auth-feedback{min-height:20px;margin-top:10px;font-size:13px;line-height:1.45}
 .auth-feedback.err{color:var(--rust)}
-.auth-feedback.ok{color:var(--deep-teal)}
+.auth-feedback.ok{color:var(--teal-deep)}
 .forgot-row{text-align:right;margin-top:-2px}
 #resetPanel{display:none;margin-top:20px;padding-top:18px;border-top:1px solid var(--line)}
 #resetPanel.visible{display:block}
 
 
 /* Manual-entry chatbot */
-.chatbot-card{margin-top:24px;border:1px solid var(--line);border-radius:14px;background:var(--raised-paper);overflow:hidden}
+.chatbot-card{margin-top:24px;border:1px solid var(--line);border-radius:14px;background:var(--paper-raised);overflow:hidden}
 .chatbot-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 18px;border-bottom:1px solid var(--line)}
 .chatbot-head h3{margin:0}
-.chatbot-head p{margin:4px 0 0;color:var(--soft-ink);font-size:12.5px}
+.chatbot-head p{margin:4px 0 0;color:var(--ink-soft);font-size:12.5px}
 .chatbot-body{padding:16px;display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:16px}
 .chat-messages{min-height:300px;max-height:360px;overflow:auto;padding:4px}
 .chat-msg{display:flex;margin:8px 0}
 .chat-msg.bot{justify-content:flex-start}.chat-msg.user{justify-content:flex-end}
 .chat-bubble{max-width:82%;padding:10px 12px;border-radius:12px;font-size:13px;line-height:1.45;border:1px solid var(--line);background:var(--paper)}
-.chat-msg.user .chat-bubble{background:var(--deep-teal);color:#fff;border-color:var(--deep-teal)}
+.chat-msg.user .chat-bubble{background:var(--teal-deep);color:#fff;border-color:var(--teal-deep)}
 .chat-input-row{display:flex;gap:8px;margin-top:10px}
 .chat-input-row input{flex:1;min-width:0;padding:11px 12px;border:1px solid var(--line);border-radius:8px;background:var(--paper);font:inherit}
 .chat-input-row button{white-space:nowrap}
@@ -306,16 +333,286 @@
 .chat-actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
 .chat-choice-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
 .chat-choice{border:1px solid var(--line);background:var(--paper);padding:8px 11px;border-radius:8px;cursor:pointer;font:inherit;font-size:12.5px}
-.chat-choice:hover{border-color:var(--deep-teal)}
-.chatbot-status{font-size:12px;color:var(--soft-ink);margin-top:8px;min-height:18px}
-.chatbot-status.ok{color:var(--deep-teal)}
+.chat-choice:hover{border-color:var(--teal-deep)}
+.chatbot-status{font-size:12px;color:var(--ink-soft);margin-top:8px;min-height:18px}
+.chatbot-status.ok{color:var(--teal-deep)}
 .chatbot-status.err{color:var(--rust)}
 @media(max-width:850px){.chatbot-body{grid-template-columns:1fr}.chat-preview{order:-1}}
+ .assistant-fab{position:fixed;right:24px;bottom:24px;z-index:1200;border:1px solid var(--ink);background:var(--paper-raised);color:var(--ink);border-radius:999px;padding:11px 15px;display:flex;align-items:center;gap:8px;font:600 12px 'Nunito';cursor:pointer;box-shadow:0 8px 24px rgba(0,0,0,.12)}
+.assistant-fab:hover{background:var(--ink);color:#fff}
+.chatbot-card{display:none;position:fixed;right:24px;bottom:78px;width:min(390px,calc(100vw - 32px));z-index:1199;margin:0;border:1px solid var(--ink);border-radius:14px;background:var(--paper-raised);box-shadow:0 18px 45px rgba(0,0,0,.18);overflow:hidden}
+.chatbot-card.open{display:block}
+#manualChatbot .chat-preview{display:none}
+.chatbot-head{padding:12px 14px}.chatbot-head p{font-size:11.5px}.assistant-head-actions{display:flex;gap:6px;align-items:center}.assistant-reset{padding:5px 8px;font-size:11px}.assistant-close{border:0;background:transparent;color:var(--ink);font-size:23px;line-height:1;cursor:pointer;padding:2px 6px}.assistant-close:hover{color:var(--rust)}
+.chatbot-body{padding:12px;display:block}.chat-messages{min-height:180px;max-height:260px}.chat-preview{margin-top:10px}.assistant-fab span{display:inline}
+@media(max-width:560px){.assistant-fab{right:14px;bottom:14px}.chatbot-card{right:12px;bottom:68px;width:calc(100vw - 24px)}}
 
+
+    .phase1-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+    .feature-card{border:1px solid var(--line);padding:18px;background:var(--paper)}
+    .feature-card h3{margin-top:0}.goal-form,.split-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+    .goal-form input,.split-form input,.split-form select{min-width:0;font:13px 'Nunito';padding:8px;border:1px solid var(--line);border-radius:4px;background:var(--paper-raised);color:var(--ink)}
+    .goal-list{display:grid;gap:10px;margin-top:14px}.goal-item{border:1px solid var(--line);padding:12px}
+    .goal-top{display:flex;justify-content:space-between;gap:10px}.progress{height:8px;background:var(--line);margin:9px 0;border-radius:99px;overflow:hidden}.progress>span{display:block;height:100%;background:var(--save)}
+    .goal-actions{display:flex;gap:8px;flex-wrap:wrap}.mini-note{font-size:12px;color:var(--ink-soft)}
+    .split-preview{padding:10px;background:var(--paper-dark);margin-top:10px}.split-total{font-weight:700}
+    .insight-list{margin:10px 0 0;padding-left:18px}.status-inline{font-size:12px;color:var(--ink-soft)}
+    @media(max-width:760px){.phase1-grid{grid-template-columns:1fr}.goal-form,.split-form{grid-template-columns:1fr}}
+
+  .ml-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px;}
+  .ml-card{border:1px solid var(--line);background:var(--paper-raised);padding:16px;border-radius:4px;}
+  .ml-card h3{margin:0 0 12px;font-family:'Nunito',serif;font-size:18px;}
+  .ml-metrics{display:grid;grid-template-columns:1fr;gap:9px;}
+  .ml-metrics div{display:flex;justify-content:space-between;gap:12px;padding-bottom:8px;border-bottom:1px solid var(--line);font-size:13px;}
+  .ml-metrics strong{font-family:'IBM Plex Mono',monospace;}
+  .ml-note,.ml-model-details{font-size:12.5px;color:var(--ink-soft);line-height:1.5;margin-top:10px;}
+  .ml-actions{display:flex;align-items:center;gap:12px;margin-top:14px;}
+  .ml-model-details{padding-top:10px;border-top:1px solid var(--line);}
+  @media(max-width:720px){.ml-grid{grid-template-columns:1fr;}}
+
+  .advisor-card{border:1px solid var(--ink);border-radius:8px;padding:24px 26px;background:var(--paper-raised);margin-bottom:40px;}
+  .advisor-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  .advisor-tool{border:1px solid var(--line);border-radius:6px;padding:17px;background:var(--paper);}
+  .advisor-tool h3{margin-bottom:7px;}
+  .advisor-form{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px;}
+  .advisor-form input,.advisor-form select{flex:1 1 110px;min-width:0;font-family:'Nunito';font-size:13px;padding:7px 8px;border:1px solid var(--line);border-radius:3px;background:var(--paper-raised);color:var(--ink);}
+  .advisor-form button{flex:0 0 auto;}
+  .advisor-result{margin-top:12px;padding:11px 12px;border-left:3px solid var(--teal);background:var(--paper-raised);font-size:13px;line-height:1.5;min-height:44px;}
+  .advisor-tool .insight-list{margin:13px 0 0;padding-left:19px;}
+  .advisor-tool .insight-list li{margin-bottom:8px;font-size:13px;line-height:1.45;}
+  .advisor-footnote{margin-top:15px;font-size:11.5px;color:var(--ink-soft);line-height:1.45;}
+  @media(max-width:720px){.advisor-grid{grid-template-columns:1fr;}}
+
+  /* ========================= PHASE 4 — FINANCIAL JOURNEY / GAMIFICATION ========================= */
+  .journey-card{border:1px solid var(--ink);border-radius:8px;padding:24px 26px;background:var(--paper-raised);margin-bottom:40px;}
+  .journey-top{display:grid;grid-template-columns:1.4fr 1fr;gap:16px;align-items:stretch;}
+  .journey-hero,.journey-stats,.challenge-card,.achievements-card{border:1px solid var(--line);background:var(--paper);padding:17px;border-radius:6px;}
+  .journey-hero h3,.challenge-card h3,.achievements-card h3{margin:0 0 8px;}
+  .level-row{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+  .level-badge{font-family:'IBM Plex Mono',monospace;font-size:12px;border:1px solid var(--ink);padding:5px 8px;border-radius:99px;}
+  .xp-track{height:10px;background:var(--line);border-radius:99px;overflow:hidden;margin:12px 0 7px;}
+  .xp-track span{display:block;height:100%;background:var(--save);border-radius:99px;}
+  .journey-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;align-content:center;}
+  .journey-stat{padding:10px;border:1px solid var(--line);background:var(--paper-raised);text-align:center;}
+  .journey-stat strong{display:block;font-family:'IBM Plex Mono',monospace;font-size:18px;margin-bottom:3px;}
+  .journey-stat span{font-size:11px;color:var(--ink-soft);}
+  .journey-main{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px;}
+  .pet-panel{display:flex;align-items:center;gap:15px;padding:13px;border:1px solid var(--line);background:var(--paper-raised);margin-top:12px;}
+  .pet-icon{font-size:42px;line-height:1;}
+  .journey-path{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px;}
+  .journey-stage{padding:11px;border:1px solid var(--line);text-align:center;opacity:.55;}
+  .journey-stage.active{opacity:1;border-color:var(--ink);background:var(--paper-raised);}
+  .journey-stage strong{display:block;font-size:13px;margin-bottom:3px;}
+  .journey-stage span{font-size:11px;color:var(--ink-soft);}
+  .challenge-progress{height:8px;background:var(--line);border-radius:99px;overflow:hidden;margin:12px 0 7px;}
+  .challenge-progress span{display:block;height:100%;background:var(--teal);}
+  .achievement-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px;}
+  .achievement{border:1px solid var(--line);padding:11px;background:var(--paper-raised);min-height:76px;}
+  .achievement.locked{opacity:.45;}
+  .achievement strong{display:block;font-size:12.5px;margin-bottom:4px;}
+  .achievement span{font-size:11px;color:var(--ink-soft);line-height:1.35;}
+  .journey-note{font-size:11.5px;color:var(--ink-soft);line-height:1.45;margin-top:13px;}
+  @media(max-width:760px){.journey-top,.journey-main{grid-template-columns:1fr}.journey-stats{grid-template-columns:repeat(3,1fr)}.achievement-grid{grid-template-columns:1fr 1fr}}
+  @media(max-width:480px){.journey-stats,.journey-path,.achievement-grid{grid-template-columns:1fr}.pet-icon{font-size:34px}}
+
+
+/* ========================= FINAL PHASES 5–7 ========================= */
+.final-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.final-card{border:1px solid var(--line);background:var(--paper-raised);padding:18px;border-radius:7px}
+.final-card h3{margin-top:0}.final-form{display:flex;flex-wrap:wrap;gap:8px}.final-form input,.final-form select{flex:1 1 140px;min-width:0;font:13px 'Nunito';padding:8px;border:1px solid var(--line);border-radius:4px;background:var(--paper);color:var(--ink)}
+.share-list{display:grid;gap:9px;margin-top:12px}.share-item{border:1px solid var(--line);padding:11px;background:var(--paper)}.share-item-top{display:flex;justify-content:space-between;gap:10px}.share-meta{font-size:11.5px;color:var(--ink-soft);margin-top:5px}.share-progress{height:7px;background:var(--line);border-radius:99px;overflow:hidden;margin:8px 0}.share-progress span{display:block;height:100%;background:var(--teal)}
+.copilot-chips{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}.copilot-chip{border:1px solid var(--line);background:var(--paper);padding:7px 10px;border-radius:99px;font:12px 'Nunito';cursor:pointer}.copilot-chip:hover{border-color:var(--ink)}
+.install-card{display:flex;justify-content:space-between;gap:18px;align-items:center}.install-actions{display:flex;gap:8px;flex-wrap:wrap}.install-note{font-size:12px;color:var(--ink-soft);line-height:1.45}.status-pill{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:99px;padding:5px 9px;font-size:11px}
+@media(max-width:760px){.final-grid{grid-template-columns:1fr}.install-card{display:block}.install-actions{margin-top:12px}}
+.mobile-focus .wrap{max-width:100%;padding-left:14px;padding-right:14px}.mobile-focus .ledger-strip{overflow-x:auto}.mobile-focus section{margin-bottom:28px}
+
+/* Mobile-first auth and layout fixes */
+@media (max-width: 600px){
+  html, body{width:100%; min-width:0; overflow-x:clip;}
+  body{font-size:15px;}
+  .wrap{width:100%; max-width:none; padding:18px 14px 64px;}
+  header{margin-bottom:20px; padding-bottom:14px;}
+  header h1{font-size:32px; line-height:1.05;}
+  header p{font-size:14px; line-height:1.5;}
+  .month-row{flex-wrap:wrap; gap:8px;}
+
+  /* Sign-in screen: use the whole phone width and start near the top. */
+  #authGate{position:fixed; inset:0; width:100%; min-height:100dvh; padding:18px 14px;
+    align-items:flex-start; justify-content:center; overflow-y:auto; -webkit-overflow-scrolling:touch;}
+  .auth-card{width:100%; max-width:430px; margin:5vh auto 20px; padding:22px 18px;
+    border-radius:14px; box-shadow:0 10px 28px rgba(0,0,0,.07);}
+  .auth-card h1{font-size:30px; line-height:1.1;}
+  .auth-card .auth-subtitle{font-size:14px; line-height:1.45; margin-bottom:18px;}
+  .auth-card .auth-form{gap:9px;}
+  .auth-card label{font-size:12px;}
+  .auth-card input{min-height:46px; font-size:16px; padding:11px 12px;}
+  .auth-card button{min-height:42px; font-size:14px;}
+  .auth-password-toggle{min-height:34px !important; font-size:12px !important;}
+  .forgot-row{margin-top:1px; margin-bottom:2px;}
+  #resetPanel{margin-top:16px; padding-top:15px;}
+  #resetPanel input{min-height:46px;}
+  .auth-switch{font-size:11.5px; line-height:1.45; margin-top:14px;}
+
+  /* Account bar/topbar stays compact on phones. */
+  .ledger-topbar{margin:0 0 14px;}
+  .account-menu{left:0; right:auto; max-width:calc(100vw - 28px);}
+  .account-menu-email{max-width:240px;}
+
+  /* Prevent desktop grids/tables from forcing the viewport wider. */
+  .grid, .final-grid, .phase1-grid, .ml-grid, .advisor-grid, .journey-top, .journey-main{
+    min-width:0;
+  }
+  .table-wrap, .bank-review-table{max-width:100%; overflow-x:auto; -webkit-overflow-scrolling:touch;}
+  .entry-columns > div{min-width:0;}
+  .bank-review-table table{min-width:560px;}
+  .card, .panel, .chatbot-card, .phase-card, .ml-card, .advisor-card, .journey-card{max-width:100%;}
+
+  /* Buttons/tools should wrap rather than create a horizontal page. */
+  .entry-tools, .bank-review-actions, .install-actions{flex-wrap:wrap;}
+  .entry-tools button, .bank-review-actions button{max-width:100%;}
+
+  /* Floating assistant stays inside the phone viewport. */
+  .assistant-fab{right:14px !important; bottom:16px !important; width:50px; height:50px;}
+  .chatbot-card{right:10px !important; bottom:76px !important; width:calc(100vw - 20px) !important; max-width:none;}
+}
+@media (max-width:380px){
+  .auth-card{padding:19px 15px;}
+  .auth-card h1{font-size:28px;}
+  #authGate{padding-left:10px; padding-right:10px;}
+  .wrap{padding-left:10px; padding-right:10px;}
+}
+
+/* ========================= TAB NAVIGATION ========================= */
+[hidden]{display:none !important;}
+.tabs{position:sticky;top:0;z-index:900;display:flex;gap:2px;margin:0 0 28px;padding-top:6px;background:var(--paper);border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none;}
+.tabs::-webkit-scrollbar{display:none;}
+.tab{flex:0 0 auto;border:0;border-bottom:2px solid transparent;margin-bottom:-1px;background:transparent;color:var(--ink-soft);font:500 14px 'Nunito',sans-serif;padding:11px 16px;cursor:pointer;white-space:nowrap;}
+.tab:hover{color:var(--ink);}
+.tab[aria-selected="true"]{color:var(--ink);font-weight:600;border-bottom-color:var(--ink);}
+.tab:focus-visible{outline:2px solid var(--teal);outline-offset:-2px;}
+.btn-small{padding:5px 11px;font-size:12px;}
+.quick-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px;}
+.split-toggle{display:inline-flex;align-items:center;gap:8px;margin:2px 0 12px;font-size:13px;color:var(--ink-soft);cursor:pointer;}
+.split-toggle input{width:15px;height:15px;margin:0;accent-color:var(--ink);}
+.split-panel{border:1px solid var(--line);border-radius:6px;background:var(--paper-raised);padding:12px 14px;margin:0 0 14px;}
+.split-panel .mini-note{margin:0 0 10px;}
+.split-panel .split-form{grid-template-columns:1fr 1fr;}
+.split-panel .split-preview{font-size:12.5px;}
+.account-menu-note{padding:7px 9px 3px;margin-top:5px;border-top:1px solid var(--line);font-size:11px;color:var(--ink-soft);line-height:1.4;}
+.feature-card .final-form{margin-top:10px;}
+#manualChatbot .copilot-chips{margin-top:8px;}
+#manualChatbot .copilot-chip{font-size:11.5px;padding:6px 9px;}
+.home-next .insight-list{margin:4px 0 0;padding-left:19px;}
+.home-next .insight-list li{margin-bottom:7px;font-size:14px;line-height:1.5;}
+@media(max-width:600px){.tabs{margin-bottom:18px;gap:0;}.tab{flex:1 1 auto;padding:10px 4px;font-size:13px;}.split-panel .split-form{grid-template-columns:1fr;}.feature-card .final-form input{flex-basis:100%;}.assistant-fab{justify-content:center;padding:0;font-size:22px;}.assistant-fab span{display:none;}}
+
+/* ========================= NOTEBOOK CREAM LAYOUT ========================= */
+body{background:var(--paper);color:var(--ink);font-family:'Nunito',system-ui,sans-serif;}
+.wrap{max-width:1000px;}
+#pdfBankStatus:empty{display:none;}
+.app-header{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;border-bottom:0;margin-bottom:18px;padding-bottom:0;}
+header h1{font-style:normal;font-weight:800;font-size:38px;letter-spacing:-.02em;}
+header p{margin-top:2px;}
+.month-row{margin-top:14px;gap:8px;align-items:center;font-family:'Nunito',sans-serif;}
+.month-row select{font-family:'Nunito',sans-serif;font-weight:700;border-radius:var(--radius-sm);padding:8px 12px;background:var(--paper-raised);border-color:var(--line);}
+.period-hint{font-size:12.5px;color:var(--ink-soft);}
+.ledger-topbar{margin:8px 0 0;gap:10px;align-items:center;flex-shrink:0;}
+.user-name{font-weight:800;font-size:15px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.tab{font-size:15px;padding:11px 18px;}
+.tab[aria-selected="true"]{border-bottom-color:var(--accent);font-weight:800;}
+.tab:focus-visible{outline-color:var(--accent);}
+section{margin-bottom:22px;}
+.card{background:var(--paper-raised);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px 22px;}
+h2.card-title{display:block;font-weight:800;font-size:17px;margin:0 0 12px;}
+h2,h3{font-weight:800;}
+.mini-note{color:var(--ink-soft);}
+.summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:22px;}
+.summary-grid > section{margin:0;}
+.card .overview-card{border:0;border-radius:0;padding:0;background:transparent;gap:18px;flex-wrap:nowrap;}
+.card .stats-col{min-width:0;flex:1 1 auto;}
+.card .donut-wrap .legend{flex-wrap:wrap;justify-content:center;gap:4px 10px;max-width:150px;font-size:11.5px;}
+.donut{width:124px;height:124px;}
+.donut::after,.donut-center{inset:17%;}
+.donut-center span{font-size:12px;letter-spacing:-.02em;}
+.donut-center.warn span{color:var(--rust);}
+.target-body{display:flex;align-items:center;gap:18px;}
+.target-list{flex:1;display:grid;gap:10px;}
+.target-row{display:flex;align-items:center;gap:10px;font-size:14.5px;color:var(--ink);}
+.target-row span{flex:1;}
+.target-row input{width:66px;font-family:'IBM Plex Mono',monospace;font-size:14px;text-align:right;border:1px solid var(--line);border-radius:var(--radius-sm);padding:6px 8px;background:var(--paper);color:var(--ink);}
+.target-row em{font-style:normal;color:var(--ink-soft);width:12px;}
+.recommendation{margin-top:16px;border-left:3px solid var(--accent);border-radius:0 var(--radius-sm) var(--radius-sm) 0;background:var(--paper);font-size:13.5px;padding:10px 14px;}
+.entry-columns{gap:18px;}
+.entry-heading h3{font-size:17px;}
+form.entry-form input,form.entry-form select{border-radius:var(--radius-sm);background:var(--paper);border-color:var(--line);padding:9px 10px;}
+form.entry-form button{background:var(--accent);border-radius:var(--radius-sm);font-weight:700;padding:9px 16px;}
+form.entry-form button:hover{background:var(--accent-deep);}
+form.entry-form button.shared-toggle{background:transparent;color:var(--accent);border:1px dashed var(--accent);padding:8px 12px;}
+form.entry-form button.shared-toggle:hover{background:var(--paper-dark);}
+.shared-fields{flex:1 1 100%;display:flex;flex-wrap:wrap;gap:8px;padding:10px;border:1px dashed var(--line);border-radius:var(--radius-sm);background:var(--paper);}
+form.entry-form .shared-fields input{flex:1 1 120px;width:auto;background:var(--paper-raised);}
+.shared-hint{flex:1 1 100%;font-size:12.5px;color:var(--ink-soft);}
+.shared-field{flex:1 1 120px;display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:700;color:var(--ink-soft);}
+form.entry-form .shared-field input{flex:none;width:100%;}
+.shared-hint.err{color:var(--rust);}
+.compact-pdf-btn,.compact-scan-btn{border-radius:999px;background:var(--paper);border-color:var(--line);font-weight:700;}
+.compact-pdf-btn:hover,.compact-scan-btn:hover{background:var(--accent);border-color:var(--accent);color:#fff;}
+thead th{border-bottom-color:var(--line);font-weight:800;}
+.tag{border-radius:999px;font-weight:700;}
+.tag.Shared{background:var(--accent);margin-left:4px;}
+.tag.Owed{background:var(--gold);margin-left:4px;}
+.tag.Paid{background:var(--save);margin-left:4px;}
+.got-back{margin-left:6px;border:1px solid var(--accent);background:transparent;color:var(--accent);border-radius:999px;font:700 11px 'Nunito',sans-serif;padding:2px 9px;cursor:pointer;white-space:nowrap;}
+.got-back:hover{background:var(--accent);color:#fff;}
+.owed-note{margin-top:-4px;text-align:right;font-size:12.5px;font-weight:700;color:var(--gold);}
+.btn-primary{background:var(--accent);border-color:var(--accent);border-radius:var(--radius-sm);font-weight:700;}
+.btn-primary:hover{background:var(--accent-deep);border-color:var(--accent-deep);}
+.btn-primary:disabled:hover{background:var(--accent);border-color:var(--accent);}
+.btn-secondary{background:var(--paper-raised);border-color:var(--line);border-radius:var(--radius-sm);font-weight:700;}
+.btn-secondary:hover{background:var(--ink);border-color:var(--ink);color:#fff;}
+.btn-secondary:disabled:hover{background:var(--paper-raised);color:var(--ink);}
+.bank-review{border-radius:var(--radius);}
+.export-card{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;}
+.export-card h2.card-title{margin-bottom:4px;}
+.export-card .mini-note{margin:0;}
+.export-card .storage-status{display:block;margin-top:6px;}
+.goal-form,.final-form{margin-top:12px;}
+.goal-form input,.final-form input{background:var(--paper);border-radius:var(--radius-sm);}
+.goal-item,.share-item{border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--paper);padding:14px;}
+.goal-plan{margin-top:9px;padding:9px 12px;border-left:3px solid var(--save);background:var(--paper-raised);border-radius:0 var(--radius-sm) var(--radius-sm) 0;font-size:13px;line-height:1.5;}
+.goal-actions{margin-top:10px;}
+.progress>span,.share-progress span{background:var(--save);}
+.intel-grid{display:grid;grid-template-columns:1.3fr 1fr;gap:18px;align-items:start;}
+.intel-grid > section{margin:0;}
+.ml-metrics div{border-bottom-color:var(--line);font-size:14.5px;}
+.ml-actions{margin-top:14px;}
+.assistant-fab{background:var(--accent);color:#fff;border-color:var(--accent);}
+.assistant-fab:hover{background:var(--accent-deep);color:#fff;}
+.chatbot-card{border-color:var(--line);border-radius:var(--radius);}
+.chat-msg.user .chat-bubble{background:var(--accent);border-color:var(--accent);}
+.copilot-chip{border-radius:999px;background:var(--paper);}
+.auth-card{border-radius:var(--radius);box-shadow:var(--shadow);}
+.auth-card h1{font-weight:800;}
+footer{margin-top:26px;}
+@media(max-width:760px){.summary-grid,.intel-grid{grid-template-columns:1fr;}}
+@media(max-width:600px){
+  header h1{font-size:30px;}
+  .period-hint{flex-basis:100%;}
+  .month-row select{padding:7px 8px;font-size:13.5px;min-width:0;}
+  .app-header{gap:10px;}
+  .tab{font-size:14.5px;padding:10px 6px;}
+  .card{padding:16px;}
+  .card .overview-card{flex-wrap:wrap;justify-content:center;}
+  .target-body{flex-wrap:wrap;justify-content:center;}
+  .target-list{flex-basis:100%;}
+  .donut{width:112px;height:112px;}
+  .export-card .sync-actions{width:100%;}
+}
 </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.min.mjs" type="module"></script>
+  <!-- pdf.js is loaded on demand by getPdfJs() via dynamic import(), so no static tag is needed here. -->
 </head>
 <body>
 <div id="authGate"><div class="auth-card"><h1>Ledger</h1><p class="auth-subtitle">Sign in to securely access your personal budget and transactions.</p><div class="auth-form"><label for="gateEmail">Email address</label><input type="email" id="gateEmail" placeholder="you@example.com" autocomplete="email"><label for="gatePassword">Password</label><div style="position:relative;">
@@ -333,26 +630,27 @@
   <div id="resetMessage" class="auth-feedback"></div>
 </div><div class="auth-switch">Your financial data stays tied to your account and is not shown until you sign in.</div></div></div>
 <div class="wrap">
-  <header>
-    <h1>Ledger</h1>
-    <p>Log what comes in and what goes out. Ledger sorts it into needs, wants, and savings, and tells you where to cut so more stays in your account.</p>
-    <div class="month-row">
-      <span>Reviewing —</span>
-      <select id="monthSel"></select>
-      <select id="yearSel"></select>
-      <span id="periodHint" style="font-size:12px;color:var(--ink-soft);align-self:center;"></span>
+  <header class="app-header">
+    <div class="brand-block">
+      <h1>Ledger</h1>
+      <p>Track what comes in and what goes out, and save toward what matters.</p>
+      <div class="month-row">
+        <select id="monthSel" aria-label="Month"></select>
+        <select id="yearSel" aria-label="Year"></select>
+        <span id="periodHint" class="period-hint"></span>
+      </div>
+    </div>
+    <div id="ledgerTopbar" class="ledger-topbar">
+      <span class="user-name" id="signedInName">Account</span>
+      <button class="btn-secondary btn-small" id="dashboardLogoutBtn" type="button">Logout</button>
     </div>
   </header>
 
-<div id="ledgerTopbar" class="ledger-topbar">
-  <div class="ledger-account-label">Signed in as <strong id="signedInEmail"></strong></div>
-  <button class="btn-secondary" id="dashboardLogoutBtn" type="button">Sign out</button>
-</div>
-
-
-
-</div>
-
+<nav class="tabs" id="appTabs" role="tablist" aria-label="Ledger sections">
+  <button class="tab" type="button" role="tab" data-tab="budget" aria-selected="true">Budget</button>
+  <button class="tab" type="button" role="tab" data-tab="intelligence" aria-selected="false">Intelligence</button>
+  <button class="tab" type="button" role="tab" data-tab="shared" aria-selected="false">Shared</button>
+</nav>
 
   <section class="auth-panel" id="authPanel" style="display:none;" aria-hidden="true">
     <div>
@@ -374,13 +672,18 @@
     </div>
   </section>
 
-  <section class="overview">
+<!-- ===================== BUDGET ===================== -->
+<div class="tab-panel" data-panel="budget" role="tabpanel">
+  <div class="summary-grid">
+    <section class="card overview">
+      <h2 class="card-title">This month</h2>
     <div class="overview-card">
       <div class="stats-col">
         <div class="stat-row"><i class="swatch" style="background:var(--ink)"></i><span class="stat-label">Income</span><span class="stat-val" id="statIncome">$0.00</span></div>
         <div class="stat-row"><i class="swatch" style="background:var(--want)"></i><span class="stat-label">Expenses</span><span class="stat-val" id="statExpenses">$0.00</span></div>
         <div class="stat-row"><i class="swatch" style="background:var(--save)"></i><span class="stat-label">Savings</span><span class="stat-val" id="statSavings">$0.00</span></div>
         <div class="stat-row total"><span class="stat-label">Left in account</span><span class="stat-val" id="lblLeftover">$0.00</span></div>
+        <div class="owed-note" id="owedNote" hidden></div>
       </div>
       <div class="donut-wrap">
         <div class="donut" id="donutChart">
@@ -393,41 +696,47 @@
         </div>
       </div>
     </div>
-  </section>
+    </section>
 
-  <section>
-    <h2>What's your target?</h2>
-    <p class="section-intro">Set the split you're aiming for — Ledger checks your actual month against it.</p>
-    <div class="targets-row">
-      <label>Needs target <input type="number" id="tgtNeed" value="50" min="0" max="100">%</label>
-      <label>Wants target <input type="number" id="tgtWant" value="30" min="0" max="100">%</label>
-      <label>Savings target <input type="number" id="tgtSave" value="20" min="0" max="100">%</label>
-    </div>
-    <div class="recommendation" id="recommendation">Add income and expenses to see your plan.</div>
-  </section>
+    <section class="card target-card">
+      <h2 class="card-title">Target</h2>
+      <div class="target-body">
+        <div class="target-list">
+          <label class="target-row"><i class="swatch" style="background:var(--need)"></i><span>Needs</span><input type="number" id="tgtNeed" value="50" min="0" max="100"><em>%</em></label>
+          <label class="target-row"><i class="swatch" style="background:var(--want)"></i><span>Wants</span><input type="number" id="tgtWant" value="30" min="0" max="100"><em>%</em></label>
+          <label class="target-row"><i class="swatch" style="background:var(--save)"></i><span>Savings</span><input type="number" id="tgtSave" value="20" min="0" max="100"><em>%</em></label>
+        </div>
+        <div class="donut-wrap">
+          <div class="donut" id="targetDonut">
+            <div class="donut-center" id="targetDonutCenter"><span id="targetDonutVal">100%</span><small>of income</small></div>
+          </div>
+        </div>
+      </div>
+      <div class="recommendation" id="recommendation">Add income and expenses to see your plan.</div>
+    </section>
+  </div>
 
-  <section>
-    <h2>What expenses do you have?</h2>
-    <p class="section-intro">Log every payment in and every purchase out for the month.</p>
+  <section class="entry-section">
+    <p id="pdfBankStatus" class="inline-import-status"></p>
     <div class="entry-columns">
-      <div>
-        <h3>Income</h3>
+      <div class="card">
+        <div class="entry-heading"><h3>Income</h3><label class="compact-pdf-btn" for="pdfBankFile">📄 Import PDF</label></div>
         <form class="entry-form" id="incomeForm">
           <input type="date" id="incDate" required>
           <input type="text" id="incSource" placeholder="Source (e.g. Paycheck)" required>
           <input type="number" id="incAmount" placeholder="Amount" step="0.01" min="0" required>
           <button type="submit">Add</button>
         </form>
-        <table>
+        <div class="table-wrap"><table>
           <thead><tr><th>Date</th><th>Source</th><th style="text-align:right">Amount</th><th></th></tr></thead>
           <tbody id="incomeBody"></tbody>
-        </table>
+        </table></div>
       </div>
-      <div>
-        <h3>Expenses</h3>
+      <div class="card">
+        <div class="entry-heading"><h3>Expenses</h3><div class="entry-tools"><label class="compact-pdf-btn" for="pdfBankFile">📄 Import PDF</label><label class="compact-scan-btn" for="receiptFile">📷 Scan receipt</label></div></div>
         <div class="scan-row">
-          <label class="btn-secondary" for="receiptFile">📷 Scan receipt</label>
           <input type="file" id="receiptFile" accept="image/*" capture="environment">
+          <input type="file" id="pdfBankFile" accept="application/pdf,.pdf">
           <span id="scanStatus"></span>
         </div>
         <form class="entry-form" id="expenseForm">
@@ -435,33 +744,121 @@
           <select id="expCategory" required></select>
           <input type="number" id="expAmount" placeholder="Amount" step="0.01" min="0" required>
           <button type="submit">Add</button>
+          <button type="button" class="shared-toggle" id="sharedToggle" aria-expanded="false" aria-controls="sharedFields">＋ Shared</button>
+          <div class="shared-fields" id="sharedFields" hidden>
+            <label class="shared-field"><span>Total amount</span><input type="number" id="expTotal" placeholder="e.g. 60" step="0.01" min="0.01"></label>
+            <label class="shared-field"><span>Your share</span><input type="number" id="expShare" placeholder="e.g. 20" step="0.01" min="0.01"></label>
+            <div class="shared-hint" id="sharedHint">Tap “Got it back” in the list when you’re repaid.</div>
+          </div>
         </form>
-        <table>
+        <div class="table-wrap"><table>
           <thead><tr><th>Date</th><th>Category</th><th style="text-align:right">Amount</th><th></th></tr></thead>
           <tbody id="expenseBody"></tbody>
+        </table></div>
+      </div>
+    </div>
+
+    <div id="bankPreviewWrap" class="bank-review" style="display:none;">
+      <div class="bank-review-head">
+        <div><strong>Review imported statement</strong><span id="bankConfirmStatus"></span></div>
+        <span>Ledger classified each row as Income or Expense automatically. You can correct any row before saving.</span>
+      </div>
+      <div class="bank-review-table">
+        <table>
+          <thead><tr><th>Date</th><th>Description</th><th style="text-align:right">Amount</th><th>Type</th><th>Category</th></tr></thead>
+          <tbody id="bankPreviewBody"></tbody>
         </table>
+      </div>
+      <div class="bank-review-actions">
+        <button class="btn-primary" id="bankConfirmBtn" type="button">Add these transactions</button>
+        <button class="btn-secondary" id="bankCancelBtn" type="button">Cancel</button>
       </div>
     </div>
   </section>
 
+  <section class="card export-card">
+    <div>
+      <h2 class="card-title">Sync &amp; export</h2>
+      <p class="mini-note">Your entries save to your account automatically. Download a copy any time.</p>
+      <span id="storageStatus" class="storage-status">Database synced</span>
+    </div>
+    <div class="sync-actions">
+      <button class="btn-secondary" id="exportBtn" type="button">Export CSV</button>
+      <button class="btn-secondary" id="exportPdfBtn" type="button">Export PDF</button>
+    </div>
+  </section>
+</div>
 
-  <section class="chatbot-card" id="manualChatbot">
+<!-- ===================== INTELLIGENCE ===================== -->
+<div class="tab-panel" data-panel="intelligence" role="tabpanel" hidden>
+  <div class="intel-grid">
+    <section class="card" id="phase1Foundation">
+      <h2 class="card-title">🎯 Savings goals</h2>
+      <p class="mini-note">A trip, a laptop, an emergency fund — Ledger shows what it takes to reach each one.</p>
+        <form class="goal-form" id="goalForm">
+          <input id="goalName" type="text" placeholder="Goal name (e.g. Japan trip)" required>
+          <input id="goalTarget" type="number" min="0.01" step="0.01" placeholder="Target amount" required>
+          <input id="goalDate" type="date" required>
+          <input id="goalSaved" type="number" min="0" step="0.01" placeholder="Already saved" value="0">
+          <button class="btn-primary" type="submit">Create goal</button>
+        </form>
+        <div id="goalStatus" class="status-inline"></div>
+        <div id="goalList" class="goal-list"></div>
+    </section>
+
+    <section class="card" id="mlIntelligenceSection">
+      <h2 class="card-title">🔮 Next month</h2>
+      <div class="ml-metrics"><div><span>Predicted income</span><strong id="mlIncomeForecast">—</strong></div><div><span>Predicted expense</span><strong id="mlExpenseForecast">—</strong></div><div><span>Predicted remainder</span><strong id="mlNetForecast">—</strong></div></div>
+      <div class="ml-note" id="mlForecastNote">Train the model after you have enough monthly history.</div>
+      <div class="ml-actions"><button class="btn-primary" id="trainMlBtn" type="button">Update forecast</button><span id="mlTrainStatus" class="status-inline"></span></div>
+      <div class="ml-model-details" id="mlModelDetails">Model: not trained yet.</div>
+    </section>
+  </div>
+</div>
+
+<!-- ===================== SHARED ===================== -->
+<div class="tab-panel" data-panel="shared" role="tabpanel" hidden>
+  <section class="card" id="phase5Social">
+    <h2 class="card-title">👥 Start a shared goal</h2>
+    <p class="mini-note">Your partner gets an email invite, opens their own Ledger account, and can see the goal and add to it.</p>
+    <div class="final-form">
+      <input id="sharedGoalName" placeholder="Name (e.g. Trip fund)" aria-label="Goal name">
+      <input id="sharedGoalDate" type="date" aria-label="Target date">
+      <input id="sharedGoalTarget" type="number" min="1" step="0.01" placeholder="Amount" aria-label="Target amount">
+      <input id="sharedGoalMember" type="email" placeholder="Partner email" aria-label="Partner email">
+      <button class="btn-primary" id="createSharedGoalBtn" type="button">Create &amp; send invite</button>
+    </div>
+    <div id="sharedGoalStatus" class="status-inline" style="margin-top:10px"></div>
+  </section>
+
+  <section class="card">
+    <h2 class="card-title">Your shared goals</h2>
+    <div id="sharedGoalList" class="share-list"><div class="mini-note">No shared goals loaded yet.</div></div>
+  </section>
+</div>
+
+<button class="assistant-fab" id="assistantFab" type="button" aria-label="Open Ledger Assistant">🤖<span>Ledger Assistant</span></button>
+  <section class="chatbot-card" id="manualChatbot" aria-label="Ledger Assistant">
     <div class="chatbot-head">
-      <div>
-        <h3>💬 Add a transaction with Ledger Assistant</h3>
-        <p>Use the chat instead of the manual form. Ledger asks for the same information, sorts it into income or expenses, fills the manual section, and saves it to your account.</p>
-      </div>
-      <button class="btn-secondary" id="chatResetBtn" type="button">Start over</button>
+      <div><h3>🧠 Ledger Assistant</h3><p>Ask about spending, saving, goals, forecasts, or affordability.</p></div>
+      <div class="assistant-head-actions"><button class="btn-secondary assistant-reset" id="chatResetBtn" type="button">Reset</button><button class="assistant-close" id="assistantCloseBtn" type="button" aria-label="Close Ledger Assistant">×</button></div>
     </div>
     <div class="chatbot-body">
       <div>
         <div class="chat-messages" id="chatMessages"></div>
         <div class="chat-input-row" id="chatInputRow">
-          <input id="chatInput" type="text" placeholder="Type your answer…" autocomplete="off">
+          <input id="chatInput" type="text" placeholder="Type your message…" autocomplete="off">
           <button class="btn-primary" id="chatSendBtn" type="button">Send</button>
         </div>
         <div id="chatChoices" class="chat-choice-row"></div>
         <div id="chatStatus" class="chatbot-status"></div>
+    <div class="copilot-chips">
+      <button class="copilot-chip" type="button" data-copilot="Can I afford $100?">Can I afford $100?</button>
+      <button class="copilot-chip" type="button" data-copilot="How can I save $500?">How can I save $500?</button>
+      <button class="copilot-chip" type="button" data-copilot="Where am I spending the most?">Where am I spending the most?</button>
+      <button class="copilot-chip" type="button" data-copilot="What will next month look like?">What will next month look like?</button>
+      <button class="copilot-chip" type="button" data-copilot="What is my next best move?">What is my next best move?</button>
+    </div>
       </div>
       <div class="chat-preview">
         <h4>Transaction preview</h4>
@@ -469,67 +866,12 @@
         <div class="chat-preview-row"><span>Date</span><strong id="chatPreviewDate">—</strong></div>
         <div class="chat-preview-row"><span>Category/source</span><strong id="chatPreviewLabel">—</strong></div>
         <div class="chat-preview-row"><span>Amount</span><strong id="chatPreviewAmount">—</strong></div>
-        <div class="chat-actions" id="chatConfirmActions" style="display:none;">
-          <button class="btn-primary" id="chatConfirmBtn" type="button">Add to Ledger</button>
-          <button class="btn-secondary" id="chatEditBtn" type="button">Change</button>
-        </div>
+        <div class="chat-actions" id="chatConfirmActions" style="display:none;"><button class="btn-primary" id="chatConfirmBtn" type="button">Add to Ledger</button><button class="btn-secondary" id="chatEditBtn" type="button">Change</button></div>
       </div>
     </div>
   </section>
 
-  <section>
-    <h2>Import your bank or card statement</h2>
-    <p class="section-intro">Upload the statement CSV or PDF your bank already gives you — Ledger reads each transaction and guesses the category, so you review and confirm instead of typing every line.</p>
-    <div class="sync-panel">
-      <div style="flex:1 1 260px;">
-        <label class="btn-secondary" for="bankFile">Upload statement CSV</label>
-        <input type="file" id="bankFile" accept=".csv">
-        <span id="bankStatus" style="margin-left:10px;font-size:12.5px;color:var(--ink-soft);"></span>
-      </div>
-      <div style="flex:1 1 260px;">
-        <label class="btn-secondary" for="pdfBankFile">Upload statement PDF</label>
-        <input type="file" id="pdfBankFile" accept="application/pdf">
-        <span id="pdfBankStatus" style="margin-left:10px;font-size:12.5px;color:var(--ink-soft);"></span>
-      </div>
-      <div id="signToggle" style="display:none;flex:1 1 260px;">
-        <label style="font-size:13px;color:var(--ink-soft);">In this file, money spent shows as
-          <select id="signConvention" style="font-family:'IBM Plex Sans';font-size:13px;padding:5px 7px;border:1px solid var(--line);border-radius:3px;margin-left:6px;">
-            <option value="neg">Negative numbers (most checking accounts)</option>
-            <option value="pos">Positive numbers (most credit cards)</option>
-          </select>
-        </label>
-      </div>
-    </div>
-    <p style="font-size:12px;color:var(--ink-soft);margin-top:8px;">PDF reading uses Claude to pull out each transaction — it needs an internet connection, and very long statements may only capture the first couple dozen rows. If a statement comes back incomplete, the CSV export from your bank captures every row.</p>
-    <div id="bankPreviewWrap" style="display:none;margin-top:16px;">
-      <table>
-        <thead><tr><th>Date</th><th>Description</th><th style="text-align:right">Amount</th><th>Type</th><th>Category</th></tr></thead>
-        <tbody id="bankPreviewBody"></tbody>
-      </table>
-      <div style="margin-top:12px;display:flex;gap:10px;align-items:center;">
-        <button class="btn-secondary" id="bankConfirmBtn" style="background:var(--ink);color:#fff;">Add these transactions</button>
-        <button class="btn-secondary" id="bankCancelBtn">Cancel</button>
-        <span id="bankConfirmStatus" style="font-size:12.5px;color:var(--teal-deep);"></span>
-      </div>
-    </div>
-  </section>
-
-  <section>
-    <h2>Keep this in sync with your Excel sheet</h2>
-    <div class="sync-panel">
-      <p>Ledger saves your entries in this browser automatically. Use Export CSV for a normal spreadsheet file, or Export Excel for an Excel-compatible spreadsheet snapshot of your current Ledger data. Import CSV brings spreadsheet rows back into Ledger.</p>
-      <div class="sync-actions">
-        <button class="btn-secondary" id="exportBtn">Export CSV</button>
-        <button class="btn-secondary" id="migrateLocalBtn" type="button" title="One-time import of data from the old browser Ledger">Import old browser data</button>
-        <button class="btn-secondary" id="exportExcelBtn">Export Excel</button>
-        <label class="btn-secondary" for="importFile">Import CSV</label>
-        <input type="file" id="importFile" accept=".csv">
-      </div>
-      <span id="storageStatus" class="storage-status">Saved in this browser</span>
-    </div>
-  </section>
-
-  <footer>Transactions are stored per customer in the secure database. Uploaded bank PDFs and receipt images are processed in your browser and are not stored by Ledger.</footer>
+  <footer>Your transactions are stored securely in your account. Bank PDFs and receipt photos are read in your browser and never uploaded.</footer>
 </div>
 
 <script>
@@ -556,11 +898,23 @@ const SUPABASE_ANON_KEY = 'sb_publishable_KgCUIR8Qg2sMlnT8VDspoA_coGSOFXQ';
 
 let dbClient = null;
 let currentUser = null;
-let state = { income: [], expenses: [] };
-let storageOk = false;
+let state = { income: [], expenses: [], goals: [] };
 let databaseMode = false;
+let splitSchemaAvailable = false;
+let goalsSchemaAvailable = false;
+let fingerprintAvailable = true;
 
 const fmt = n => (n<0?'-$':'$') + Math.abs(Number(n)||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+
+// Supabase must be given a redirect URL that is allowed in
+// Authentication -> URL Configuration. Using the current deployed
+// page keeps password reset and email verification on the same app.
+function getAuthRedirectUrl(){
+  if(window.location.protocol === 'http:' || window.location.protocol === 'https:'){
+    return window.location.origin + window.location.pathname;
+  }
+  return window.location.href.split('#')[0];
+}
 
 function isDatabaseConfigured(){
   return SUPABASE_URL.startsWith('https://') && !SUPABASE_URL.includes('YOUR_') &&
@@ -597,7 +951,8 @@ function normalizeDbRows(rows){
     if(r.transaction_type === 'income'){
       income.push({id:String(r.id), date:String(r.transaction_date), source:String(r.source || r.description || '(bank transaction)'), amount});
     }else if(r.transaction_type === 'expense'){
-      expenses.push({id:String(r.id), date:String(r.transaction_date), category:String(r.category || 'Other'), amount});
+      // Shared expenses count the full amount paid; repayments come back as income.
+      expenses.push({id:String(r.id), date:String(r.transaction_date), category:String(r.category || 'Other'), amount:(r.shared_expense && r.gross_amount!=null) ? Number(r.gross_amount) : amount, grossAmount:r.gross_amount==null?null:Number(r.gross_amount), userShare:r.user_share==null?amount:Number(r.user_share), reimbursementDue:r.reimbursement_due==null?0:Number(r.reimbursement_due), shared:!!r.shared_expense, description:String(r.description||'')});
     }
   });
   return {income, expenses};
@@ -605,68 +960,53 @@ function normalizeDbRows(rows){
 
 async function loadState(){
   if(!databaseMode || !currentUser){
-    state = {income:[], expenses:[]};
+    state = {income:[], expenses:[], goals:[]};
     render();
     return;
   }
   try{
-    const {data, error} = await dbClient
-      .from('transactions')
-      .select('id,transaction_date,transaction_type,category,source,description,amount,created_at')
-      .eq('user_id', currentUser.id)
-      .order('transaction_date', {ascending:true})
-      .order('created_at', {ascending:true});
-    if(error) throw error;
-    state = normalizeDbRows(data);
-    storageOk = true;
+    // Load the core transaction columns first so Ledger still works when the
+    // optional Phase 1 split-expense columns have not been migrated yet.
+    const baseSelect='id,transaction_date,transaction_type,category,source,description,amount,created_at';
+    let result=await dbClient.from('transactions').select(baseSelect+',gross_amount,user_share,reimbursement_due,shared_expense').eq('user_id',currentUser.id).order('transaction_date',{ascending:true}).order('created_at',{ascending:true});
+    if(result.error){
+      splitSchemaAvailable=false;
+      result=await dbClient.from('transactions').select(baseSelect).eq('user_id',currentUser.id).order('transaction_date',{ascending:true}).order('created_at',{ascending:true});
+    }else{ splitSchemaAvailable=true; }
+    if(result.error) throw result.error;
+    state = normalizeDbRows(result.data||[]);
     render();
-    updateStorageStatus('Database synced ✓');
+    await loadGoals();
+    // Shared goals are optional (Phase 5 migration). A failure here must not be
+    // reported as "could not load your transactions", which already succeeded.
+    await loadSharedGoals().catch(err => console.warn('Shared goals unavailable:', err));
+    updateStorageStatus(splitSchemaAvailable ? 'Database synced ✓' : 'Database synced ✓ — Phase 1 split fields not installed');
   }catch(e){
-    storageOk = false;
     console.error('Ledger database load failed:', e);
     setDbStatus('Could not load your transactions. Check the database/RLS setup.', 'err');
     updateStorageStatus('Database error');
   }
 }
 
-/* Kept for compatibility with older parts of the UI.
-   Data is never serialized into localStorage in database mode. */
-function saveState(){
-  updateStorageStatus(databaseMode ? 'Database synced ✓' : 'Database not connected');
-  return databaseMode && !!currentUser;
-}
-
-function updateStorageStatus(message){
-  const el = document.getElementById('storageStatus');
-  if(!el) return;
-  if(message){
-    el.textContent = message;
-    el.className = message.toLowerCase().includes('error') || message.toLowerCase().includes('not connected')
-      ? 'storage-status err' : 'storage-status ok';
-    clearTimeout(updateStorageStatus.timer);
-    updateStorageStatus.timer = setTimeout(() => updateStorageStatus(), 3000);
-  } else {
-    el.textContent = databaseMode && currentUser ? 'Saved to secure database' : 'Sign in to save data';
-    el.className = databaseMode && currentUser ? 'storage-status ok' : 'storage-status err';
-  }
-}
-
 async function insertTransaction(entry, kind, fingerprint=null){
   if(!databaseMode || !currentUser) throw new Error('Please sign in first.');
-  const row = {
-    id: entry.id || crypto.randomUUID(),
-    user_id: currentUser.id,
-    transaction_date: entry.date,
-    transaction_type: kind,
-    category: kind === 'expense' ? entry.category : null,
-    source: kind === 'income' ? entry.source : null,
-    description: entry.description || null,
-    amount: Math.abs(Number(entry.amount)),
-    fingerprint: fingerprint || null
+  const baseRow = {
+    id: entry.id || crypto.randomUUID(), user_id: currentUser.id, transaction_date: entry.date,
+    transaction_type: kind, category: kind === 'expense' ? entry.category : null,
+    source: kind === 'income' ? entry.source : null, description: entry.description || null, amount: Math.abs(Number(entry.amount)), fingerprint: fingerprint || null
   };
-  const {data, error} = await dbClient.from('transactions').insert(row).select().single();
-  if(error) throw error;
-  return data;
+  if(kind === 'expense' && entry.shared && !splitSchemaAvailable){
+    throw new Error('Shared expenses need the Phase 1 database migration. Regular expenses are still available.');
+  }
+  const row = splitSchemaAvailable ? {...baseRow, gross_amount: kind === 'expense' && entry.shared ? Math.abs(Number(entry.grossAmount)) : null, user_share: kind === 'expense' && entry.shared ? Math.abs(Number(entry.userShare)) : null, reimbursement_due: kind === 'expense' && entry.shared ? Math.max(0, Math.abs(Number(entry.grossAmount)) - Math.abs(Number(entry.userShare))) : 0, shared_expense: kind === 'expense' ? !!entry.shared : false} : baseRow;
+  let result=await dbClient.from('transactions').insert(row).select().single();
+  if(result.error && /fingerprint|column .* does not exist|schema cache/i.test(result.error.message||'')){
+    fingerprintAvailable=false;
+    const retryRow={...row}; delete retryRow.fingerprint;
+    result=await dbClient.from('transactions').insert(retryRow).select().single();
+  }
+  if(result.error) throw result.error;
+  return result.data;
 }
 
 async function deleteTransaction(id){
@@ -690,17 +1030,16 @@ async function addEntriesToDatabase(entries){
 
     // Check the per-user fingerprint first. This prevents re-uploading the
     // same statement from creating duplicate rows.
-    const {data: existing, error: findError} = await dbClient
-      .from('transactions')
-      .select('id')
-      .eq('user_id', currentUser.id)
-      .eq('fingerprint', fingerprint)
-      .limit(1);
-    if(findError) throw findError;
-    if(existing && existing.length){
-      skipped++;
-      continue;
+    let existing=null;
+    if(fingerprintAvailable){
+      const check=await dbClient.from('transactions').select('id').eq('user_id',currentUser.id).eq('fingerprint',fingerprint).limit(1);
+      if(check.error){
+        if(/fingerprint|schema cache|column/i.test(check.error.message||'')){ fingerprintAvailable=false; }
+        else throw check.error;
+      }else existing=check.data;
     }
+    if((!existing || !existing.length) && hasTransaction(entry,kind)){ existing=[{id:'client-match'}]; }
+    if(existing && existing.length){ skipped++; continue; }
 
     try{
       await insertTransaction(entry, kind, fingerprint);
@@ -732,7 +1071,7 @@ function requireSignedIn(){
 }
 
 
-function setAuthGateMessage(message,kind=''){const el=document.getElementById('authGateMessage');if(!el)return;el.textContent=message||'';el.className=kind}
+function setAuthGateMessage(message,kind=''){const el=document.getElementById('authGateMessage');if(!el)return;el.textContent=message||'';el.className='auth-feedback'+(kind?' '+kind:'')}
 function showAuthGate(show){const gate=document.getElementById('authGate');if(!gate)return;gate.classList.toggle('hidden',!show);document.body.style.overflow=show?'hidden':''}
 async function signInFromGate(){if(!databaseMode){setAuthGateMessage('Database is not configured yet.','err');return}const email=document.getElementById('gateEmail').value.trim();const password=document.getElementById('gatePassword').value;if(!email||!password){setAuthGateMessage('Enter your email and password.','err');return}setAuthGateMessage('Signing in…');document.getElementById('gateSignInBtn').disabled=true;document.getElementById('gateSignUpBtn').disabled=true;const {error}=await dbClient.auth.signInWithPassword({email,password});document.getElementById('gateSignInBtn').disabled=false;document.getElementById('gateSignUpBtn').disabled=false;if(error)setAuthGateMessage(error.message,'err');else setAuthGateMessage('Signed in successfully.','ok')}
 async function signUpFromGate(){
@@ -850,11 +1189,19 @@ async function initDatabase(){
   }
 
   try{
+    // An invited partner arrives with "type=invite" in the link. Read it before the
+    // Supabase client consumes the link, so they can choose a password once signed in.
+    const arrivedFromInvite = /(^|[#&?])type=invite(&|$)/.test(window.location.hash + window.location.search);
     dbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     databaseMode = true;
 
     const {data:{session}} = await dbClient.auth.getSession();
     await handleAuthSession(session);
+    if(arrivedFromInvite && session){
+      history.replaceState(null, '', window.location.pathname);
+      showTab('shared');
+      await handlePasswordRecovery('Welcome to Ledger! Choose a password so you can sign in next time (at least 8 characters):');
+    }
 
     dbClient.auth.onAuthStateChange((event, session)=>{
       // Don't await directly inside Supabase's auth callback.
@@ -874,8 +1221,8 @@ async function initDatabase(){
 }
 
 
-async function handlePasswordRecovery(){
-  const newPassword = window.prompt('Enter your new password (at least 8 characters):');
+async function handlePasswordRecovery(promptText='Enter your new password (at least 8 characters):'){
+  const newPassword = window.prompt(promptText);
   if(newPassword === null) return;
 
   if(newPassword.length < 8){
@@ -907,9 +1254,17 @@ async function handleAuthSession(session){
   const ledgerTopbar = document.getElementById('ledgerTopbar');
   if(ledgerTopbar){
     ledgerTopbar.classList.toggle('visible', signedIn);
-    if(signedIn) document.getElementById('signedInEmail').textContent = currentUser.email || 'Account';
+    if(signedIn){
+      const metadata=currentUser.user_metadata||{};
+      const fullName=String(metadata.full_name||metadata.name||'').trim();
+      const email=currentUser.email||'Account';
+      const fallback=email.split('@')[0].split(/[._-]/)[0];
+      const displayName=fullName||(fallback?fallback.charAt(0).toUpperCase()+fallback.slice(1):'Account');
+      document.getElementById('signedInName').textContent=displayName;
+      document.getElementById('signedInName').title=email;
+    }
   }
-  if(signedIn){setDbStatus(`Signed in securely as ${currentUser.email}`,'ok');setAuthMessage('Your data is isolated to your account.');setAuthGateMessage('');setAppEnabled(true);await loadState()}else{setDbStatus('Database connected — sign in above to continue.','');setAuthMessage('');setAppEnabled(false);state={income:[],expenses:[]};render();updateStorageStatus()}}
+  if(signedIn){setDbStatus(`Signed in securely as ${currentUser.email}`,'ok');setAuthMessage('Your data is isolated to your account.');setAuthGateMessage('');setAppEnabled(true);await loadState()}else{setDbStatus('Database connected — sign in above to continue.','');setAuthMessage('');setAppEnabled(false);state={income:[],expenses:[],goals:[]};sharedGoals=[];loadSharedGoals();render();updateStorageStatus()}}
 
 document.getElementById('signInBtn').addEventListener('click', async ()=>{
   if(!databaseMode) return;
@@ -962,17 +1317,18 @@ async function logoutLedger(){
 document.getElementById('signOutBtn').addEventListener('click', logoutLedger);
 document.getElementById('dashboardLogoutBtn').addEventListener('click', logoutLedger);
 
+
 function updateStorageStatus(message){
   const el = document.getElementById('storageStatus');
   if(!el) return;
   if(message){
     el.textContent = message;
-    el.className = message.includes('Could') ? 'storage-status err' : 'storage-status ok';
+    el.className = 'storage-status' + (/failed|error|could not|unavailable/i.test(message) ? ' err' : ' ok');
     clearTimeout(updateStorageStatus.timer);
-    updateStorageStatus.timer = setTimeout(() => updateStorageStatus(), 2200);
+    updateStorageStatus.timer = setTimeout(() => updateStorageStatus(), 3000);
   } else {
-    el.textContent = storageOk ? 'Saved in this browser' : 'Storage unavailable';
-    el.className = storageOk ? 'storage-status' : 'storage-status err';
+    el.textContent = databaseMode && currentUser ? 'Database synced ✓' : 'Sign in to save data';
+    el.className = 'storage-status' + (databaseMode && currentUser ? ' ok' : ' err');
   }
 }
 
@@ -1027,6 +1383,79 @@ function inPeriod(dateStr, year, month){
   return (year === 0 || d.getFullYear() === year) && (month === 0 || (d.getMonth()+1) === month);
 }
 
+async function loadGoals(){
+  if(!databaseMode || !currentUser) return;
+  try{
+    const {data,error}=await dbClient.from('savings_goals').select('id,name,target_amount,saved_amount,target_date,status,created_at').eq('user_id',currentUser.id).order('target_date',{ascending:true});
+    if(error) throw error;
+    state.goals=data||[];
+    goalsSchemaAvailable=true;
+    renderGoals();
+  }catch(err){
+    console.warn('Savings goals unavailable:',err.message||err);
+    goalsSchemaAvailable=false; state.goals=[]; renderGoals(); document.getElementById('goalStatus').textContent='Savings goals need the Phase 1 database migration.';
+  }
+}
+
+// "Solution to reach this goal": the monthly amount needed, checked against the
+// user's recent leftover, and where the gap could come from if it isn't enough.
+function goalPlanText(g){
+  const target = Number(g.target_amount)||0, saved = Number(g.saved_amount)||0;
+  const remaining = Math.max(0, target - saved);
+  if(!remaining) return 'Goal reached — nice work!';
+  const today = new Date(), end = new Date(String(g.target_date) + 'T00:00:00');
+  const months = Math.max(1, (end.getFullYear()-today.getFullYear())*12 + (end.getMonth()-today.getMonth()));
+  const needed = remaining / months;
+  const plan = `Save ${fmt(needed)}/month for ${months} month${months===1?'':'s'} to reach it.`;
+  const s = advisorMonthlyStats();
+  if(!s.rows.length) return plan + ' Add income and expenses so Ledger can check that against your budget.';
+  if(needed <= s.avgNet) return plan + ` Your recent leftover (${fmt(s.avgNet)}/month) covers that.`;
+  const gap = needed - Math.max(0, s.avgNet);
+  const totals = advisorCategoryTotals(), monthsOfData = Math.max(1, s.rows.length);
+  const wants = CATEGORIES.filter(([c])=>CAT_TYPE[c]==='Want')
+    .map(([c])=>[c, (totals[c]||0)/monthsOfData]).filter(x=>x[1]>0).sort((a,b)=>b[1]-a[1]);
+  const top = wants[0];
+  if(top && top[1] >= gap){
+    return plan + ` That’s ${fmt(gap)} more than your recent leftover — spending about ${Math.min(100, Math.ceil(gap/top[1]*100))}% less on ${top[0]} would cover it.`;
+  }
+  return plan + ` That’s ${fmt(gap)} more than your recent leftover — try a later target date or a smaller goal.`;
+}
+
+function renderGoals(){
+  const list=document.getElementById('goalList'); if(!list) return;
+  list.innerHTML='';
+  const goals=state.goals||[];
+  if(!goals.length){list.innerHTML='<div class="mini-note">No goals yet. Create your first one above.</div>';return;}
+  goals.forEach(g=>{
+    const target=Number(g.target_amount)||0, saved=Number(g.saved_amount)||0, pct=target?Math.min(100,saved/target*100):0;
+    const wrap=document.createElement('div'); wrap.className='goal-item';
+    wrap.innerHTML=`<div class="goal-top"><strong>${escapeHtml(g.name)}</strong><span>${fmt(saved)} / ${fmt(target)}</span></div><div class="progress"><span style="width:${pct}%"></span></div><div class="mini-note">${pct.toFixed(0)}% complete • Target ${g.target_date}</div><div class="goal-plan">${escapeHtml(goalPlanText(g))}</div><div class="goal-actions"><button type="button" class="btn-secondary goal-add" data-id="${g.id}">Add savings</button><button type="button" class="btn-secondary goal-delete" data-id="${g.id}">Delete</button></div>`;
+    list.appendChild(wrap);
+  });
+  list.querySelectorAll('.goal-add').forEach(btn=>btn.addEventListener('click',async()=>{
+    const amount=parseFloat(prompt('How much did you add to this goal?','25')||''); if(!Number.isFinite(amount)||amount<=0)return;
+    const g=state.goals.find(x=>x.id===btn.dataset.id); if(!g)return;
+    const next=Number(g.saved_amount||0)+amount;
+    const {error}=await dbClient.from('savings_goals').update({saved_amount:next,status:next>=Number(g.target_amount)?'achieved':'active'}).eq('id',g.id).eq('user_id',currentUser.id);
+    if(error){alert('Could not update goal: '+error.message);return;} await loadGoals();
+  }));
+  list.querySelectorAll('.goal-delete').forEach(btn=>btn.addEventListener('click',async()=>{
+    if(!confirm('Delete this savings goal?'))return;
+    const {error}=await dbClient.from('savings_goals').delete().eq('id',btn.dataset.id).eq('user_id',currentUser.id);
+    if(error){alert('Could not delete goal: '+error.message);return;} await loadGoals();
+  }));
+}
+
+async function createGoal(e){
+  e.preventDefault(); if(!requireSignedIn())return;
+  if(!goalsSchemaAvailable){document.getElementById('goalStatus').textContent='Savings goals are not enabled in this database yet. Run the Phase 1 migration SQL, then reload Ledger.';return;}
+  const name=document.getElementById('goalName').value.trim(), target=parseFloat(document.getElementById('goalTarget').value), date=document.getElementById('goalDate').value, saved=parseFloat(document.getElementById('goalSaved').value)||0;
+  if(!name||!Number.isFinite(target)||target<=0||!date||saved<0||saved>target){document.getElementById('goalStatus').textContent='Enter a valid goal, target date, and saved amount.';return;}
+  const {error}=await dbClient.from('savings_goals').insert({user_id:currentUser.id,name,target_amount:target,saved_amount:saved,target_date:date,status:saved>=target?'achieved':'active'});
+  if(error){document.getElementById('goalStatus').textContent='Could not create goal: '+error.message;return;}
+  e.target.reset();document.getElementById('goalSaved').value='0';document.getElementById('goalStatus').textContent='Goal created ✓';await loadGoals();
+}
+
 function render(){
   const {year, month} = currentPeriod();
   const hint = document.getElementById('periodHint');
@@ -1046,10 +1475,26 @@ function render(){
   const leftEl = document.getElementById('lblLeftover');
   leftEl.textContent = fmt(leftover);
   leftEl.className = 'stat-val ' + (leftover>=0?'pos':'neg');
+  const owedBack = expenseThis.reduce((t,e)=>t + (e.shared ? Number(e.reimbursementDue)||0 : 0), 0);
+  const owedNote = document.getElementById('owedNote');
+  owedNote.hidden = owedBack <= 0;
+  owedNote.textContent = owedBack > 0 ? `+ ${fmt(owedBack)} owed back to you` : '';
 
   const tgtNeed = parseFloat(document.getElementById('tgtNeed').value)||0;
   const tgtWant = parseFloat(document.getElementById('tgtWant').value)||0;
   const tgtSave = parseFloat(document.getElementById('tgtSave').value)||0;
+
+  // Target pie chart: the split the user is aiming for. Warns when it doesn't add to 100%.
+  const tgtTotal = tgtNeed + tgtWant + tgtSave;
+  const targetDonut = document.getElementById('targetDonut');
+  if(tgtTotal > 0){
+    const n = tgtNeed/tgtTotal*100, w = n + tgtWant/tgtTotal*100;
+    targetDonut.style.background = `conic-gradient(var(--need) 0% ${n}%, var(--want) ${n}% ${w}%, var(--save) ${w}% 100%)`;
+  } else {
+    targetDonut.style.background = 'conic-gradient(var(--line) 0 100%)';
+  }
+  document.getElementById('targetDonutVal').textContent = Math.round(tgtTotal) + '%';
+  document.getElementById('targetDonutCenter').classList.toggle('warn', Math.round(tgtTotal) !== 100);
 
   // Donut chart: how the tracked money (Needs + Wants + Savings) actually split this month
   const donut = document.getElementById('donutChart');
@@ -1094,7 +1539,7 @@ function render(){
   } else {
     incomeThis.slice().sort((a,b)=>a.date.localeCompare(b.date)).forEach(e=>{
       const tr = document.createElement('tr');
-      tr.innerHTML = `<td>${e.date}</td><td style="font-family:'IBM Plex Sans'">${escapeHtml(e.source)}</td><td class="amt">${fmt(e.amount)}</td><td><button class="del" data-id="${e.id}" data-kind="income">✕</button></td>`;
+      tr.innerHTML = `<td>${e.date}</td><td class="td-text">${escapeHtml(e.source)}</td><td class="amt">${fmt(e.amount)}</td><td><button class="del" data-id="${e.id}" data-kind="income">✕</button></td>`;
       incomeBody.appendChild(tr);
     });
   }
@@ -1107,10 +1552,13 @@ function render(){
     expenseThis.slice().sort((a,b)=>a.date.localeCompare(b.date)).forEach(e=>{
       const type = CAT_TYPE[e.category]||'Want';
       const tr = document.createElement('tr');
-      tr.innerHTML = `<td>${e.date}</td><td style="font-family:'IBM Plex Sans'">${escapeHtml(e.category)} <span class="tag ${type}">${type}</span></td><td class="amt">${fmt(e.amount)}</td><td><button class="del" data-id="${e.id}" data-kind="expense">✕</button></td>`;
+      tr.innerHTML = `<td>${e.date}</td><td class="td-text">${escapeHtml(e.category)} <span class="tag ${type}">${type}</span>${sharedBadges(e)}</td><td class="amt">${fmt(e.amount)}</td><td><button class="del" data-id="${e.id}" data-kind="expense">✕</button></td>`;
       expenseBody.appendChild(tr);
     });
   }
+
+  renderGoals();
+  if(!ledgerMlModel) mlFallbackForecast(mlMonthlyData());
 
   document.querySelectorAll('.del').forEach(btn=>{
     btn.addEventListener('click', async ()=>{
@@ -1131,12 +1579,61 @@ function render(){
       }
     });
   });
+  document.querySelectorAll('.got-back').forEach(btn=>btn.addEventListener('click',()=>markPaidBack(btn.dataset.id)));
 }
 
-function escapeHtml(s){
-  return String(s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+// Row badges for shared expenses: what's still owed, plus a "Got it back" button.
+function sharedBadges(e){
+  if(!e.shared) return '';
+  const due = Number(e.reimbursementDue)||0;
+  return due > 0
+    ? `<span class="tag Owed">Owed ${fmt(due)}</span><button type="button" class="got-back" data-id="${e.id}">Got it back</button>`
+    : '<span class="tag Paid">Paid back</span>';
 }
-function uid(){ return Math.random().toString(36).slice(2,10); }
+
+// "Got it back": the other person repaid some or all of a shared expense. The repayment
+// is saved as income (dated today) and the expense's remaining amount owed is reduced.
+async function markPaidBack(expenseId){
+  if(!requireSignedIn()) return;
+  const exp = state.expenses.find(e=>e.id===expenseId);
+  if(!exp || !exp.shared) return;
+  const due = Number(exp.reimbursementDue)||0;
+  if(due <= 0) return;
+
+  const answer = prompt(`How much did you get back? (Still owed: ${fmt(due)})`, due.toFixed(2));
+  if(answer === null) return;
+  const amount = Math.round(parseFloat(answer)*100)/100;
+  if(!Number.isFinite(amount) || amount <= 0 || amount > due){
+    alert(`Enter an amount between $0.01 and ${fmt(due)}.`);
+    return;
+  }
+
+  const today = new Date().toISOString().slice(0,10);
+  const income = {id:crypto.randomUUID(), date:today, source:`Paid back · ${exp.category}`, amount, description:`reimbursement:${exp.id}`};
+  try{
+    // Fingerprint includes both ids so repeated partial repayments never collide.
+    await insertTransaction(income, 'income', `income|reimbursement|${exp.id}|${income.id}`);
+  }catch(err){
+    alert('Could not record the repayment: ' + (err.message || 'Unknown error'));
+    return;
+  }
+
+  const remaining = Math.round((due - amount)*100)/100;
+  const {error} = await dbClient.from('transactions').update({reimbursement_due: remaining}).eq('id', exp.id).eq('user_id', currentUser.id);
+  if(error){
+    // Keep the two records consistent: undo the income entry if the expense didn't update.
+    await deleteTransaction(income.id).catch(()=>{});
+    alert('Could not update the shared expense: ' + error.message);
+    return;
+  }
+
+  state.income.push(income);
+  exp.reimbursementDue = remaining;
+  jumpToDate(today);
+  render();
+  updateStorageStatus(remaining > 0 ? `Got ${fmt(amount)} back ✓ — ${fmt(remaining)} still owed` : `Got ${fmt(amount)} back ✓ — fully paid back`);
+}
+
 function transactionKey(r, kind){
   if(kind === 'income') return `I|${r.date}|${String(r.source).trim().toLowerCase()}|${Number(r.amount).toFixed(2)}`;
   return `E|${r.date}|${String(r.category).trim().toLowerCase()}|${Number(r.amount).toFixed(2)}`;
@@ -1205,13 +1702,32 @@ document.getElementById('expenseForm').addEventListener('submit', async e=>{
 
   const date = document.getElementById('expDate').value;
   const category = document.getElementById('expCategory').value;
-  const amount = parseFloat(document.getElementById('expAmount').value);
-  if(!date || !category || !Number.isFinite(amount) || amount <= 0){
-    updateStorageStatus('Enter date, category, and a valid amount');
-    return;
+  const shared = !document.getElementById('sharedFields').hidden;
+  let entry;
+
+  if(shared){
+    // Shared: the full amount paid counts as spending. The part owed back is tracked and
+    // becomes income when the user marks it "Got it back".
+    const gross = parseFloat(document.getElementById('expTotal').value);
+    const share = parseFloat(document.getElementById('expShare').value);
+    if(!date || !category || !Number.isFinite(gross) || !Number.isFinite(share) || gross <= 0 || share <= 0 || share > gross){
+      setSharedHint('Enter the total amount, and a share no bigger than the total.', 'err');
+      return;
+    }
+    if(!splitSchemaAvailable){
+      setSharedHint('Shared expenses need the database update. Regular expenses still work.', 'err');
+      return;
+    }
+    entry = {id:crypto.randomUUID(), date, category, amount:gross, grossAmount:gross, userShare:share, reimbursementDue:Math.round((gross-share)*100)/100, shared:true, description:'Shared expense'};
+  }else{
+    const amount = parseFloat(document.getElementById('expAmount').value);
+    if(!date || !category || !Number.isFinite(amount) || amount <= 0){
+      updateStorageStatus('Enter date, category, and a valid amount');
+      return;
+    }
+    entry = {id:crypto.randomUUID(), date, category, amount};
   }
 
-  const entry = {id:crypto.randomUUID(), date, category, amount};
   if(hasTransaction(entry, 'expense')){
     updateStorageStatus('That expense entry already exists');
     return;
@@ -1222,9 +1738,10 @@ document.getElementById('expenseForm').addEventListener('submit', async e=>{
     state.expenses.push(entry);
     jumpToDate(date);
     render();
-    updateStorageStatus('Expense saved ✓');
+    updateStorageStatus(shared ? `Shared expense saved ✓ — ${fmt(entry.grossAmount - entry.userShare)} owed back to you` : 'Expense saved ✓');
     document.getElementById('expDate').value = new Date().toISOString().slice(0,10);
-    document.getElementById('expAmount').value='';
+    ['expAmount','expTotal','expShare'].forEach(id=>{ document.getElementById(id).value=''; });
+    if(shared) setSharedHint('Tap “Got it back” in the list when you’re repaid.');
   }catch(err){
     console.error(err);
     updateStorageStatus('Could not save expense');
@@ -1232,6 +1749,37 @@ document.getElementById('expenseForm').addEventListener('submit', async e=>{
   }
 });
 
+// "+ Shared" swaps the single Amount box for Total amount + Your share.
+const sharedToggle = document.getElementById('sharedToggle');
+const sharedFields = document.getElementById('sharedFields');
+const expAmountInput = document.getElementById('expAmount');
+function setSharedHint(message, kind=''){
+  const el = document.getElementById('sharedHint');
+  el.textContent = message;
+  el.className = 'shared-hint' + (kind ? ' ' + kind : '');
+}
+sharedToggle.addEventListener('click', ()=>{
+  const on = sharedFields.hidden;
+  sharedFields.hidden = !on;
+  sharedToggle.setAttribute('aria-expanded', String(on));
+  sharedToggle.textContent = on ? '− Shared' : '＋ Shared';
+  expAmountInput.hidden = on;
+  expAmountInput.required = !on;
+  if(on) document.getElementById('expTotal').focus();
+});
+['expTotal','expShare'].forEach(id=>document.getElementById(id).addEventListener('input', ()=>{
+  const gross = parseFloat(document.getElementById('expTotal').value);
+  const share = parseFloat(document.getElementById('expShare').value);
+  if(!Number.isFinite(gross) || !Number.isFinite(share)) return setSharedHint('Tap “Got it back” in the list when you’re repaid.');
+  if(share > gross) return setSharedHint('Your share can’t be more than the total.', 'err');
+  setSharedHint(`Your share: ${fmt(share)} · owed back to you: ${fmt(gross - share)}`);
+}));
+
+document.getElementById('goalForm').addEventListener('submit',createGoal);
+function populatePhase1Selectors(){
+  const d=new Date().toISOString().slice(0,10); ['goalDate','sharedGoalDate'].forEach(id=>{const el=document.getElementById(id);if(el&&!el.value)el.value=d;});
+}
+populatePhase1Selectors();
 
 /* =========================
    MANUAL ENTRY CHATBOT
@@ -1490,76 +2038,51 @@ document.getElementById('exportBtn').addEventListener('click', ()=>{
   downloadBlob(buildCsv(), 'ledger-export.csv', 'text/csv;charset=utf-8');
 });
 
-// Excel-compatible workbook export. This creates a real spreadsheet-readable .xls file
-// without requiring an external library or internet connection.
-document.getElementById('exportExcelBtn').addEventListener('click', ()=>{
+// PDF export: builds a printable report of the selected period and opens the
+// browser's print dialog, where "Save as PDF" produces the file. No library needed.
+document.getElementById('exportPdfBtn').addEventListener('click', ()=>{
   if(!requireSignedIn()) return;
-  const rows = [
-    ['SECTION','Date','Source or Category','Amount','Type'],
-    ...state.income.map(e => ['Income', e.date, e.source, Number(e.amount).toFixed(2), '']),
-    ...state.expenses.map(e => ['Expense', e.date, e.category, Number(e.amount).toFixed(2), CAT_TYPE[e.category] || 'Want'])
-  ];
-  const esc = v => String(v ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-  const xml = '<?xml version="1.0"?>' +
-    '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">' +
-    '<Worksheet ss:Name="Ledger"><Table>' +
-    rows.map((row, ri) => '<Row>' + row.map((v, ci) => '<Cell' + (ri===0 ? ' ss:StyleID="Header"' : '') + '><Data ss:Type="' + (ci===3 && ri>0 ? 'Number' : 'String') + '">' + esc(v) + '</Data></Cell>').join('') + '</Row>').join('') +
-    '</Table></Worksheet><Styles><Style ss:ID="Header"><Font ss:Bold="1"/></Style></Styles></Workbook>';
-  downloadBlob(xml, 'ledger-export.xls', 'application/vnd.ms-excel;charset=utf-8');
+  const {year, month} = currentPeriod();
+  const byDate = (a,b)=>a.date.localeCompare(b.date);
+  const inc = state.income.filter(e=>inPeriod(e.date, year, month)).sort(byDate);
+  const exp = state.expenses.filter(e=>inPeriod(e.date, year, month)).sort(byDate);
+  const monthName = month ? document.getElementById('monthSel').selectedOptions[0].textContent : 'All months';
+  const period = `${monthName} ${year || '(all years)'}`;
+  const sum = arr => arr.reduce((t,e)=>t + (Number(e.amount)||0), 0);
+  const savings = exp.filter(e=>CAT_TYPE[e.category]==='Savings');
+  const spending = exp.filter(e=>CAT_TYPE[e.category]!=='Savings');
+  const rows = (arr, label) => arr.map(e=>`<tr><td>${e.date}</td><td>${escapeHtml(label(e))}</td><td class="r">${fmt(e.amount)}</td></tr>`).join('')
+    || '<tr><td colspan="3" class="empty">None recorded</td></tr>';
+  const html = `<!doctype html><html><head><meta charset="utf-8"><title>Ledger — ${escapeHtml(period)}</title><style>
+    body{font-family:Helvetica,Arial,sans-serif;color:#2E2A24;margin:32px}
+    h1{margin:0 0 4px;font-size:24px}.sub{color:#736C5F;margin:0 0 20px}
+    .sum{display:flex;gap:10px;margin-bottom:20px}.sum div{flex:1;border:1px solid #E6DDC6;border-radius:8px;padding:10px 12px;font-size:12px;color:#736C5F}
+    .sum b{display:block;font-size:16px;color:#2E2A24;margin-top:3px}
+    h2{font-size:15px;margin:22px 0 6px}table{width:100%;border-collapse:collapse;font-size:12px}
+    th,td{text-align:left;padding:6px 4px;border-bottom:1px solid #E6DDC6}.r{text-align:right}.empty{color:#999;font-style:italic}
+  </style></head><body>
+    <h1>Ledger report</h1><p class="sub">${escapeHtml(period)} · generated ${new Date().toLocaleDateString()}</p>
+    <div class="sum"><div>Income<b>${fmt(sum(inc))}</b></div><div>Expenses<b>${fmt(sum(spending))}</b></div><div>Savings<b>${fmt(sum(savings))}</b></div><div>Left in account<b>${fmt(sum(inc)-sum(exp))}</b></div></div>
+    <h2>Income</h2><table><thead><tr><th>Date</th><th>Source</th><th class="r">Amount</th></tr></thead><tbody>${rows(inc, e=>e.source)}</tbody></table>
+    <h2>Expenses</h2><table><thead><tr><th>Date</th><th>Category</th><th class="r">Amount</th></tr></thead><tbody>${rows(exp, e=>e.category + (e.shared ? ' (shared)' : ''))}</tbody></table>
+  </body></html>`;
+  const frame = document.createElement('iframe');
+  frame.id = 'ledgerPrintFrame';
+  frame.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0';
+  document.body.appendChild(frame);
+  frame.contentDocument.open();
+  frame.contentDocument.write(html);
+  frame.contentDocument.close();
+  setTimeout(()=>{
+    frame.contentWindow.focus();
+    frame.contentWindow.print();
+    setTimeout(()=>frame.remove(), 1000);
+  }, 250);
 });
 
-// CSV import: imports into the current signed-in customer's database.
-// It never replaces existing transactions.
-document.getElementById('importFile').addEventListener('change', async e=>{
-  const file = e.target.files[0];
-  if(!file) return;
-  if(!requireSignedIn()){ e.target.value=''; return; }
-
-  const reader = new FileReader();
-  reader.onload = async ()=>{
-    try{
-      const lines = reader.result.split(/\r?\n/).filter(l=>l.trim().length);
-      const entries = [];
-      lines.slice(1).forEach(line=>{
-        const parts = parseCsvLine(line);
-        if(parts.length < 4) return;
-        const [section, date, label, amountStr] = parts;
-        const amount = parseFloat(amountStr);
-        if(!date || !Number.isFinite(amount) || !label.trim()) return;
-
-        if(/income/i.test(section)){
-          entries.push({kind:'income', entry:{id:crypto.randomUUID(), date, source:label.trim(), amount:Math.abs(amount)}});
-        }else if(/expense/i.test(section)){
-          const match = CATEGORIES.find(([name]) => name.toLowerCase() === label.trim().toLowerCase());
-          entries.push({kind:'expense', entry:{id:crypto.randomUUID(), date, category:match ? match[0] : label.trim(), amount:Math.abs(amount)}});
-        }
-      });
-
-      if(!entries.length){
-        updateStorageStatus('No valid CSV transactions found');
-        return;
-      }
-
-      const result = await addEntriesToDatabase(entries);
-      updateStorageStatus(`CSV import: ${result.added} added${result.skipped ? `, ${result.skipped} duplicates skipped` : ''} ✓`);
-      document.getElementById('monthSel').value='0';
-      document.getElementById('yearSel').value='0';
-      await loadState();
-    }catch(err){
-      console.error(err);
-      updateStorageStatus('CSV import failed');
-      alert('CSV import failed: ' + (err.message || 'Unknown error'));
-    }finally{
-      e.target.value = '';
-    }
-  };
-  reader.readAsText(file);
-});
-
-// Receipt scanning — sends the photo to Claude, which reads the total, date,
-// and merchant off the receipt and suggests one of our fixed categories.
-const CATEGORY_NAMES = CATEGORIES.map(c=>c[0]);
-
+// Receipt scanning — OCR runs locally via Tesseract.js. The extracted total,
+// date, and merchant text are used to prefill the expense form; the image
+// itself never leaves the browser.
 document.getElementById('receiptFile').addEventListener('change', async (e)=>{
   const file = e.target.files[0];
   if(!file) return;
@@ -1660,36 +2183,10 @@ function parseReceiptOcr(text){
   return {date, amount, category};
 }
 
-function fileToBase64(file){
-  return new Promise((resolve, reject)=>{
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result.split(',')[1]);
-    reader.onerror = () => reject(new Error('Could not read file'));
-    reader.readAsDataURL(file);
-  });
-}
-
-function parseCsvLine(line){
-  const out = []; let cur=''; let inQ=false;
-  for(let i=0;i<line.length;i++){
-    const c = line[i];
-    if(c === '"'){
-      if(inQ && line[i+1] === '"'){ cur += '"'; i++; }
-      else inQ = !inQ;
-      continue;
-    }
-    if(c === ',' && !inQ){ out.push(cur.trim()); cur=''; continue; }
-    cur += c;
-  }
-  out.push(cur.trim());
-  return out;
-}
-
 // ---------------------------------------------------------------------
-// Bank / card statement import: detects common column layouts, guesses
-// Income vs Expense and a category per row, then shows a review table
-// before anything is added — heuristics on real bank exports are good
-// but not perfect, so confirmation matters more than for a manual entry.
+// Bank statement import: PDF only. The PDF is parsed locally, transactions
+// are classified as Income or Expense, categories are suggested, and the
+// user gets a review table before anything is saved.
 // ---------------------------------------------------------------------
 const CATEGORY_KEYWORDS = [
   ["Groceries", ["walmart","target","costco","kroger","safeway","trader joe","whole foods","aldi","publix","grocery","supermarket"]],
@@ -1706,208 +2203,15 @@ const CATEGORY_KEYWORDS = [
   ["Education", ["tuition","university","college","school fee"]],
   ["Childcare", ["daycare","childcare","babysit"]],
 ];
-const INCOME_KEYWORDS = ["payroll","salary","paycheck","direct dep","deposit from","employer","refund","reimbursement"];
-
-function guessCategory(desc){
-  const d = desc.toLowerCase();
-  for(const [cat, words] of CATEGORY_KEYWORDS){
-    if(words.some(w => d.includes(w))) return cat;
-  }
-  return "Other";
-}
-function looksLikeIncome(desc){
-  const d = desc.toLowerCase();
-  return INCOME_KEYWORDS.some(w => d.includes(w));
-}
-
-function findColumn(headerRow, candidates){
-  const lower = headerRow.map(h => h.trim().toLowerCase());
-  for(const cand of candidates){
-    const idx = lower.findIndex(h => h === cand);
-    if(idx !== -1) return idx;
-  }
-  for(const cand of candidates){
-    const idx = lower.findIndex(h => h.includes(cand));
-    if(idx !== -1) return idx;
-  }
-  return -1;
-}
-
-let bankPreviewRows = [];
-
-function parseBankCsv(text){
-  const lines = text.split(/\r?\n/).filter(l => l.trim().length);
-  if(lines.length < 2) return { rows: [], needsSignChoice: false };
-  const header = parseCsvLine(lines[0]);
-  const dateIdx = findColumn(header, ["date","transaction date","posted date","trans date"]);
-  const descIdx = findColumn(header, ["description","merchant","payee","details","memo","name"]);
-  const amtIdx = findColumn(header, ["amount","amt"]);
-  const debitIdx = findColumn(header, ["debit","withdrawal","money out"]);
-  const creditIdx = findColumn(header, ["credit","deposit","money in"]);
-
-  const rows = [];
-  for(let i=1;i<lines.length;i++){
-    const cells = parseCsvLine(lines[i]);
-    if(cells.length < 2) continue;
-    const rawDate = dateIdx !== -1 ? cells[dateIdx] : '';
-    const desc = descIdx !== -1 ? cells[descIdx] : (cells[1] || '');
-    const isoDate = toIsoDate(rawDate);
-    if(!isoDate) continue;
-
-    let signedAmount = null; // negative = money out, positive = money in (normalized)
-    if(debitIdx !== -1 || creditIdx !== -1){
-      const debitVal = debitIdx !== -1 ? parseFloat((cells[debitIdx]||'').replace(/[^0-9.-]/g,'')) : NaN;
-      const creditVal = creditIdx !== -1 ? parseFloat((cells[creditIdx]||'').replace(/[^0-9.-]/g,'')) : NaN;
-      if(!isNaN(debitVal) && debitVal !== 0) signedAmount = -Math.abs(debitVal);
-      else if(!isNaN(creditVal) && creditVal !== 0) signedAmount = Math.abs(creditVal);
-    } else if(amtIdx !== -1){
-      const v = parseFloat((cells[amtIdx]||'').replace(/[^0-9.-]/g,''));
-      if(!isNaN(v)) signedAmount = v; // sign meaning resolved after user picks convention
-    }
-    if(signedAmount === null || signedAmount === 0) continue;
-    rows.push({ date: isoDate, desc: desc.trim() || '(no description)', signedAmount });
-  }
-  const needsSignChoice = (debitIdx === -1 && creditIdx === -1 && amtIdx !== -1);
-  return { rows, needsSignChoice };
-}
-
-function toIsoDate(raw){
-  if(!raw) return null;
-  raw = raw.trim();
-  if(/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
-  let m = raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/); // MM/DD/YYYY
-  if(m){
-    let [_, mo, da, yr] = m;
-    if(yr.length === 2) yr = '20'+yr;
-    return `${yr}-${mo.padStart(2,'0')}-${da.padStart(2,'0')}`;
-  }
-  const d = new Date(raw);
-  if(!isNaN(d.getTime())) return d.toISOString().slice(0,10);
-  return null;
-}
-
-function renderBankPreview(rows, convention){
-  const body = document.getElementById('bankPreviewBody');
-  body.innerHTML = '';
-  bankPreviewRows = rows.map((r, i) => {
-    const isExpense = convention === 'debit-credit' ? r.signedAmount < 0 : (convention === 'pos' ? r.signedAmount > 0 : r.signedAmount < 0);
-    const type = isExpense ? 'Expense' : 'Income';
-    const category = looksLikeIncome(r.desc) && type === 'Income' ? null : guessCategory(r.desc);
-    return { ...r, id: i, type, category: category || 'Other', amount: Math.abs(r.signedAmount) };
-  });
-  bankPreviewRows.forEach(r => {
-    const tr = document.createElement('tr');
-    const typeOpts = ['Expense','Income'].map(t => `<option value="${t}" ${t===r.type?'selected':''}>${t}</option>`).join('');
-    const catOpts = CATEGORIES.map(([name]) => `<option value="${name}" ${name===r.category?'selected':''}>${name}</option>`).join('');
-    tr.innerHTML = `<td>${r.date}</td><td style="font-family:'IBM Plex Sans'">${escapeHtml(r.desc)}</td>` +
-      `<td class="amt">${fmt(r.amount)}</td>` +
-      `<td><select data-id="${r.id}" data-field="type" style="font-size:12px;">${typeOpts}</select></td>` +
-      `<td><select data-id="${r.id}" data-field="category" style="font-size:12px;" ${r.type==='Income'?'disabled':''}>${catOpts}</select></td>`;
-    body.appendChild(tr);
-  });
-  body.querySelectorAll('select').forEach(sel => {
-    sel.addEventListener('change', () => {
-      const row = bankPreviewRows.find(r => r.id === parseInt(sel.dataset.id));
-      row[sel.dataset.field] = sel.value;
-      if(sel.dataset.field === 'type'){
-        const tr = sel.closest('tr');
-        const catSelect = tr.querySelector('select[data-field="category"]');
-        catSelect.disabled = (sel.value === 'Income');
-      }
-    });
-  });
-  document.getElementById('bankPreviewWrap').style.display = rows.length ? 'block' : 'none';
-}
-
-document.getElementById('bankFile').addEventListener('change', (e) => {
-  const file = e.target.files[0];
-  if(!file) return;
-  const statusEl = document.getElementById('bankStatus');
-  statusEl.textContent = 'Reading file…';
-  const reader = new FileReader();
-  reader.onload = () => {
-    const { rows, needsSignChoice } = parseBankCsv(reader.result);
-    if(rows.length === 0){
-      statusEl.textContent = "Couldn't find transaction rows — check the file has Date/Description/Amount columns.";
-      document.getElementById('bankPreviewWrap').style.display = 'none';
-      return;
-    }
-    document.getElementById('signToggle').style.display = needsSignChoice ? 'block' : 'none';
-    statusEl.textContent = `Found ${rows.length} transactions — review below.`;
-    const convention = needsSignChoice ? document.getElementById('signConvention').value : 'debit-credit';
-    renderBankPreview(rows, convention);
-  };
-  reader.readAsText(file);
-});
-
-document.getElementById('signConvention').addEventListener('change', (e) => {
-  const fileInput = document.getElementById('bankFile');
-  if(fileInput.files[0]){
-    const reader = new FileReader();
-    reader.onload = () => {
-      const { rows } = parseBankCsv(reader.result);
-      renderBankPreview(rows, e.target.value);
-    };
-    reader.readAsText(fileInput.files[0]);
-  }
-});
-
-document.getElementById('bankConfirmBtn').addEventListener('click', async () => {
-  if(!bankPreviewRows.length || !requireSignedIn()) return;
-
-  try{
-    const entries = bankPreviewRows.map(r=>{
-      if(r.type === 'Expense'){
-        return {
-          kind:'expense',
-          entry:{
-            id:crypto.randomUUID(),
-            date:r.date,
-            category:r.category || 'Other',
-            amount:Math.abs(Number(r.amount)),
-            description:r.desc || null
-          }
-        };
-      }
-      return {
-        kind:'income',
-        entry:{
-          id:crypto.randomUUID(),
-          date:r.date,
-          source:r.desc || '(bank transaction)',
-          amount:Math.abs(Number(r.amount)),
-          description:r.desc || null
-        }
-      };
-    }).filter(x=>x.entry.date && Number.isFinite(x.entry.amount) && x.entry.amount > 0);
-
-    const result = await addEntriesToDatabase(entries);
-
-    document.getElementById('monthSel').value = '0';
-    document.getElementById('yearSel').value = '0';
-    await loadState();
-
-    document.getElementById('bankConfirmStatus').textContent =
-      `Added ${result.added} transactions${result.skipped ? `; skipped ${result.skipped} exact duplicates` : ''}. Showing all months.`;
-    updateStorageStatus(`Bank import: ${result.added} added ✓`);
-    document.getElementById('bankPreviewWrap').style.display = 'none';
-    document.getElementById('bankFile').value = '';
-    document.getElementById('pdfBankFile').value = '';
-    bankPreviewRows = [];
-    setTimeout(() => { document.getElementById('bankConfirmStatus').textContent = ''; }, 5000);
-  }catch(err){
-    console.error(err);
-    document.getElementById('bankConfirmStatus').textContent = 'Could not save imported transactions.';
-    updateStorageStatus('Bank import failed');
-    alert('Could not save the bank transactions: ' + (err.message || 'Unknown error'));
-  }
-});
-
-document.getElementById('bankCancelBtn').addEventListener('click', () => {
-  document.getElementById('bankPreviewWrap').style.display = 'none';
-  document.getElementById('bankFile').value = '';
-  bankPreviewRows = [];
-});
+const INCOME_KEYWORDS = ["payroll","salary","paycheck","direct dep","direct deposit","deposit from","employer","refund","reimbursement","interest earned","cashback","cash back","credit"];
+const EXPENSE_KEYWORDS = ["debit","withdrawal","purchase","payment","fee","charge","transfer out","bill pay","autopay","pos ","purchase at"];
+function guessCategory(desc){const d=desc.toLowerCase();for(const [cat,words] of CATEGORY_KEYWORDS){if(words.some(w=>d.includes(w)))return cat;}return "Other";}
+function looksLikeIncome(desc){const d=desc.toLowerCase();return INCOME_KEYWORDS.some(w=>d.includes(w));}
+function looksLikeExpense(desc){const d=desc.toLowerCase();return EXPENSE_KEYWORDS.some(w=>d.includes(w));}
+function findDirectionFromText(desc){const d=desc.toLowerCase();if(/\b(cr|credit)\b/.test(d)||looksLikeIncome(d))return 'Income';if(/\b(dr|debit)\b/.test(d)||looksLikeExpense(d))return 'Expense';return null;}
+function toIsoDate(raw){if(!raw)return null;raw=raw.trim();if(/^\d{4}-\d{2}-\d{2}$/.test(raw))return raw;let m=raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);if(m){let[_,mo,da,yr]=m;if(yr.length===2)yr='20'+yr;return `${yr}-${mo.padStart(2,'0')}-${da.padStart(2,'0')}`;}m=raw.match(/^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+(\d{1,2})(?:,?\s+(\d{2,4}))?$/i);if(m){const months={jan:1,feb:2,mar:3,apr:4,may:5,jun:6,jul:7,aug:8,sep:9,oct:10,nov:11,dec:12};const mo=months[m[1].slice(0,3).toLowerCase()];const da=+m[2];const yr=m[3]?(m[3].length===2?'20'+m[3]:m[3]):new Date().getFullYear();return `${yr}-${String(mo).padStart(2,'0')}-${String(da).padStart(2,'0')}`;}const d=new Date(raw);if(!isNaN(d.getTime()))return d.toISOString().slice(0,10);return null;}
+let bankPreviewRows=[];
+function renderBankPreview(rows){const body=document.getElementById('bankPreviewBody');if(!body)return;body.innerHTML='';bankPreviewRows=rows.map((r,i)=>({...r,id:i,amount:Math.abs(Number(r.signedAmount)),category:guessCategory(r.desc)}));bankPreviewRows.forEach(r=>{const tr=document.createElement('tr');const typeOpts=['Expense','Income'].map(t=>`<option value="${t}" ${t===r.type?'selected':''}>${t}</option>`).join('');const catOpts=CATEGORIES.map(([name])=>`<option value="${name}" ${name===r.category?'selected':''}>${name}</option>`).join('');tr.innerHTML=`<td>${r.date}</td><td class="td-text">${escapeHtml(r.desc)}</td><td class="amt">${fmt(r.amount)}</td><td><select data-id="${r.id}" data-field="type" style="font-size:12px;">${typeOpts}</select></td><td><select data-id="${r.id}" data-field="category" style="font-size:12px;" ${r.type==='Income'?'disabled':''}>${catOpts}</select></td>`;body.appendChild(tr);});body.querySelectorAll('select').forEach(sel=>{sel.addEventListener('change',()=>{const row=bankPreviewRows.find(r=>r.id===parseInt(sel.dataset.id));if(!row)return;row[sel.dataset.field]=sel.value;if(sel.dataset.field==='type'){const catSelect=sel.closest('tr').querySelector('select[data-field="category"]');catSelect.disabled=(sel.value==='Income');}});});document.getElementById('bankPreviewWrap').style.display=rows.length?'block':'none';}
 
 // PDF statement import — browser-side PDF text extraction. This avoids requiring
 // an Anthropic API key in the HTML file and works with normal text-based bank PDFs.
@@ -1945,51 +2249,56 @@ async function extractPdfText(file, statusEl){
 }
 
 function parseBankPdfText(text){
-  const lines = text.split(/\r?\n/).map(x=>x.replace(/\s+/g,' ').trim()).filter(Boolean);
-  const rows = [];
-  let currentYear = new Date().getFullYear();
-  const dateAtStart = /^(\d{1,2}[\/-]\d{1,2}(?:[\/-]\d{2,4})?|\d{4}[\/-]\d{1,2}[\/-]\d{1,2}|(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{1,2}(?:,?\s+\d{2,4})?)/i;
-  const money = /(?:\$\s*)?\(?-?\d{1,3}(?:,\d{3})*(?:\.\d{2})\)?|(?:\$\s*)?\(?-?\d+(?:\.\d{2})\)?/g;
-  const skip = /^(date|transaction date|posted|description|details|merchant|amount|balance|opening balance|closing balance|account|statement|page \d|total|subtotal|summary|debits?|credits?)/i;
-
-  for(let i=0;i<lines.length;i++){
-    const line = lines[i];
+  const lines=text.split(/\r?\n/).map(x=>x.replace(/\s+/g,' ').trim()).filter(Boolean);
+  const candidates=[]; let currentYear=new Date().getFullYear(); let previousBalance=null;
+  const openingMatch=text.match(/(?:opening|beginning)\s+balance[^$\d-]*\(?-?([\d,]+(?:\.\d{2})?)\)?/i);
+  if(openingMatch) previousBalance=parseFloat(openingMatch[1].replace(/,/g,''));
+  const dateAtStart=/^(\d{1,2}[\/-]\d{1,2}(?:[\/-]\d{2,4})?|\d{4}[\/-]\d{1,2}[\/-]\d{1,2}|(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{1,2}(?:,?\s+\d{2,4})?)/i;
+  const money=/(?:\$\s*)?\(?-?\d{1,3}(?:,\d{3})*(?:\.\d{2})\)?|(?:\$\s*)?\(?-?\d+(?:\.\d{2})\)?/g;
+  const skip=/^(date|transaction date|posted|description|details|merchant|amount|balance|opening balance|closing balance|account|statement|page \d|total|subtotal|summary|debits?|credits?|withdrawals?|deposits?)/i;
+  for(const line of lines){
     if(skip.test(line)) continue;
-    const dm = line.match(dateAtStart);
-    if(!dm) continue;
-    let dateText = dm[1];
-    let rest = line.slice(dm[0].length).trim();
-    // Add the year when a statement prints only month/day.
-    if(/^\d{1,2}[\/-]\d{1,2}$/.test(dateText)) dateText += '/' + currentYear;
-    if(/^(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)/i.test(dateText) && !/\d{4}/.test(dateText)) dateText += ' ' + currentYear;
-    const iso = toIsoDate(dateText);
-    if(!iso) continue;
-
-    const amounts = rest.match(money) || [];
-    if(!amounts.length) continue;
-    // Usually the last monetary value is the transaction amount; a trailing
-    // balance is common, so when there are two+ values use the first as amount.
-    let rawAmount = amounts[amounts.length > 1 ? amounts.length-2 : 0];
-    let amount = parseFloat(rawAmount.replace(/[$,\s]/g,'').replace(/^\((.*)\)$/,'-$1'));
-    if(!Number.isFinite(amount) || amount===0) continue;
-
-    const amountIndex = rest.lastIndexOf(rawAmount);
-    let desc = rest.slice(0, amountIndex).trim();
-    if(!desc) desc = '(no description)';
-    const lower = line.toLowerCase();
-    const negative = /^-/.test(rawAmount) || /^\(/.test(rawAmount) || /\b(debit|withdrawal|purchase|payment|fee|charge)\b/.test(lower);
-    const positive = /\b(deposit|credit|refund|interest|payroll|salary)\b/.test(lower);
-    const type = positive && !negative ? 'Income' : 'Expense';
-    rows.push({date: iso, desc, signedAmount: type==='Income' ? Math.abs(amount) : -Math.abs(amount)});
+    const dm=line.match(dateAtStart); if(!dm) continue;
+    let dateText=dm[1];
+    if(/^\d{1,2}[\/-]\d{1,2}$/.test(dateText)) dateText+='/'+currentYear;
+    if(/^(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)/i.test(dateText)&&!/\d{4}/.test(dateText)) dateText+=' '+currentYear;
+    const iso=toIsoDate(dateText); if(!iso) continue;
+    const rest=line.slice(dm[0].length).trim();
+    const matches=[]; let mm; money.lastIndex=0;
+    while((mm=money.exec(rest))!==null) matches.push({raw:mm[0],index:mm.index});
+    if(!matches.length) continue;
+    const parsedAmounts=matches.map(m=>({raw:m.raw,index:m.index,value:parseFloat(m.raw.replace(/[$,\s]/g,'').replace(/^\((.*)\)$/,'-$1'))})).filter(x=>Number.isFinite(x.value));
+    if(!parsedAmounts.length) continue;
+    const first=parsedAmounts[0];
+    const last=parsedAmounts[parsedAmounts.length-1];
+    const desc=rest.slice(0,first.index).trim() || rest.replace(first.raw,'').trim() || '(no description)';
+    const lower=rest.toLowerCase();
+    const explicit=findDirectionFromText(rest);
+    const hasNegative=/^-|^\(/.test(first.raw);
+    const hasCredit=/\b(cr|credit|deposit|deposited|payroll|salary|direct\s+dep(?:osit)?)\b/i.test(lower);
+    const hasDebit=/\b(dr|debit|withdrawal|withdrawn|purchase|payment|fee|charge|autopay|bill\s+pay|pos)\b/i.test(lower);
+    let typeHint=explicit || (hasCredit&&!hasDebit?'Income':hasDebit&&!hasCredit?'Expense':null);
+    let balance=null;
+    // On statements with a running balance, the last amount is normally the balance.
+    if(parsedAmounts.length>=2) balance=last.value;
+    let signedAmount=hasNegative ? -Math.abs(first.value) : Math.abs(first.value);
+    if(!typeHint && Number.isFinite(balance) && Number.isFinite(previousBalance)){
+      const delta=balance-previousBalance;
+      if(delta>0.005) { typeHint='Income'; signedAmount=Math.abs(first.value); }
+      else if(delta<-0.005) { typeHint='Expense'; signedAmount=-Math.abs(first.value); }
+    }
+    candidates.push({date:iso,desc,signedAmount,typeHint,balance});
+    if(Number.isFinite(balance)) previousBalance=balance;
   }
-
-  // Remove duplicate lines that can occur in PDFs with repeated headers/text layers.
-  const seen = new Set();
-  return rows.filter(r=>{
-    const k = `${r.date}|${r.desc}|${r.signedAmount}`;
-    if(seen.has(k)) return false;
-    seen.add(k); return true;
+  const rows=candidates.map(r=>{
+    // Never assume a positive amount is income. Bank statements often print
+    // both deposits and withdrawals as positive numbers; keywords or balance
+    // movement are used first, with Expense as the conservative final fallback.
+    const type=r.typeHint || 'Expense';
+    return {date:r.date,desc:r.desc,signedAmount:type==='Income'?Math.abs(r.signedAmount):-Math.abs(r.signedAmount),type};
   });
+  const seen=new Set();
+  return rows.filter(r=>{const k=`${r.date}|${r.desc}|${r.signedAmount}`;if(seen.has(k))return false;seen.add(k);return true;});
 }
 
 document.getElementById('pdfBankFile').addEventListener('change', async (e) => {
@@ -2005,11 +2314,9 @@ document.getElementById('pdfBankFile').addEventListener('change', async (e) => {
     const rows = parseBankPdfText(text);
     if(!rows.length) throw new Error('No transaction rows found');
 
-    document.getElementById('signToggle').style.display = 'none';
-    document.getElementById('bankStatus').textContent = '';
     statusEl.className = 'ok';
-    statusEl.textContent = `Found ${rows.length} transactions — review below, then click Add these transactions.`;
-    renderBankPreview(rows, 'debit-credit');
+    statusEl.textContent = `Found ${rows.length} transactions — Income/Expense classified automatically. Review before adding.`;
+    renderBankPreview(rows);
   }catch(err){
     console.error('PDF import failed:', err);
     statusEl.className = 'err';
@@ -2021,45 +2328,282 @@ document.getElementById('pdfBankFile').addEventListener('change', async (e) => {
   }
 });
 
+
+document.getElementById('bankConfirmBtn').addEventListener('click', async ()=>{
+  if(!bankPreviewRows.length || !requireSignedIn()) return;
+  const status=document.getElementById('bankConfirmStatus');
+  try{
+    const entries=bankPreviewRows.map(r=>r.type==='Expense'?{kind:'expense',entry:{id:crypto.randomUUID(),date:r.date,category:r.category||'Other',amount:Math.abs(Number(r.amount)),description:r.desc||null}}:{kind:'income',entry:{id:crypto.randomUUID(),date:r.date,source:r.desc||'(bank transaction)',amount:Math.abs(Number(r.amount)),description:r.desc||null}}).filter(x=>x.entry.date&&Number.isFinite(x.entry.amount)&&x.entry.amount>0);
+    const result=await addEntriesToDatabase(entries);
+    document.getElementById('monthSel').value='0';document.getElementById('yearSel').value='0';await loadState();
+    status.textContent=`Added ${result.added} transaction${result.added===1?'':'s'}${result.skipped?`; skipped ${result.skipped} duplicate${result.skipped===1?'':'s'}`:''}.`;
+    updateStorageStatus(`Bank PDF import: ${result.added} added ✓`);
+    setTimeout(()=>{document.getElementById('bankPreviewWrap').style.display='none';status.textContent='';},3500);
+  }catch(err){
+    console.error(err);status.textContent='Could not save imported transactions.';status.style.color='var(--rust)';
+  }
+});
+
+document.getElementById('bankCancelBtn').addEventListener('click',()=>{
+  document.getElementById('bankPreviewWrap').style.display='none';
+  document.getElementById('pdfBankStatus').textContent='';
+  bankPreviewRows=[];
+});
+
 populateSelectors();
 setAppEnabled(false);
 initDatabase();
 
-document.getElementById('migrateLocalBtn').addEventListener('click', async ()=>{
-  if(!requireSignedIn()) return;
-  const oldKeys = ['ledger-data','ledger-data-v2','ledger-data-v3'];
-  let raw = null;
-  for(const key of oldKeys){
-    const candidate = localStorage.getItem(key);
-    if(candidate){ raw = candidate; break; }
-  }
-  if(!raw){
-    alert('No old browser Ledger data was found on this computer.');
+// Phase 1 data foundation
+// Goals are loaded after authentication is established inside initDatabase's auth flow.
+
+
+
+
+
+/* =========================
+   PHASE 3 — FINANCIAL INTELLIGENCE
+   ========================= */
+function advisorMonthlyStats(){const rows=mlMonthlyData();const recent=rows.slice(-3);const n=recent.length||1;const avgIncome=recent.reduce((a,x)=>a+x.income,0)/n;const avgExpense=recent.reduce((a,x)=>a+x.expense,0)/n;return {rows,recent,avgIncome,avgExpense,avgNet:avgIncome-avgExpense};}
+function advisorCategoryTotals(){const totals={};(state.expenses||[]).forEach(e=>{const c=e.category||'Other';totals[c]=(totals[c]||0)+Math.abs(Number(e.amount)||0);});return totals;}
+function advisorGoalMonthlyNeed(){const today=new Date();let need=0;(state.goals||[]).forEach(g=>{const remaining=Math.max(0,(Number(g.target_amount)||0)-(Number(g.saved_amount)||0));if(!remaining)return;const end=new Date(String(g.target_date)+'T00:00:00');const months=Math.max(1,(end.getFullYear()-today.getFullYear())*12+(end.getMonth()-today.getMonth()));need+=remaining/months;});return need;}
+
+/* =========================
+   PHASE 2 — DATA SCIENCE / ML
+   ========================= */
+let ledgerMlModel = null;
+
+function mlMonthlyData(){
+  const byMonth = new Map();
+  (state.income||[]).forEach(x=>{
+    const k=String(x.date).slice(0,7); if(!/^\d{4}-\d{2}$/.test(k)) return;
+    if(!byMonth.has(k)) byMonth.set(k,{income:0,expense:0});
+    byMonth.get(k).income += Math.abs(Number(x.amount)||0);
+  });
+  (state.expenses||[]).forEach(x=>{
+    const k=String(x.date).slice(0,7); if(!/^\d{4}-\d{2}$/.test(k)) return;
+    if(!byMonth.has(k)) byMonth.set(k,{income:0,expense:0});
+    byMonth.get(k).expense += Math.abs(Number(x.amount)||0);
+  });
+  return [...byMonth.entries()].sort((a,b)=>a[0].localeCompare(b[0])).map(([month,v])=>({month,income:v.income,expense:v.expense,net:v.income-v.expense}));
+}
+
+function mlSetStatus(text,kind=''){
+  const el=document.getElementById('mlTrainStatus'); if(!el)return; el.textContent=text; el.className='status-inline'+(kind?' '+kind:'');
+}
+
+function mlFallbackForecast(rows){
+  const n=Math.min(3,rows.length);
+  if(!n){
+    ['mlIncomeForecast','mlExpenseForecast','mlNetForecast'].forEach(id=>{document.getElementById(id).textContent='—';});
+    document.getElementById('mlForecastNote').textContent='No monthly history yet. Add income and expenses, then train the model.';
     return;
   }
-  try{
-    const old = JSON.parse(raw);
-    const entries = [];
-    (old.income || []).forEach(e=>entries.push({
-      kind:'income',
-      entry:{id:crypto.randomUUID(),date:String(e.date),source:String(e.source||''),amount:Math.abs(Number(e.amount))}
-    }));
-    (old.expenses || []).forEach(e=>entries.push({
-      kind:'expense',
-      entry:{id:crypto.randomUUID(),date:String(e.date),category:String(e.category||'Other'),amount:Math.abs(Number(e.amount))}
-    }));
-    const valid = entries.filter(x=>x.entry.date && Number.isFinite(x.entry.amount) && x.entry.amount > 0);
-    const result = await addEntriesToDatabase(valid);
-    updateStorageStatus(`Old data migrated: ${result.added} added, ${result.skipped} duplicates skipped ✓`);
-    alert(`Migration complete.\n\nAdded: ${result.added}\nDuplicates skipped: ${result.skipped}`);
-  }catch(err){
-    console.error(err);
-    alert('Migration failed: ' + (err.message || 'Unknown error'));
-  }
-});
+  const recent=rows.slice(-n);
+  const avgIncome=recent.reduce((a,x)=>a+x.income,0)/n; const avgExpense=recent.reduce((a,x)=>a+x.expense,0)/n;
+  document.getElementById('mlIncomeForecast').textContent=fmt(avgIncome);
+  document.getElementById('mlExpenseForecast').textContent=fmt(avgExpense);
+  document.getElementById('mlNetForecast').textContent=fmt(avgIncome-avgExpense);
+  document.getElementById('mlForecastNote').textContent=`Baseline estimate from the last ${n} month${n===1?'':'s'}. Add at least 4 complete months to train the neural forecasting model.`;
+}
 
+async function trainLedgerML(){
+  if(!requireSignedIn())return;
+  const rows=mlMonthlyData();
+  if(rows.length<4){
+    mlFallbackForecast(rows);
+    mlSetStatus('Need at least 4 months of history for ML.','err');
+    document.getElementById('mlModelDetails').textContent=`Model not trained. Current dataset: ${rows.length} month${rows.length===1?'':'s'}. Keep importing/logging transactions; the model will become more useful with more history.`;
+    return;
+  }
+  if(typeof tf==='undefined'){mlSetStatus('ML library unavailable.','err');return;}
+  const btn=document.getElementById('trainMlBtn'); btn.disabled=true; mlSetStatus('Training locally…');
+  try{
+    const inputs=[],targets=[];
+    // Three-month rolling window: [income, expense, net] for each month.
+    for(let i=3;i<rows.length;i++){
+      const win=rows.slice(i-3,i);
+      inputs.push(win.flatMap(r=>[r.income,r.expense,r.net]));
+      targets.push([rows[i].income,rows[i].expense]);
+    }
+    const maxAbs=Math.max(1,...inputs.flat().map(x=>Math.abs(x)),...targets.flat().map(x=>Math.abs(x)));
+    const X=tf.tensor2d(inputs).div(maxAbs); const Y=tf.tensor2d(targets).div(maxAbs);
+    if(ledgerMlModel){ledgerMlModel.dispose(); ledgerMlModel=null;}
+    const model=tf.sequential();
+    model.add(tf.layers.dense({inputShape:[9],units:24,activation:'relu'}));
+    model.add(tf.layers.dense({units:12,activation:'relu'}));
+    model.add(tf.layers.dense({units:2,activation:'linear'}));
+    model.compile({optimizer:tf.train.adam(0.01),loss:'meanSquaredError'});
+    const epochs=Math.min(120,Math.max(50,rows.length*10));
+    await model.fit(X,Y,{epochs,batchSize:Math.min(8,inputs.length),shuffle:false,verbose:0});
+    X.dispose();Y.dispose();
+    ledgerMlModel=model;
+    const last3=rows.slice(-3);
+    const feature=tf.tensor2d([last3.flatMap(r=>[r.income,r.expense,r.net])]).div(maxAbs);
+    const pred=model.predict(feature); const vals=Array.from(await pred.data()); feature.dispose(); pred.dispose();
+    const income=Math.max(0,vals[0]*maxAbs), expense=Math.max(0,vals[1]*maxAbs), net=income-expense;
+    document.getElementById('mlIncomeForecast').textContent=fmt(income);
+    document.getElementById('mlExpenseForecast').textContent=fmt(expense);
+    document.getElementById('mlNetForecast').textContent=fmt(net);
+    document.getElementById('mlForecastNote').textContent=`Neural forecast trained on ${rows.length} monthly observations using a three-month rolling window. This is an estimate, not a guarantee.`;
+    document.getElementById('mlModelDetails').textContent=`Model: TensorFlow.js dense neural network • Inputs: previous 3 months of income, spending, and net cash flow • Training observations: ${inputs.length} • Epochs: ${epochs} • Training is performed locally in this browser.`;
+    mlSetStatus('Model trained ✓','ok');
+  }catch(err){console.error(err);mlSetStatus('Training failed.','err');document.getElementById('mlModelDetails').textContent='ML training error: '+(err.message||'Unknown error');}
+  finally{btn.disabled=false;}
+}
+
+document.getElementById('trainMlBtn').addEventListener('click',trainLedgerML);
 
 initLedgerChatbot();
+const assistantFab=document.getElementById('assistantFab'), assistantPanel=document.getElementById('manualChatbot'), assistantClose=document.getElementById('assistantCloseBtn');
+function openLedgerAssistant(){assistantPanel.classList.add('open');assistantFab.style.display='none';}
+function closeLedgerAssistant(){assistantPanel.classList.remove('open');assistantFab.style.display='flex';}
+assistantFab.addEventListener('click',openLedgerAssistant);
+assistantClose.addEventListener('click',closeLedgerAssistant);
+
+
+
+/* ========================= FINAL PHASES 5–7 LOGIC ========================= */
+let sharedGoals=[];
+async function loadSharedGoals(){
+  const list=document.getElementById('sharedGoalList');
+  if(!list)return;
+  if(!databaseMode || !currentUser){list.innerHTML='<div class="mini-note">Sign in and configure the database to use shared goals.</div>';return;}
+  const {data,error}=await dbClient.from('shared_goals').select('id,name,target_amount,total_saved,target_date,owner_id,created_at').order('target_date',{ascending:true});
+  if(error){sharedGoals=[];list.innerHTML='<div class="mini-note">Shared goals are not configured yet. Run the Phase 5 migration in Supabase.</div>';return;}
+  sharedGoals=data||[];
+  const ids=sharedGoals.map(g=>g.id);
+  if(ids.length){const {data:contribs}=await dbClient.from('shared_goal_contributions').select('shared_goal_id,amount,user_id').in('shared_goal_id',ids);const sums={};(contribs||[]).forEach(c=>sums[c.shared_goal_id]=(sums[c.shared_goal_id]||0)+Number(c.amount||0));sharedGoals=sharedGoals.map(g=>({...g,total_saved:Number(g.total_saved||0)+(sums[g.id]||0)}));}
+  renderSharedGoals();
+}
+function renderSharedGoals(){
+  const list=document.getElementById('sharedGoalList'); if(!list)return; list.innerHTML='';
+  if(!sharedGoals.length){list.innerHTML='<div class="mini-note">No shared goals yet.</div>';return;}
+  sharedGoals.forEach(g=>{const pct=Math.min(100,Number(g.target_amount)>0?(Number(g.total_saved||0)/Number(g.target_amount))*100:0);const el=document.createElement('div');el.className='share-item';el.innerHTML=`<div class="share-item-top"><strong>${escapeHtml(g.name)}</strong><span>${fmt(Number(g.total_saved||0))} / ${fmt(Number(g.target_amount||0))}</span></div><div class="share-progress"><span style="width:${pct}%"></span></div><div class="share-meta">Target: ${g.target_date||'No date'} • ${Math.round(pct)}% funded</div><div class="final-form" style="margin-top:8px"><input type="number" min="1" step="0.01" placeholder="Your contribution" data-contrib-input="${g.id}"><button class="btn-secondary" type="button" data-contrib-btn="${g.id}">Add contribution</button></div>`;list.appendChild(el);});
+  list.querySelectorAll('[data-contrib-btn]').forEach(btn=>btn.addEventListener('click',()=>addSharedContribution(btn.dataset.contribBtn)));
+}
+async function addSharedContribution(goalId){
+  if(!requireSignedIn())return; const input=document.querySelector(`[data-contrib-input="${goalId}"]`);const amount=Number(input?.value);if(!Number.isFinite(amount)||amount<=0){return;}
+  const {error}=await dbClient.from('shared_goal_contributions').insert({shared_goal_id:goalId,user_id:currentUser.id,amount});
+  if(error){alert('Could not add contribution: '+(error.message||'Run the Phase 5 migration first.'));return;}
+  if(input)input.value='';await loadSharedGoals();
+}
+function escapeHtml(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+// Emails the partner through the invite-partner Edge Function. The function holds the
+// Supabase service key on the server; that key must never be placed in this file.
+async function sendPartnerInvite(goalId, email){
+  const fallback = `Your partner can still sign up with ${email} to see it.`;
+  try{
+    const {data, error} = await dbClient.functions.invoke('invite-partner', {
+      body:{shared_goal_id:goalId, email, redirect_to:getAuthRedirectUrl()}
+    });
+    if(error){
+      let detail = error.message || 'unknown error';
+      try{ const body = await error.context.json(); if(body && body.error) detail = body.error; }catch(e){}
+      return `Shared goal created ✓ — but the invite email couldn’t be sent (${detail}). ${fallback}`;
+    }
+    return data && data.status === 'existing_user'
+      ? `Shared goal created ✓ — ${email} already has a Ledger account, so they were emailed a sign-in link. The goal is waiting in their Shared tab.`
+      : `Shared goal created ✓ — invite sent to ${email}. Once they accept it and sign in, the goal appears in their Shared tab.`;
+  }catch(err){
+    console.error('Invite failed:', err);
+    return `Shared goal created ✓ — but the invite email couldn’t be sent. ${fallback}`;
+  }
+}
+
+async function createSharedGoal(){
+  const status=document.getElementById('sharedGoalStatus');
+  if(!requireSignedIn()){status.textContent='Please sign in first.';return;}
+  const name=document.getElementById('sharedGoalName').value.trim(),target=Number(document.getElementById('sharedGoalTarget').value),date=document.getElementById('sharedGoalDate').value,member=document.getElementById('sharedGoalMember').value.trim().toLowerCase();
+  if(!name||!Number.isFinite(target)||target<=0||!date||!member){status.textContent='Enter a goal name, target, date, and member email.';return;}
+  status.textContent='Creating shared goal…';
+  const {data,error}=await dbClient.from('shared_goals').insert({owner_id:currentUser.id,name,target_amount:target,total_saved:0,target_date:date}).select('id').single();
+  if(error){status.textContent='Could not create shared goal: '+(error.message||'Run the Phase 5 migration first.');return;}
+  const {error:memberErr}=await dbClient.from('shared_goal_members').insert({shared_goal_id:data.id,member_email:member,role:'member'});
+  if(memberErr){await dbClient.from('shared_goals').delete().eq('id',data.id);status.textContent='Could not add the member: '+(memberErr.message||'Unknown error');return;}
+  document.getElementById('sharedGoalName').value='';document.getElementById('sharedGoalTarget').value='';document.getElementById('sharedGoalMember').value='';
+  await loadSharedGoals();
+  status.textContent='Shared goal created ✓ — sending invite…';
+  status.textContent=await sendPartnerInvite(data.id, member);
+}
+
+function copilotStats(){
+  const rows=mlMonthlyData(), recent=rows.slice(-3), n=recent.length||1;
+  const avgIncome=recent.reduce((a,x)=>a+x.income,0)/n,avgExpense=recent.reduce((a,x)=>a+x.expense,0)/n,avgNet=avgIncome-avgExpense;
+  const totals=advisorCategoryTotals(); const ranked=Object.entries(totals).sort((a,b)=>b[1]-a[1]);
+  return {rows,recent,avgIncome,avgExpense,avgNet,totals,ranked};
+}
+function copilotAnswer(q){
+  const text=String(q||'').toLowerCase(); const s=copilotStats();
+  if(!s.rows.length)return 'I need some transaction history before I can give you a useful financial answer. Start by adding a few income and expense records or importing a statement.';
+  const amountMatch=text.match(/(?:\$|cad\s*)?(\d+(?:\.\d{1,2})?)/); const amount=amountMatch?Number(amountMatch[1]):null;
+  if(/afford|buy|purchase|spend .*\$/.test(text)){
+    const safe=Math.max(0,s.avgNet-advisorGoalMonthlyNeed()-Math.max(100,s.avgIncome*.10));
+    if(amount&&amount<=safe)return `Based on your recent history, about ${fmt(safe)} is your estimated flexible room after goal funding and a safety buffer. A ${fmt(amount)} purchase fits inside that estimate, assuming your upcoming income and expenses are similar.`;
+    return `I estimate about ${fmt(safe)} of flexible room after recent spending, active goal funding, and a safety buffer. ${amount?`A ${fmt(amount)} purchase is above that estimate by about ${fmt(Math.max(0,amount-safe))}. `:''}Consider waiting, or ask me about a smaller amount.`;
+  }
+  if(/save|saving|goal/.test(text)&&amount){
+    const months=Math.max(1,Number((text.match(/(\d+)\s*(?:month|months)/)||[])[1]||3)); const needed=amount/months;
+    return `To save ${fmt(amount)} in ${months} month${months===1?'':'s'}, you would need about ${fmt(needed)} per month. Your recent average leftover is about ${fmt(s.avgNet)} per month. ${needed<=s.avgNet?'That target is within your recent average leftover.':'That target is above your recent average leftover, so Ledger would focus on flexible spending or additional income.'}`;
+  }
+  if(/where.*spend|spending.*most|largest|category/.test(text)){
+    if(!s.ranked.length)return 'I do not have enough categorized expenses yet.';
+    const top=s.ranked.slice(0,3).map(([c,v])=>`${c}: ${fmt(v)}`).join(' • '); return `Your largest recorded spending categories are ${top}. Start with the largest flexible category rather than cutting essentials blindly.`;
+  }
+  if(/next month|forecast|predict|future/.test(text)){
+    const rows=s.rows; const last=rows[rows.length-1]; return `Ledger's current baseline is about ${fmt(s.avgIncome)} income and ${fmt(s.avgExpense)} spending per month based on your recent history. ${last?`Your latest recorded month was ${last.month}, with ${fmt(last.income)} income and ${fmt(last.expense)} spending. `:''}For a stronger forecast, open the Intelligence tab and update the forecast once you have four months of history.`;
+  }
+  if(/best move|what should i do|what.*do now|advice|recommend/.test(text)){
+    if(s.avgNet<0)return `Your recent average cash flow is negative by ${fmt(Math.abs(s.avgNet))}/month. Your best first move is to review the largest flexible category and recurring costs.`;
+    const top=s.ranked[0]; return `Your recent average leftover is about ${fmt(s.avgNet)}/month. Protect part of it for goals first; ${top?`your largest recorded category is ${top[0]} at ${fmt(top[1])}, so even a modest reduction there could create more room.`:''}`;
+  }
+  if(/anomal|unusual/.test(text))return 'Ledger doesn’t flag unusual spending in this version. Ask me where you’re spending the most instead.';
+  if(/balance|leftover|cash flow|income|expense/.test(text))return `Your recent average is about ${fmt(s.avgIncome)} income, ${fmt(s.avgExpense)} spending, and ${fmt(s.avgNet)} leftover per month. These are averages from your recorded history, not guaranteed future amounts.`;
+  return `I can help with affordability, saving targets, spending reductions, forecasts, anomalies, and your next best move. Try “Can I afford $100?” or “How can I save $500?”`;
+}
+function upgradeLedgerAssistant(){
+  if(!ledgerChatbot)return;
+  ledgerChatbot.start=function(){
+    this.reset(); if(!this.messagesEl)return; this.messagesEl.innerHTML='';this.setStatus('');this.hideConfirm();this.clearChoices();
+    this.addBot('Hi! I\'m your Ledger Financial Copilot. Ask me about spending, saving, goals, forecasts, or whether a purchase fits your current cash flow.');
+    this.addBot('I use the data Ledger currently has and clearly label estimates.');
+    this.inputEl.disabled=false;this.inputEl.value='';this.updatePreview();
+  };
+  ledgerChatbot.handle=function(raw,fromChoice=false){const text=String(raw??'').trim();if(!text)return;if(!fromChoice)this.addUser(text);this.addBot(copilotAnswer(text));};
+  ledgerChatbot.confirm=()=>{}; ledgerChatbot.edit=()=>{};
+  ledgerChatbot.start();
+}
+
+function initFinalPhases(){
+  const d=document.getElementById('sharedGoalDate'); if(d&&!d.value)d.value=new Date().toISOString().slice(0,10);
+  document.getElementById('createSharedGoalBtn')?.addEventListener('click',createSharedGoal);
+  document.querySelectorAll('[data-copilot]').forEach(b=>b.addEventListener('click',()=>{openLedgerAssistant();setTimeout(()=>{const v=b.dataset.copilot;ledgerChatbot.inputEl.value=v;document.getElementById('chatSendBtn').click();},50);}));
+  if('serviceWorker' in navigator && location.protocol!=='file:') navigator.serviceWorker.register('./sw.js').catch(()=>{});
+  loadSharedGoals();
+}
+
+// The existing assistant is upgraded after its original initializer so the same compact floating UI becomes the Phase 6 copilot.
+upgradeLedgerAssistant();
+initFinalPhases();
+
+/* ========================= TAB NAVIGATION ========================= */
+function showTab(name){
+  const panels=[...document.querySelectorAll('[data-panel]')];
+  if(!panels.some(p=>p.dataset.panel===name)) name=panels[0].dataset.panel;
+  panels.forEach(p=>{p.hidden=p.dataset.panel!==name;});
+  document.querySelectorAll('#appTabs [data-tab]').forEach(t=>{
+    const on=t.dataset.tab===name;
+    t.setAttribute('aria-selected',String(on));
+    t.tabIndex=on?0:-1;
+  });
+  try{localStorage.setItem('ledgerTab',name);}catch(e){}
+}
+document.querySelectorAll('#appTabs [data-tab], [data-go]').forEach(btn=>btn.addEventListener('click',()=>{
+  showTab(btn.dataset.tab||btn.dataset.go);
+  window.scrollTo({top:0});
+}));
+(function(){let saved=null;try{saved=localStorage.getItem('ledgerTab');}catch(e){}showTab(saved||'budget');})();
+
 </script>
 </body>
 </html>
