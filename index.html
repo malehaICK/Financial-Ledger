@@ -20,6 +20,7 @@
     --teal:#5E9A6A;        /* success / positive */
     --teal-deep:#4A7F56;
     --gold:#E7AE48;
+    --orange:#C9700C;      /* watch out: profile numbers */
     --rust:#C4553A;
     --need:#7D9CC8;
     --want:#E7AE48;
@@ -76,13 +77,10 @@
   #lblLeftover.pos{color:var(--teal-deep);}
 
   .donut-wrap{display:flex;flex-direction:column;align-items:center;gap:12px;flex:0 0 auto;}
-  .donut{
-    width:150px;height:150px;border-radius:50%;position:relative;
-    background:conic-gradient(var(--line) 0 100%);
-  }
-  .donut::after{
-    content:'';position:absolute;inset:22%;background:var(--paper-raised);border-radius:50%;
-  }
+  .donut{width:150px;height:150px;position:relative;}
+  /* Segmented ring: rounded ends with a gap between parts (drawn by renderDonut). */
+  .donut svg{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg);overflow:visible;}
+  .donut circle{fill:none;stroke-width:12;stroke-linecap:round;}
   .donut-center{
     position:absolute;inset:22%;display:flex;flex-direction:column;align-items:center;justify-content:center;
     font-family:'IBM Plex Mono',monospace;text-align:center;z-index:1;
@@ -360,21 +358,21 @@ section{margin-bottom:22px;}
 h2.card-title{display:block;font-weight:800;font-size:17px;margin:0 0 12px;}
 h2,h3{font-weight:800;}
 .mini-note{color:var(--ink-soft);}
-.summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:22px;}
+.summary-grid{display:grid;grid-template-columns:1fr 1fr;align-items:start;gap:18px;margin-bottom:22px;}
 .summary-grid > section{margin:0;}
 .card .overview-card{border:0;border-radius:0;padding:0;background:transparent;gap:18px;flex-wrap:nowrap;}
 .card .stats-col{min-width:0;flex:1 1 auto;}
 .card .donut-wrap .legend{flex-wrap:wrap;justify-content:center;gap:4px 10px;max-width:150px;font-size:11.5px;}
 .donut{width:124px;height:124px;}
-.donut::after,.donut-center{inset:17%;}
+.donut-center{inset:17%;}
 .donut-center span{font-size:12px;letter-spacing:-.02em;}
-.donut-center.warn span{color:var(--rust);}
-.target-body{display:flex;align-items:center;gap:18px;}
-.target-list{flex:1;display:grid;gap:10px;}
-.target-row{display:flex;align-items:center;gap:10px;font-size:14.5px;color:var(--ink);}
-.target-row span{flex:1;}
-.target-row input{width:66px;font-family:'IBM Plex Mono',monospace;font-size:14px;text-align:right;border:1px solid var(--line);border-radius:var(--radius-sm);padding:6px 8px;background:var(--paper);color:var(--ink);}
-.target-row em{font-style:normal;color:var(--ink-soft);width:12px;}
+.split-edit{margin-top:12px;font-size:13px;}
+.split-edit summary{width:max-content;cursor:pointer;font-weight:700;color:var(--accent-deep);}
+.split-row{display:flex;flex-wrap:wrap;gap:10px 18px;margin:10px 0 6px;}
+.split-row label{display:inline-flex;align-items:center;gap:6px;font-weight:700;color:var(--ink);}
+.split-row input{width:62px;padding:6px 8px;border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--paper);color:var(--ink);font:inherit;text-align:right;}
+.split-edit .mini-note{margin:0;}
+.split-edit .mini-note.warn{color:var(--orange);font-weight:700;}
 .recommendation{margin-top:16px;border-left:3px solid var(--accent);border-radius:0 var(--radius-sm) var(--radius-sm) 0;background:var(--paper);font-size:13.5px;padding:10px 14px;}
 .entry-columns{gap:18px;}
 .entry-heading h3{font-size:17px;}
@@ -447,16 +445,131 @@ footer{margin-top:26px;}
 .profile-trigger:hover,.profile-trigger[aria-expanded="true"]{border-color:var(--line);background:var(--paper-raised);}
 .profile-trigger:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
 .avatar{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;background:var(--accent);color:#fff;font-weight:800;font-size:14px;flex-shrink:0;}
-.avatar-lg{width:44px;height:44px;font-size:19px;}
-.profile-panel{position:absolute;right:0;top:calc(100% + 8px);z-index:1100;width:min(320px,calc(100vw - 28px));padding:16px;background:var(--paper-raised);border:1px solid var(--line);border-radius:var(--radius);box-shadow:0 14px 34px rgba(80,64,30,.14);display:grid;gap:12px;}
-.profile-head{display:flex;align-items:center;gap:12px;min-width:0;}
-.profile-head strong{font-size:16px;}
-.profile-head .mini-note{overflow-wrap:anywhere;}
+/* Target bars in This month: dollars spent (or saved) against each target. */
+.target-bars{display:grid;gap:12px;margin:18px 0 12px;padding-top:16px;border-top:1px solid var(--line);}
+.tbar-top{display:flex;align-items:baseline;flex-wrap:wrap;gap:2px 8px;margin-bottom:5px;font-size:13px;}
+.tbar-top span{font-weight:700;}
+.tbar-top em{font-style:normal;font-size:12.5px;color:var(--ink-soft);}
+.tbar-top strong{margin-left:auto;font-size:13px;}
+.tbar-track{position:relative;height:10px;overflow:hidden;border-radius:999px;background:var(--paper-dark);}
+.tbar-fill{position:absolute;top:0;bottom:0;left:0;border-radius:999px;}
+.good{color:var(--teal-deep);}
+.warn{color:var(--orange);}
+
+/* Calendar tab */
+.cal-head{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.cal-nav{width:40px;height:40px;border:1px solid var(--line);border-radius:50%;background:var(--paper);color:var(--ink);font-size:24px;line-height:1;cursor:pointer;}
+.cal-nav:hover{border-color:var(--ink-soft);}
+.cal-switch{display:inline-flex;padding:4px;border-radius:999px;background:var(--paper-dark);}
+.cal-switch button{border:0;border-radius:999px;background:transparent;padding:8px 22px;color:var(--ink-soft);font:700 15px 'Nunito',sans-serif;cursor:pointer;}
+.cal-switch button[aria-pressed="true"]{background:var(--accent);color:#fff;}
+h2.cal-title{display:block;margin:14px 0 4px;text-align:center;font-size:18px;font-weight:800;}
+.cal-legend{display:flex;justify-content:center;flex-wrap:wrap;gap:4px 16px;margin-bottom:12px;font-size:12px;color:var(--ink-soft);}
+.cal-legend span{display:inline-flex;align-items:center;gap:6px;}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;}
+.dot.inc{background:#2F9E44;}      /* green: income */
+.dot.exp{background:#F08C00;}      /* orange: expense */
+.dot.due{background:transparent;box-shadow:inset 0 0 0 2px #2F9E44;}
+.cal-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));border-top:1px solid var(--line);border-left:1px solid var(--line);}
+.cal-dow{padding:8px 0;border-right:1px solid var(--line);border-bottom:1px solid var(--line);background:var(--paper);text-align:center;font-size:12px;font-weight:700;color:var(--ink-soft);}
+.cal-cell{display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-width:0;min-height:68px;padding:6px;border:0;border-right:1px solid var(--line);border-bottom:1px solid var(--line);background:transparent;color:var(--ink);font:700 16px 'Nunito',sans-serif;text-align:left;cursor:pointer;}
+button.cal-cell:hover{background:var(--paper);}
+.cal-cell.blank{cursor:default;}
+.cal-cell.today .cal-num{color:var(--accent-deep);text-decoration:underline;text-underline-offset:3px;}
+/* Selected day: light fill and outline, so the green and orange dots stay visible. */
+.cal-cell[aria-pressed="true"]{background:#FDEBDD !important;box-shadow:inset 0 0 0 2px var(--accent);border-radius:10px;}
+#pdfBankStatus.err{color:var(--rust);font-weight:700;}
+#pdfBankStatus.ok{color:var(--teal-deep);font-weight:700;}
+.cal-cell:focus-visible{outline:2px solid var(--ink);outline-offset:-3px;}
+.cal-amt{font-size:10.5px;font-weight:700;color:var(--ink-soft);}
+.cal-dots{display:flex;flex-wrap:wrap;gap:4px;margin-top:auto;}
+.cal-year{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;}
+.cal-month{display:grid;gap:3px;padding:12px;border:1px solid var(--line);border-radius:14px;background:var(--paper);color:var(--ink);font:inherit;text-align:left;cursor:pointer;}
+.cal-month:hover{border-color:var(--ink-soft);}
+.cal-month.current{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);}
+.cal-month strong{font-size:15px;}
+.cal-month span{font-size:12px;color:var(--ink-soft);}
+.cal-month span.in,.cal-month span.good{color:var(--teal-deep);}
+.cal-month span.warn{color:var(--orange);}
+.cal-actions{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px;}
+.cal-add{padding:13px 10px;border:1px solid;border-radius:14px;font:800 15px 'Nunito',sans-serif;cursor:pointer;}
+.cal-add.exp{background:#F7E3DA;border-color:#EFCBBB;color:var(--accent-deep);}
+.cal-add.inc{background:#E3EFE5;border-color:#C9DECD;color:var(--teal-deep);}
+.cal-day{margin-top:16px;padding-top:14px;border-top:1px solid var(--line);}
+.cal-day h3{margin:0 0 2px;font-size:16px;}
+.cal-day-sum{margin-bottom:8px;font-size:13px;color:var(--ink-soft);}
+.cal-list{display:grid;gap:6px;margin:0;padding:0;list-style:none;}
+.cal-list li{display:flex;justify-content:space-between;gap:10px;padding:9px 12px;border-radius:10px;background:var(--paper);font-size:14px;}
+.cal-list li.expected{background:transparent;border:1px dashed #C9DECD;}
+.cal-list .in{color:var(--teal-deep);white-space:nowrap;}
+.cal-list .out{white-space:nowrap;}
+.pattern-list{display:grid;gap:8px;margin:0 0 4px;padding:0;list-style:none;}
+.pattern-list li{padding:10px 12px;border-radius:12px;background:var(--paper);font-size:14px;line-height:1.4;}
+.pattern-list small{display:block;font-size:12px;color:var(--ink-soft);}
+.income-reminder{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 14px;margin-bottom:18px;padding:14px 16px;border:1px solid #C9DECD;border-radius:var(--radius);background:#EAF3EC;}
+.income-reminder p{margin:0;font-size:14px;line-height:1.45;}
+.reminder-actions{display:flex;gap:8px;}
+@media(max-width:600px){
+  .cal-cell{min-height:56px;padding:4px;font-size:14px;}
+  .cal-amt{font-size:9.5px;}
+  .cal-switch button{padding:7px 16px;}
+  .cal-year{grid-template-columns:repeat(3,minmax(0,1fr));}
+}
+
+/* Badges */
+.badges-card,.pattern-card{margin-top:18px;}
+/* Calendar sits beside This month, so it uses shorter day cells there. */
+.cal-card .cal-cell{min-height:56px;}
+.cal-card .cal-nav{width:36px;height:36px;font-size:22px;}
+.badges-card .hint{margin-left:6px;}
+.badge-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px 10px;}
+.badge{display:grid;justify-items:center;align-content:start;gap:5px;text-align:center;}
+.badge-medal{display:grid;place-items:center;width:68px;height:68px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#FFF4DA,#F1C878);box-shadow:inset 0 0 0 3px #fff,0 0 0 2px var(--gold);font-size:32px;}
+.badge strong{font-size:13px;line-height:1.2;}
+.badge small{font-size:11.5px;line-height:1.3;color:var(--ink-soft);}
+.badge.locked .badge-medal{filter:grayscale(1);opacity:.4;}
+.badge.locked strong{font-weight:600;color:var(--ink-soft);}
+@media(max-width:600px){.badge-grid{grid-template-columns:repeat(3,minmax(0,1fr));}}
+
+/* Profile sheet: slides up from the bottom on phones, centred on wider screens. */
+body.sheet-open{overflow:hidden;}
+body.sheet-open .assistant-fab{display:none;}
+.sheet-backdrop{position:fixed;inset:0;z-index:1090;background:rgba(46,42,36,.38);}
+.profile-panel{position:fixed;left:50%;bottom:0;z-index:1100;width:min(440px,100%);max-height:92dvh;overflow-y:auto;overscroll-behavior:contain;padding:22px 20px calc(18px + env(safe-area-inset-bottom));background:var(--paper-raised);border:1px solid var(--line);border-bottom:0;border-radius:24px 24px 0 0;box-shadow:0 -12px 40px rgba(80,64,30,.18);display:grid;gap:16px;transform:translateX(-50%);animation:sheet-up .24s ease-out;}
+@keyframes sheet-up{from{transform:translate(-50%,40px);opacity:0;}to{transform:translate(-50%,0);opacity:1;}}
+@keyframes sheet-in{from{transform:translate(-50%,-46%);opacity:0;}to{transform:translate(-50%,-50%);opacity:1;}}
+@media(min-width:720px){.profile-panel{top:50%;bottom:auto;border-bottom:1px solid var(--line);border-radius:24px;transform:translate(-50%,-50%);animation-name:sheet-in;}}
+@media(prefers-reduced-motion:reduce){.profile-panel{animation:none;}}
+.sheet-close{position:absolute;top:14px;right:14px;display:grid;place-items:center;width:34px;height:34px;border:0;border-radius:50%;background:var(--paper-dark);color:var(--ink);font-size:22px;line-height:1;cursor:pointer;}
+.sheet-close:hover{background:var(--line);}
+.sheet-close:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+.profile-hero{display:grid;justify-items:center;gap:3px;min-width:0;padding-top:6px;text-align:center;}
+.profile-hero strong{margin-top:8px;font-size:21px;font-weight:800;}
+.profile-hero .mini-note{font-size:13.5px;overflow-wrap:anywhere;}
+.avatar-xl{width:76px;height:76px;font-size:34px;}
+.profile-numbers{display:grid;grid-template-columns:repeat(3,1fr);padding:14px 0;text-align:center;background:var(--paper);border:1px solid var(--line);border-radius:18px;}
+.profile-numbers>div{position:relative;display:grid;gap:4px;align-content:start;min-width:0;padding:0 4px;}
+.profile-numbers>div+div::before{content:'';position:absolute;left:0;top:15%;bottom:15%;border-left:1px solid var(--line);}
+.profile-numbers strong{font-size:20px;font-weight:800;line-height:1.15;color:var(--ink);overflow-wrap:anywhere;}
+.profile-numbers span{font-size:12px;color:var(--ink-soft);line-height:1.25;}
+.profile-numbers .good{color:var(--teal-deep);}
+.profile-numbers .warn{color:var(--orange);}
+.profile-stats{font-size:12px;color:var(--ink-soft);}
+.profile-menu{list-style:none;margin:0;padding:0;}
+.menu-item{display:flex;align-items:center;gap:14px;width:100%;padding:13px 6px;border:0;border-radius:var(--radius-sm);background:none;color:var(--ink);font:600 16px 'Nunito',sans-serif;text-align:left;cursor:pointer;}
+.menu-item:hover{background:var(--paper);}
+.menu-item:focus-visible{outline:2px solid var(--accent);outline-offset:-2px;}
+.menu-item[aria-expanded="true"]{color:var(--accent-deep);}
+.menu-item.danger{color:var(--rust);}
+svg.ic{width:22px;height:22px;flex-shrink:0;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;color:var(--ink-soft);}
+.menu-item.danger svg.ic,.menu-item[aria-expanded="true"] svg.ic{color:inherit;}
+.menu-body{display:grid;gap:10px;padding:2px 6px 14px 42px;}
+.menu-actions{grid-template-columns:1fr 1fr;}
+.menu-body .mini-note{margin:0;font-size:12.5px;line-height:1.45;}
 .profile-field{display:grid;gap:4px;font-size:12px;font-weight:700;color:var(--ink-soft);}
 .profile-field input{padding:9px 10px;border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--paper);font:inherit;font-size:14px;color:var(--ink);}
-.profile-section summary{cursor:pointer;font-weight:700;font-size:13.5px;color:var(--accent);}
-.profile-section[open]{display:grid;gap:10px;}
-.profile-stats{font-size:12px;color:var(--ink-soft);border-top:1px solid var(--line);padding-top:10px;}
+.btn-danger{padding:10px 14px;border:1px solid var(--rust);border-radius:var(--radius-sm);background:var(--rust);color:#fff;font:700 14px 'Nunito',sans-serif;cursor:pointer;}
+.btn-danger:disabled{opacity:.45;cursor:not-allowed;}
 .row-note{font-size:11.5px;color:var(--ink-soft);margin-top:2px;}
 .receipt-meta{font-size:12.5px;color:var(--ink-soft);margin:-2px 0 8px;}
 .receipt-amount{width:84px;text-align:right;font-family:'IBM Plex Mono',monospace;font-size:12px;padding:4px 6px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink);}
@@ -470,8 +583,6 @@ footer{margin-top:26px;}
   .tab{font-size:14.5px;padding:10px 6px;}
   .card{padding:16px;}
   .card .overview-card{flex-wrap:wrap;justify-content:center;}
-  .target-body{flex-wrap:wrap;justify-content:center;}
-  .target-list{flex-basis:100%;}
   .donut{width:112px;height:112px;}
   .export-card .sync-actions{width:100%;}
 }
@@ -509,16 +620,45 @@ footer{margin-top:26px;}
     </div>
     <div id="ledgerTopbar" class="ledger-topbar">
       <button class="profile-trigger" id="profileBtn" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="profilePanel"><span class="avatar" id="profileAvatar" aria-hidden="true">?</span><span class="user-name" id="signedInName">Account</span></button>
-      <button class="btn-secondary btn-small" id="dashboardLogoutBtn" type="button">Logout</button>
-      <div class="profile-panel" id="profilePanel" role="dialog" aria-label="Your profile" hidden>
-        <div class="profile-head"><span class="avatar avatar-lg" id="profileAvatarLg" aria-hidden="true">?</span><div><strong id="profileNameText">Account</strong><div class="mini-note" id="profileEmailText"></div></div></div>
-        <label class="profile-field"><span>Display name</span><input type="text" id="profileName" maxlength="60" autocomplete="name"></label>
-        <button class="btn-primary" id="profileSaveBtn" type="button">Save name</button>
-        <details class="profile-section"><summary>Change password</summary>
-          <label class="profile-field"><span>New password</span><input type="password" id="profileNewPassword" minlength="8" autocomplete="new-password" placeholder="At least 8 characters"></label>
-          <button class="btn-secondary" id="profilePasswordBtn" type="button">Update password</button>
-        </details>
-        <div class="profile-stats" id="profileStats"></div>
+      <div class="sheet-backdrop" id="profileBackdrop" hidden></div>
+      <div class="profile-panel" id="profilePanel" role="dialog" aria-modal="true" aria-labelledby="profileNameText" hidden>
+        <button class="sheet-close" id="profileCloseBtn" type="button" aria-label="Close profile">×</button>
+        <div class="profile-hero">
+          <span class="avatar avatar-xl" id="profileAvatarLg" aria-hidden="true">?</span>
+          <strong id="profileNameText">Account</strong>
+          <div class="mini-note" id="profileEmailText"></div>
+          <div class="profile-stats" id="profileStats"></div>
+        </div>
+        <div class="profile-numbers">
+          <div><strong id="profileLeft">$0</strong><span id="profileLeftLabel">Left this month</span></div>
+          <div><strong id="profileSaved">$0</strong><span>Saved in goals</span></div>
+          <div><strong id="profileGoals">0</strong><span>Goals reached</span></div>
+        </div>
+        <ul class="profile-menu">
+          <li><button class="menu-item" type="button" aria-expanded="false" aria-controls="profileRename"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M17 3a2.8 2.8 0 0 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg><span>Rename</span></button>
+            <div class="menu-body" id="profileRename" hidden>
+              <label class="profile-field"><span>Display name</span><input type="text" id="profileName" maxlength="60" autocomplete="name"></label>
+              <button class="btn-primary" id="profileSaveBtn" type="button">Save name</button>
+            </div></li>
+          <li><button class="menu-item" type="button" aria-expanded="false" aria-controls="profilePassword"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><span>Change password</span></button>
+            <div class="menu-body" id="profilePassword" hidden>
+              <label class="profile-field"><span>New password</span><input type="password" id="profileNewPassword" minlength="8" autocomplete="new-password" placeholder="At least 8 characters"></label>
+              <button class="btn-primary" id="profilePasswordBtn" type="button">Update password</button>
+            </div></li>
+          <li><button class="menu-item" type="button" aria-expanded="false" aria-controls="profileExport"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg><span>Export data</span></button>
+            <div class="menu-body menu-actions" id="profileExport" hidden>
+              <button class="btn-secondary" type="button" data-click="exportBtn">Export CSV</button>
+              <button class="btn-secondary" type="button" data-click="exportPdfBtn">Export PDF</button>
+            </div></li>
+          <li><button class="menu-item" type="button" id="profileImportBtn"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/><path d="M12 12v6"/><path d="m9 15 3 3 3-3"/></svg><span>Import bank statement</span></button></li>
+          <li><button class="menu-item" type="button" aria-expanded="false" aria-controls="profileDelete"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M6 6l1 15h10l1-15"/></svg><span>Delete account</span></button>
+            <div class="menu-body" id="profileDelete" hidden>
+              <p class="mini-note">This permanently deletes your account, all your transactions and your goals. Goals you shared are deleted for everyone. It can’t be undone.</p>
+              <label class="profile-field"><span>Type DELETE to confirm</span><input type="text" id="profileDeleteConfirm" autocomplete="off" autocapitalize="characters"></label>
+              <button class="btn-danger" id="profileDeleteBtn" type="button" disabled>Delete my account</button>
+            </div></li>
+          <li><button class="menu-item danger" type="button" id="profileLogoutBtn"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg><span>Log out</span></button></li>
+        </ul>
         <div class="status-inline" id="profileStatus" aria-live="polite"></div>
       </div>
     </div>
@@ -531,6 +671,7 @@ footer{margin-top:26px;}
 
 <!-- ===================== BUDGET ===================== -->
 <div class="tab-panel" data-panel="budget" role="tabpanel">
+  <div id="incomeReminders"></div>
   <div class="summary-grid">
     <section class="card overview">
       <h2 class="card-title">This month</h2>
@@ -543,8 +684,9 @@ footer{margin-top:26px;}
         <div class="owed-note" id="owedNote" hidden></div>
       </div>
       <div class="donut-wrap">
-        <div class="donut" id="donutChart">
-          <div class="donut-center"><span id="donutCenterVal">$0</span><small>tracked</small></div>
+        <div class="donut" id="donutChart" role="img" aria-label="No spending tracked yet">
+          <svg viewBox="0 0 120 120" aria-hidden="true"><g id="donutSegments"></g></svg>
+          <div class="donut-center" aria-hidden="true"><span id="donutCenterVal">$0</span><small>tracked</small></div>
         </div>
         <div class="legend">
           <span><i class="swatch" style="background:var(--need)"></i>Needs</span>
@@ -553,23 +695,37 @@ footer{margin-top:26px;}
         </div>
       </div>
     </div>
+      <div class="target-bars" id="targetBars" hidden></div>
+      <div class="recommendation" id="recommendation">Add your income to see how your month is going.</div>
+      <details class="split-edit">
+        <summary>Change targets</summary>
+        <div class="split-row">
+          <label>Needs <input type="number" id="tgtNeed" value="50" min="0" max="100">%</label>
+          <label>Wants <input type="number" id="tgtWant" value="30" min="0" max="100">%</label>
+          <label>Savings <input type="number" id="tgtSave" value="20" min="0" max="100">%</label>
+        </div>
+        <p class="mini-note" id="splitNote"></p>
+      </details>
     </section>
 
-    <section class="card target-card">
-      <h2 class="card-title">Target</h2>
-      <div class="target-body">
-        <div class="target-list">
-          <label class="target-row"><i class="swatch" style="background:var(--need)"></i><span>Needs</span><input type="number" id="tgtNeed" value="50" min="0" max="100"><em>%</em></label>
-          <label class="target-row"><i class="swatch" style="background:var(--want)"></i><span>Wants</span><input type="number" id="tgtWant" value="30" min="0" max="100"><em>%</em></label>
-          <label class="target-row"><i class="swatch" style="background:var(--save)"></i><span>Savings</span><input type="number" id="tgtSave" value="20" min="0" max="100"><em>%</em></label>
+    <section class="card cal-card">
+      <div class="cal-head">
+        <button class="cal-nav" id="calPrev" type="button" aria-label="Previous month">‹</button>
+        <div class="cal-switch" role="group" aria-label="Calendar view">
+          <button type="button" id="calMonthBtn" aria-pressed="true">Month</button>
+          <button type="button" id="calYearBtn" aria-pressed="false">Year</button>
         </div>
-        <div class="donut-wrap">
-          <div class="donut" id="targetDonut">
-            <div class="donut-center" id="targetDonutCenter"><span id="targetDonutVal">100%</span><small>of income</small></div>
-          </div>
-        </div>
+        <button class="cal-nav" id="calNext" type="button" aria-label="Next month">›</button>
       </div>
-      <div class="recommendation" id="recommendation">Add income and expenses to see your plan.</div>
+      <h2 class="cal-title" id="calTitle"></h2>
+      <div class="cal-legend" aria-hidden="true"><span><i class="dot inc"></i>Income</span><span><i class="dot exp"></i>Expense</span><span><i class="dot due"></i>Income expected</span></div>
+      <div class="cal-grid" id="calGrid"></div>
+      <div class="cal-year" id="calYear" hidden></div>
+      <div class="cal-actions">
+        <button class="cal-add exp" type="button" data-cal-add="expense">＋ Add expense</button>
+        <button class="cal-add inc" type="button" data-cal-add="income">＋ Add income</button>
+      </div>
+      <div class="cal-day" id="calDay" aria-live="polite"></div>
     </section>
   </div>
 
@@ -577,7 +733,7 @@ footer{margin-top:26px;}
     <p id="pdfBankStatus" class="inline-import-status"></p>
     <div class="entry-columns">
       <div class="card">
-        <div class="entry-heading"><h3>Income</h3><label class="compact-pdf-btn" for="pdfBankFile">📄 Import PDF</label></div>
+        <div class="entry-heading"><h3>Income</h3><label class="compact-pdf-btn" for="pdfBankFile">📄 Import PDF / CSV</label></div>
         <form class="entry-form" id="incomeForm">
           <input type="date" id="incDate" required>
           <input type="text" id="incSource" placeholder="Source (e.g. Paycheck)" required>
@@ -590,10 +746,10 @@ footer{margin-top:26px;}
         </table></div>
       </div>
       <div class="card">
-        <div class="entry-heading"><h3>Expenses</h3><div class="entry-tools"><label class="compact-pdf-btn" for="pdfBankFile">📄 Import PDF</label><label class="compact-scan-btn" for="receiptFile">📷 Scan receipt</label></div></div>
+        <div class="entry-heading"><h3>Expenses</h3><div class="entry-tools"><label class="compact-pdf-btn" for="pdfBankFile">📄 Import PDF / CSV</label><label class="compact-scan-btn" for="receiptFile">📷 Scan receipt</label></div></div>
         <div class="scan-row">
           <input type="file" id="receiptFile" accept="image/*" capture="environment">
-          <input type="file" id="pdfBankFile" accept="application/pdf,.pdf">
+          <input type="file" id="pdfBankFile" accept="application/pdf,.pdf,text/csv,.csv">
           <span id="scanStatus"></span>
         </div>
         <form class="entry-form" id="expenseForm">
@@ -691,6 +847,18 @@ footer{margin-top:26px;}
       <div class="ml-model-details" id="mlModelDetails">Model: not trained yet.</div>
     </section>
   </div>
+
+  <section class="card pattern-card">
+    <h2 class="card-title">💡 Income pattern</h2>
+    <p class="mini-note">Ledger learns when your regular income arrives, marks the next expected day on the calendar, and reminds you around payday.</p>
+    <div id="incomePatterns"></div>
+    <div class="ml-actions"><button class="btn-secondary" id="notifyBtn" type="button">Turn on notifications</button><span id="notifyStatus" class="status-inline"></span></div>
+  </section>
+
+  <section class="card badges-card">
+    <h2 class="card-title">🏅 Badges<span class="hint" id="badgeCount"></span></h2>
+    <div class="badge-grid" id="badgeGrid"></div>
+  </section>
 </div>
 
 <button class="assistant-fab" id="assistantFab" type="button" aria-label="Open Ledger Assistant">🤖<span>Ledger Assistant</span></button>
@@ -748,6 +916,8 @@ let databaseMode = false;
 let splitSchemaAvailable = false;
 let goalsSchemaAvailable = false;
 let fingerprintAvailable = true;
+// Calendar tab: which month/year it shows, month or year view, and the selected day.
+const cal = { mode: 'month', year: 0, month: 0, selected: null };
 
 const fmt = n => (n<0?'-$':'$') + Math.abs(Number(n)||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
 
@@ -1093,7 +1263,7 @@ async function handleAuthSession(session){
       refreshProfile();
     }
   }
-  if(signedIn){setAuthGateMessage('');setAppEnabled(true);await loadState();await processPendingJoin()}else{setAppEnabled(false);state={income:[],expenses:[],goals:[]};goalMembers={};openSharePanel=null;render();document.getElementById('profilePanel').hidden=true;document.getElementById('profileBtn').setAttribute('aria-expanded','false');if(peekPendingJoin())setAuthGateMessage('Sign in or create an account to join the shared goal you were invited to.','ok');updateStorageStatus()}}
+  if(signedIn){setAuthGateMessage('');setAppEnabled(true);await loadState();await processPendingJoin()}else{setAppEnabled(false);state={income:[],expenses:[],goals:[]};goalMembers={};openSharePanel=null;render();setProfileOpen(false);if(peekPendingJoin())setAuthGateMessage('Sign in or create an account to join the shared goal you were invited to.','ok');updateStorageStatus()}}
 
 async function logoutLedger(){
   if(!databaseMode) return;
@@ -1105,8 +1275,6 @@ async function logoutLedger(){
     setAuthGateMessage('');
   }
 }
-
-document.getElementById('dashboardLogoutBtn').addEventListener('click', logoutLedger);
 
 // Profile panel: display name, password change, and a small account summary.
 const profileBtn = document.getElementById('profileBtn');
@@ -1129,24 +1297,84 @@ function refreshProfile(){
   const nameInput = document.getElementById('profileName');
   if(document.activeElement !== nameInput) nameInput.value = name;
   const since = currentUser.created_at ? new Date(currentUser.created_at).toLocaleDateString(undefined, {month:'short', year:'numeric'}) : '';
-  const tx = (state.income||[]).length + (state.expenses||[]).length, goals = (state.goals||[]).length;
+  const tx = (state.income||[]).length + (state.expenses||[]).length;
   document.getElementById('profileStats').textContent =
-    [since && `Member since ${since}`, `${tx} transaction${tx===1?'':'s'}`, `${goals} goal${goals===1?'':'s'}`].filter(Boolean).join(' · ');
+    [since && `Member since ${since}`, `${tx} transaction${tx===1?'':'s'}`].filter(Boolean).join(' · ');
+
+  // Three numbers, whole dollars so they fit side by side. Green = good, orange = watch out.
+  const whole = n => (n<0?'-$':'$') + Math.round(Math.abs(n)).toLocaleString();
+  const setNumber = (id, text, tone, title) => {
+    const el = document.getElementById(id);
+    el.textContent = text; el.className = tone; el.title = title || '';
+  };
+  const {year, month} = currentPeriod();
+  const income = state.income.filter(e => inPeriod(e.date, year, month)).reduce((t,e)=>t+e.amount, 0);
+  const expenses = state.expenses.filter(e => inPeriod(e.date, year, month));
+  const left = income - expenses.reduce((t,e)=>t+e.amount, 0) - lentOutOf(expenses);
+  document.getElementById('profileLeftLabel').textContent = (year === 0 || month === 0) ? 'Left overall' : 'Left this month';
+  setNumber('profileLeft', whole(left), left >= 0 ? 'good' : 'warn', fmt(left));
+  const goals = state.goals || [];
+  const saved = goals.reduce((t,g)=>t+(Number(g.saved_amount)||0), 0);
+  setNumber('profileSaved', whole(saved), saved > 0 ? 'good' : '', fmt(saved));
+  const reached = goals.filter(g => g.status === 'achieved' || (Number(g.saved_amount)||0) >= (Number(g.target_amount)||0)).length;
+  setNumber('profileGoals', goals.length ? `${reached} of ${goals.length}` : '0', reached ? 'good' : '');
+}
+// Menu rows open one section at a time (Rename, Change password, Export data, Delete account).
+function setProfileSection(id){
+  document.querySelectorAll('#profilePanel .menu-item[aria-controls]').forEach(btn=>{
+    const open = btn.getAttribute('aria-controls') === id;
+    btn.setAttribute('aria-expanded', String(open));
+    document.getElementById(btn.getAttribute('aria-controls')).hidden = !open;
+  });
+  const input = id && document.getElementById(id).querySelector('input');
+  if(input) input.focus();
 }
 function setProfileOpen(open){
   profilePanel.hidden = !open;
+  document.getElementById('profileBackdrop').hidden = !open;
+  document.body.classList.toggle('sheet-open', open);
   profileBtn.setAttribute('aria-expanded', String(open));
   if(open){
     document.getElementById('profileStatus').textContent = '';
     refreshProfile();
-    document.getElementById('profileName').focus();
+    setProfileSection(null);
+    document.getElementById('profileCloseBtn').focus();
   }
 }
-profileBtn.addEventListener('click', e=>{ e.stopPropagation(); setProfileOpen(profilePanel.hidden); });
-profilePanel.addEventListener('click', e=>e.stopPropagation());
-document.addEventListener('click', ()=>{ if(!profilePanel.hidden) setProfileOpen(false); });
+profileBtn.addEventListener('click', ()=>setProfileOpen(true));
+document.getElementById('profileCloseBtn').addEventListener('click', ()=>{ setProfileOpen(false); profileBtn.focus(); });
+document.getElementById('profileBackdrop').addEventListener('click', ()=>setProfileOpen(false));
 document.addEventListener('keydown', e=>{
   if(e.key === 'Escape' && !profilePanel.hidden){ setProfileOpen(false); profileBtn.focus(); }
+});
+document.querySelectorAll('#profilePanel .menu-item[aria-controls]').forEach(btn=>btn.addEventListener('click', ()=>{
+  setProfileSection(btn.getAttribute('aria-expanded') === 'true' ? null : btn.getAttribute('aria-controls'));
+}));
+document.querySelectorAll('#profilePanel [data-click]').forEach(btn=>btn.addEventListener('click', ()=>document.getElementById(btn.dataset.click).click()));
+document.getElementById('profileImportBtn').addEventListener('click', ()=>{
+  setProfileOpen(false);
+  showTab('budget');
+  document.getElementById('pdfBankFile').click();
+});
+document.getElementById('profileLogoutBtn').addEventListener('click', ()=>{ setProfileOpen(false); logoutLedger(); });
+const deleteConfirm = document.getElementById('profileDeleteConfirm');
+deleteConfirm.addEventListener('input', ()=>{ document.getElementById('profileDeleteBtn').disabled = deleteConfirm.value.trim() !== 'DELETE'; });
+document.getElementById('profileDeleteBtn').addEventListener('click', async ()=>{
+  if(!requireSignedIn() || deleteConfirm.value.trim() !== 'DELETE') return;
+  const btn = document.getElementById('profileDeleteBtn'), status = document.getElementById('profileStatus');
+  btn.disabled = true;
+  status.textContent = 'Deleting your account…';
+  const {error} = await dbClient.rpc('delete_my_account');
+  if(error){
+    btn.disabled = false;
+    status.textContent = /delete_my_account|schema cache/i.test(error.message || '')
+      ? 'Delete account needs the database update first.'
+      : 'Could not delete your account: ' + error.message;
+    return;
+  }
+  setProfileOpen(false);
+  await logoutLedger();
+  setAuthGateMessage('Your account and all its data were deleted.', 'ok');
 });
 document.getElementById('profileSaveBtn').addEventListener('click', async ()=>{
   if(!requireSignedIn()) return;
@@ -1282,6 +1510,7 @@ let goalMembers = {};       // goal id -> [{goal_id, email, user_id}]
 let openSharePanel = null;  // id of the goal whose Share panel is open
 
 function renderGoals(){
+  renderBadges();
   const list=document.getElementById('goalList'); if(!list) return;
   const goals=state.goals||[];
   if(!goals.length){list.innerHTML='<div class="mini-note">No goals yet. Create your first one above.</div>';return;}
@@ -1390,6 +1619,12 @@ async function createGoal(e){
   e.target.reset();document.getElementById('goalSaved').value='0';document.getElementById('goalStatus').textContent='Goal created ✓';await loadGoals();
 }
 
+// Money paid on someone else's behalf (the non-share part of a shared bill) isn't the
+// user's spending, but it did leave the account, so it still reduces what's left.
+function lentOutOf(expenses){
+  return expenses.reduce((t,e)=>t + (e.shared ? Math.max(0,(Number(e.grossAmount)||0)-(Number(e.amount)||0)) : 0), 0);
+}
+
 function render(){
   const {year, month} = currentPeriod();
   const hint = document.getElementById('periodHint');
@@ -1401,9 +1636,7 @@ function render(){
   const byType = {Need:0, Want:0, Savings:0};
   expenseThis.forEach(e=>{ byType[CAT_TYPE[e.category]||'Want'] += e.amount; });
   const totalExpenses = byType.Need + byType.Want + byType.Savings;
-  // Money paid on someone else's behalf (the non-share part of a shared bill) isn't the
-  // user's spending, but it did leave the account, so it still reduces what's left.
-  const lentOut = expenseThis.reduce((t,e)=>t + (e.shared ? Math.max(0,(Number(e.grossAmount)||0)-(Number(e.amount)||0)) : 0), 0);
+  const lentOut = lentOutOf(expenseThis);
   const leftover = totalIncome - totalExpenses - lentOut;
 
   document.getElementById('statIncome').textContent = fmt(totalIncome);
@@ -1421,52 +1654,28 @@ function render(){
   const tgtWant = parseFloat(document.getElementById('tgtWant').value)||0;
   const tgtSave = parseFloat(document.getElementById('tgtSave').value)||0;
 
-  // Target pie chart: the split the user is aiming for. Warns when it doesn't add to 100%.
-  const tgtTotal = tgtNeed + tgtWant + tgtSave;
-  const targetDonut = document.getElementById('targetDonut');
-  if(tgtTotal > 0){
-    const n = tgtNeed/tgtTotal*100, w = n + tgtWant/tgtTotal*100;
-    targetDonut.style.background = `conic-gradient(var(--need) 0% ${n}%, var(--want) ${n}% ${w}%, var(--save) ${w}% 100%)`;
-  } else {
-    targetDonut.style.background = 'conic-gradient(var(--line) 0 100%)';
-  }
-  document.getElementById('targetDonutVal').textContent = Math.round(tgtTotal) + '%';
-  document.getElementById('targetDonutCenter').classList.toggle('warn', Math.round(tgtTotal) !== 100);
+  const splitTotal = Math.round(tgtNeed + tgtWant + tgtSave);
+  const splitNote = document.getElementById('splitNote');
+  splitNote.textContent = splitTotal === 100
+    ? 'Share of your income for each part. 50 / 30 / 20 is a common rule.'
+    : `These add up to ${splitTotal}%. Change them so they add up to 100%.`;
+  splitNote.className = 'mini-note' + (splitTotal === 100 ? '' : ' warn');
 
   // Donut chart: how the tracked money (Needs + Wants + Savings) actually split this month
-  const donut = document.getElementById('donutChart');
-  const centerVal = document.getElementById('donutCenterVal');
-  if(totalExpenses > 0){
-    const needPct = byType.Need/totalExpenses*100;
-    const wantPct = byType.Want/totalExpenses*100;
-    const needEnd = needPct;
-    const wantEnd = needPct + wantPct;
-    donut.style.background = `conic-gradient(var(--need) 0% ${needEnd}%, var(--want) ${needEnd}% ${wantEnd}%, var(--save) ${wantEnd}% 100%)`;
-    centerVal.textContent = fmt(totalExpenses);
-  } else {
-    donut.style.background = 'conic-gradient(var(--line) 0 100%)';
-    centerVal.textContent = '$0';
-  }
+  renderDonut([['Needs', byType.Need, 'need'], ['Wants', byType.Want, 'want'], ['Savings', byType.Savings, 'save']], totalExpenses);
+  document.getElementById('donutCenterVal').textContent = totalExpenses > 0 ? fmt(totalExpenses) : '$0';
 
-  // recommendation engine
-  const targetSavingsAmt = totalIncome * (tgtSave/100);
-  const gap = byType.Savings - targetSavingsAmt;
-  const periodLabel = (year === 0 || month === 0) ? 'the selected data' : 'the month';
-  const needsVsTarget = byType.Need - totalIncome*(tgtNeed/100);
-  const wantsVsTarget = byType.Want - totalIncome*(tgtWant/100);
+  // One-line verdict under the bars. Targets are dollar amounts from the split in "Change targets".
+  const target = {Need:totalIncome*tgtNeed/100, Want:totalIncome*tgtWant/100, Savings:totalIncome*tgtSave/100};
+  const overNeed = byType.Need - target.Need, overWant = byType.Want - target.Want, saveGap = target.Savings - byType.Savings;
   let rec;
-  if(totalIncome === 0){
-    rec = "Add income and expenses to see your plan.";
-  } else if(gap >= 0){
-    rec = `You're at or above your savings target for ${periodLabel} — nice work. Consider moving the extra ${fmt(gap)} into savings or investments before it gets spent.`;
-  } else if(wantsVsTarget > 0){
-    rec = `You're ${fmt(wantsVsTarget)} over your Wants target. Trimming dining out, subscriptions, or shopping by that amount would close most of your ${fmt(-gap)} savings gap.`;
-  } else if(needsVsTarget > 0){
-    rec = `You're ${fmt(needsVsTarget)} over your Needs target. Look for a recurring cost to renegotiate or cut (a subscription, insurance shop-around, or a cheaper plan) rather than a one-time fix.`;
-  } else {
-    rec = `Your spending fits your Needs/Wants split, but savings are still ${fmt(-gap)} short of target — automating a transfer to savings on payday is the most reliable fix.`;
-  }
+  if(totalIncome === 0) rec = 'Add your income to see how your month is going.';
+  else if(overWant > 0) rec = `⚠️ Wants are ${fmt(overWant)} over. Cut back on extras like dining out or shopping.`;
+  else if(overNeed > 0) rec = `⚠️ Needs are ${fmt(overNeed)} over. Look for a bill you can lower.`;
+  else if(saveGap > 0) rec = `💡 Spending is on track. Save ${fmt(saveGap)} more to reach your savings target.`;
+  else rec = '✅ On track: spending is within your targets and savings are reached.';
   document.getElementById('recommendation').textContent = rec;
+  renderTargetBars(totalIncome, byType, target);
 
   // tables
   const incomeBody = document.getElementById('incomeBody');
@@ -1495,6 +1704,7 @@ function render(){
   }
 
   renderGoals();
+  renderCalendar(renderIncomeReminders());
   if(!ledgerMlModel) mlFallbackForecast(mlMonthlyData());
 
   document.querySelectorAll('.del').forEach(btn=>{
@@ -2103,13 +2313,14 @@ const CATEGORY_KEYWORDS = [
 ];
 const INCOME_KEYWORDS = ["payroll","salary","paycheck","direct dep","direct deposit","deposit from","employer","refund","reimbursement","interest earned","cashback","cash back","credit"];
 const EXPENSE_KEYWORDS = ["debit","withdrawal","purchase","payment","fee","charge","transfer out","bill pay","autopay","pos ","purchase at"];
-function guessCategory(desc){const d=desc.toLowerCase();for(const [cat,words] of CATEGORY_KEYWORDS){if(words.some(w=>d.includes(w)))return cat;}return "Other";}
+// Keywords must start a word, so "rent" matches "RENT SEPT" but not "Parents".
+function guessCategory(desc){const words=s=>' '+String(s).toLowerCase().replace(/[^a-z0-9]+/g,' ');const d=words(desc);for(const [cat,keys] of CATEGORY_KEYWORDS){if(keys.some(k=>d.includes(words(k).trimEnd())))return cat;}return "Other";}
 function looksLikeIncome(desc){const d=desc.toLowerCase();return INCOME_KEYWORDS.some(w=>d.includes(w));}
 function looksLikeExpense(desc){const d=desc.toLowerCase();return EXPENSE_KEYWORDS.some(w=>d.includes(w));}
 function findDirectionFromText(desc){const d=desc.toLowerCase();if(/\b(cr|credit)\b/.test(d)||looksLikeIncome(d))return 'Income';if(/\b(dr|debit)\b/.test(d)||looksLikeExpense(d))return 'Expense';return null;}
 function toIsoDate(raw){if(!raw)return null;raw=raw.trim();if(/^\d{4}-\d{2}-\d{2}$/.test(raw))return raw;let m=raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);if(m){let[_,mo,da,yr]=m;if(yr.length===2)yr='20'+yr;return `${yr}-${mo.padStart(2,'0')}-${da.padStart(2,'0')}`;}m=raw.match(/^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+(\d{1,2})(?:,?\s+(\d{2,4}))?$/i);if(m){const months={jan:1,feb:2,mar:3,apr:4,may:5,jun:6,jul:7,aug:8,sep:9,oct:10,nov:11,dec:12};const mo=months[m[1].slice(0,3).toLowerCase()];const da=+m[2];const yr=m[3]?(m[3].length===2?'20'+m[3]:m[3]):new Date().getFullYear();return `${yr}-${String(mo).padStart(2,'0')}-${String(da).padStart(2,'0')}`;}const d=new Date(raw);if(!isNaN(d.getTime()))return d.toISOString().slice(0,10);return null;}
 let bankPreviewRows=[];
-function renderBankPreview(rows){const body=document.getElementById('bankPreviewBody');if(!body)return;body.innerHTML='';bankPreviewRows=rows.map((r,i)=>({...r,id:i,amount:Math.abs(Number(r.signedAmount)),category:guessCategory(r.desc)}));bankPreviewRows.forEach(r=>{const tr=document.createElement('tr');const typeOpts=['Expense','Income'].map(t=>`<option value="${t}" ${t===r.type?'selected':''}>${t}</option>`).join('');const catOpts=CATEGORIES.map(([name])=>`<option value="${name}" ${name===r.category?'selected':''}>${name}</option>`).join('');tr.innerHTML=`<td>${r.date}</td><td class="td-text">${escapeHtml(r.desc)}</td><td class="amt">${fmt(r.amount)}</td><td><select data-id="${r.id}" data-field="type" style="font-size:12px;">${typeOpts}</select></td><td><select data-id="${r.id}" data-field="category" style="font-size:12px;" ${r.type==='Income'?'disabled':''}>${catOpts}</select></td>`;body.appendChild(tr);});body.querySelectorAll('select').forEach(sel=>{sel.addEventListener('change',()=>{const row=bankPreviewRows.find(r=>r.id===parseInt(sel.dataset.id));if(!row)return;row[sel.dataset.field]=sel.value;if(sel.dataset.field==='type'){const catSelect=sel.closest('tr').querySelector('select[data-field="category"]');catSelect.disabled=(sel.value==='Income');}});});document.getElementById('bankPreviewWrap').style.display=rows.length?'block':'none';}
+function renderBankPreview(rows){const body=document.getElementById('bankPreviewBody');if(!body)return;body.innerHTML='';bankPreviewRows=rows.map((r,i)=>({...r,id:i,amount:Math.abs(Number(r.signedAmount)),category:r.category||guessCategory(r.desc)}));bankPreviewRows.forEach(r=>{const tr=document.createElement('tr');const typeOpts=['Expense','Income'].map(t=>`<option value="${t}" ${t===r.type?'selected':''}>${t}</option>`).join('');const catOpts=CATEGORIES.map(([name])=>`<option value="${name}" ${name===r.category?'selected':''}>${name}</option>`).join('');tr.innerHTML=`<td>${r.date}</td><td class="td-text">${escapeHtml(r.desc)}</td><td class="amt">${fmt(r.amount)}</td><td><select data-id="${r.id}" data-field="type" style="font-size:12px;">${typeOpts}</select></td><td><select data-id="${r.id}" data-field="category" style="font-size:12px;" ${r.type==='Income'?'disabled':''}>${catOpts}</select></td>`;body.appendChild(tr);});body.querySelectorAll('select').forEach(sel=>{sel.addEventListener('change',()=>{const row=bankPreviewRows.find(r=>r.id===parseInt(sel.dataset.id));if(!row)return;row[sel.dataset.field]=sel.value;if(sel.dataset.field==='type'){const catSelect=sel.closest('tr').querySelector('select[data-field="category"]');catSelect.disabled=(sel.value==='Income');}});});document.getElementById('bankPreviewWrap').style.display=rows.length?'block':'none';}
 
 // PDF statement import — browser-side PDF text extraction. This avoids requiring
 // an Anthropic API key in the HTML file and works with normal text-based bank PDFs.
@@ -2284,29 +2495,208 @@ function parseBankPdfText(text){
   return rows.filter(r=>{const k=`${r.date}|${r.desc}|${r.signedAmount}`;if(seen.has(k))return false;seen.add(k);return true;});
 }
 
+// CSV statement import. Handles the usual bank exports: a header row with a date, a
+// description and either one signed amount or separate withdrawal/deposit (debit/credit)
+// columns, optionally a Debit/Credit type column; or no header at all
+// (date, description, withdrawal, deposit, balance). Dates may be year-, month- or day-first.
+function parseCsvTable(text){
+  text = text.replace(/^﻿/, '');
+  const firstLine = text.split(/\r?\n/).find(l=>l.trim()) || '';
+  const delim = [',', ';', '\t'].sort((a,b)=>firstLine.split(b).length - firstLine.split(a).length)[0];
+  const table = [];
+  let row = [], field = '', quoted = false;
+  for(let i = 0; i < text.length; i++){
+    const c = text[i];
+    if(quoted){
+      if(c === '"' && text[i+1] === '"'){ field += '"'; i++; }
+      else if(c === '"') quoted = false;
+      else field += c;
+    }else if(c === '"') quoted = true;
+    else if(c === delim){ row.push(field); field = ''; }
+    else if(c === '\n' || c === '\r'){
+      if(c === '\r' && text[i+1] === '\n') i++;
+      row.push(field); table.push(row); row = []; field = '';
+    }else field += c;
+  }
+  row.push(field); table.push(row);
+  return table.map(r=>r.map(f=>f.trim())).filter(r=>r.some(Boolean));
+}
+const CSV_MONEY = /^\(?[-+]?\$?\s?(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d{1,2})?\)?-?(?:\s?(?:CR|DR))?$/i;
+function csvMoney(raw){
+  const s = String(raw || '').trim();
+  if(!CSV_MONEY.test(s)) return null;
+  const value = parseFloat(s.replace(/[^\d.]/g, ''));
+  return /^[(-]|-$|DR$/i.test(s) ? -value : value;
+}
+function csvIsoDate(raw, dayFirst){
+  const t = String(raw || '').trim();
+  const valid = (y, m, d) => m >= 1 && m <= 12 && d >= 1 && d <= 31 ? calIso(y, m, d) : null;
+  let m = t.match(/^(\d{4})[\/.-](\d{1,2})[\/.-](\d{1,2})\b/);
+  if(m) return valid(+m[1], +m[2], +m[3]);
+  m = t.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4}|\d{2})\b/);
+  if(m){
+    const y = m[3].length === 2 ? 2000 + +m[3] : +m[3];
+    return dayFirst ? valid(y, +m[2], +m[1]) : valid(y, +m[1], +m[2]);
+  }
+  m = t.match(BANK_DATE_AT_START);
+  return m && m[0] === t ? bankLineIsoDate(m[1]) : null;
+}
+// Budget-tracker spreadsheets saved as CSV: months across the top (Mar, Apr, …), a row of
+// Week 1 / Week 2 / Month Total under each month, and one row per category. Title rows with
+// "INCOME" or "EXPENSE" set the type. Each filled week becomes one transaction (bi-weekly
+// sheets: week 1 on the 1st, week 2 on the 15th); totals, "-" and blank cells are skipped.
+const TRACKER_MONTHS = ['january','february','march','april','may','june','july','august','september','october','november','december'];
+const TRACKER_CATEGORY_WORDS = [
+  ['Housing', /\brent\b|housing|mortgage/], ['Groceries', /grocer|\bfood\b/], ['Transportation', /transport|transit|\bbus\b|\bcar\b|\bgas\b|\bfuel\b/],
+  ['Utilities', /utilit|\bphone\b|internet|hydro|electric/], ['Debt Payments', /\bdebt\b|credit card|\bloans?\b/],
+  ['Education', /educat|universit|college|tuition|school/], ['Savings & Investments', /\bsaving|invest|rrsp|tfsa/],
+  ['Insurance', /insur/], ['Health & Medical', /health|medic|pharm|dental/], ['Dining Out', /dining|restaurant|takeout/],
+  ['Subscriptions', /subscri|netflix|spotify/], ['Entertainment', /entertain|movie|\bgames?\b/], ['Shopping', /shopping|cloth/],
+  ['Personal Care', /personal care|\bgym\b|\bhair/], ['Childcare', /\bchild|daycare/],
+];
+function trackerMonth(cell){
+  const t = String(cell || '').trim().toLowerCase().replace(/\.$/, '');
+  const i = TRACKER_MONTHS.findIndex(m=>t === m || t === m.slice(0,3) || (m === 'september' && t === 'sept'));
+  return i + 1;
+}
+function trackerCategory(name, sub){
+  const exact = CATEGORIES.find(([c])=>[name, sub].some(x=>x.toLowerCase() === c.toLowerCase()));
+  if(exact) return exact[0];
+  const text = `${name} ${sub}`.toLowerCase();
+  const hit = TRACKER_CATEGORY_WORDS.find(([, re])=>re.test(text));
+  return hit ? hit[0] : guessCategory(text);
+}
+function parseTrackerCsv(table){
+  const isMonthRow = r => r.filter(trackerMonth).length >= 2;
+  if(!table.some(isMonthRow)) return null;
+  const yearText = table.filter(r=>isMonthRow(r) || r.filter(Boolean).length === 1).flat().join(' ').match(/\b(20\d{2})\b/);
+  const year = yearText ? +yearText[1] : new Date().getFullYear();
+  const rows = [];
+  let type = 'Expense', months = null, cols = null;
+  for(const r of table){
+    const name = (r[0] || '').trim(), sub = (r[1] || '').trim();
+    if(r.filter(Boolean).length === 1 && /income|earning/i.test(name)){ type = 'Income'; continue; }
+    if(r.filter(Boolean).length === 1 && /expense|spending|bills/i.test(name)){ type = 'Expense'; continue; }
+    if(isMonthRow(r)){
+      let current = 0;
+      months = r.map(c=>{ if(c) current = trackerMonth(c); return current; });
+      cols = null;
+      continue;
+    }
+    if(months && !cols && !r.some(c=>csvMoney(c))){
+      // The header under the months: which columns hold amounts, and the day each stands for.
+      const weeksIn = {};
+      r.forEach((c, j)=>{ const w = c.match(/week\s*(\d+)/i); if(w && months[j]) weeksIn[months[j]] = Math.max(weeksIn[months[j]] || 0, +w[1]); });
+      cols = [];
+      r.forEach((c, j)=>{
+        const month = months[j], w = c.match(/week\s*(\d+)/i);
+        if(!month) return;
+        if(w) cols.push({col:j, month, day: weeksIn[month] <= 2 ? (w[1] === '1' ? 1 : 15) : Math.min(28, 1 + (w[1]-1)*7)});
+        else if(!weeksIn[month] && !/total/i.test(c) && !cols.some(x=>x.month === month)) cols.push({col:j, month, day:1});
+      });
+      continue;
+    }
+    if(!cols || (!name && !sub) || /^(total|net|balance|grand total)/i.test(name)) continue;
+    for(const c of cols){
+      const value = csvMoney(r[c.col]);
+      if(!value) continue;
+      const date = calIso(year, c.month, c.day);
+      if(type === 'Income') rows.push({date, desc: sub.length > name.length ? sub : name, signedAmount: Math.abs(value), type:'Income'});
+      else rows.push({date, desc: name || sub, signedAmount: -Math.abs(value), type:'Expense', category: trackerCategory(name, sub)});
+    }
+  }
+  return rows.sort((a,b)=>a.date.localeCompare(b.date));
+}
+
+function parseBankCsv(text){
+  const table = parseCsvTable(text);
+  const tracker = parseTrackerCsv(table);
+  if(tracker) return tracker;
+  const isDate = c => !!(csvIsoDate(c, false) || csvIsoDate(c, true));
+  const headerAt = table.slice(0, 10).findIndex(r=>r.some(c=>/date/i.test(c)) && !r.some(isDate));
+  const header = headerAt >= 0 ? table[headerAt].map(h=>h.toLowerCase()) : null;
+  const body = header ? table.slice(headerAt + 1) : table;
+  const find = re => header.findIndex(h=>re.test(h));
+  const col = header && {
+    date: find(/date/),
+    desc: header.map((h,i)=>/description|details|merchant|payee|memo|narrative|particulars|^name$|^transaction$/.test(h) ? i : -1).filter(i=>i >= 0),
+    type: find(/^(transaction )?type$|cr\s*\/\s*dr|dr\s*\/\s*cr|debit\s*\/\s*credit|credit\s*\/\s*debit/),
+    out: find(/withdraw|^debits?( amount)?$|money out|paid out|^charges?$/),
+    in: find(/deposit|^credits?( amount)?$|money in|paid in/),
+    amount: find(/amount|^value$|cad\$|usd\$|^\$$/),
+  };
+  if(header && col.date < 0) return [];
+  const dates = body.map(r=>header ? r[col.date] : r.find(isDate)).filter(Boolean);
+  const dayFirst = dates.some(c=>{ const m = c.match(/^(\d{1,2})[\/.-]\d{1,2}[\/.-]/); return m && +m[1] > 12; });
+
+  const rows = [];
+  for(const r of body){
+    let date, desc, out = null, inn = null, signed = null, typeText = '';
+    if(header){
+      date = csvIsoDate(r[col.date], dayFirst);
+      desc = col.desc.map(i=>r[i]).filter(Boolean).join(' · ');
+      if(col.out >= 0 || col.in >= 0){ out = csvMoney(r[col.out]); inn = csvMoney(r[col.in]); }
+      else if(col.amount >= 0) signed = csvMoney(r[col.amount]);
+      if(col.type >= 0) typeText = String(r[col.type] || '').toLowerCase();
+    }else{
+      const di = r.findIndex(isDate);
+      if(di < 0) continue;
+      date = csvIsoDate(r[di], dayFirst);
+      const ti = r.findIndex((c,i)=>i > di && c && !CSV_MONEY.test(c));
+      desc = ti >= 0 ? r[ti] : '';
+      const slots = r.slice((ti >= 0 ? ti : di) + 1);
+      if(slots.length >= 2){ out = csvMoney(slots[0]); inn = csvMoney(slots[1]); }
+      else signed = csvMoney(slots[0]);
+    }
+    if(!date) continue;
+    desc = desc || '(no description)';
+    if(/opening balance|closing balance|balance forward/i.test(desc)) continue;
+    if(out) rows.push({date, desc, signedAmount:-Math.abs(out), type:'Expense'});
+    if(inn) rows.push({date, desc, signedAmount:Math.abs(inn), type:'Income'});
+    if(signed){
+      const type = /debit|withdraw|\bdr\b/.test(typeText) ? 'Expense' : /credit|deposit|\bcr\b/.test(typeText) ? 'Income' : signed < 0 ? 'Expense' : 'Income';
+      rows.push({date, desc, signedAmount:type === 'Expense' ? -Math.abs(signed) : Math.abs(signed), type});
+    }
+  }
+  return rows.sort((a,b)=>a.date.localeCompare(b.date));
+}
+
+// One button imports both PDF and CSV statements. The result message sits above the
+// Income/Expenses cards, so the page scrolls to it (and to the review table) on phones.
 document.getElementById('pdfBankFile').addEventListener('change', async (e) => {
   const file = e.target.files[0];
   if(!file) return;
   const statusEl = document.getElementById('pdfBankStatus');
+  const isCsv = /\.csv$/i.test(file.name) || /csv|vnd\.ms-excel/i.test(file.type || '');
   statusEl.className = '';
-  statusEl.textContent = 'Opening PDF…';
+  statusEl.textContent = isCsv ? 'Reading CSV…' : 'Opening PDF…';
+  statusEl.scrollIntoView({block:'center', behavior:'smooth'});
   try{
-    if(file.type && file.type !== 'application/pdf' && !/\.pdf$/i.test(file.name)) throw new Error('Please choose a PDF file');
-    const lines = await extractPdfLines(file, statusEl);
-    if(!lines.some(l=>l.text)) throw new Error('This PDF contains no selectable text');
-    const rows = parseBankStatement(lines);
+    let rows;
+    if(isCsv){
+      rows = parseBankCsv(await file.text());
+    }else{
+      if(file.type && file.type !== 'application/pdf' && !/\.pdf$/i.test(file.name)) throw new Error('Please choose a PDF or CSV file');
+      const lines = await extractPdfLines(file, statusEl);
+      if(!lines.some(l=>l.text)) throw new Error('This PDF contains no selectable text');
+      rows = parseBankStatement(lines);
+    }
     if(!rows.length) throw new Error('No transaction rows found');
 
     statusEl.className = 'ok';
     const deposits = rows.filter(r=>r.type==='Income').length;
-    statusEl.textContent = `Found ${rows.length} transactions: ${deposits} deposit${deposits===1?'':'s'} as income, ${rows.length-deposits} withdrawal${rows.length-deposits===1?'':'s'} as expenses. Review before adding.`;
+    statusEl.textContent = `Found ${rows.length} transaction${rows.length===1?'':'s'}: ${deposits} income, ${rows.length-deposits} expense${rows.length-deposits===1?'':'s'}. Check them below (you can change any type or category), then add them.`;
     renderBankPreview(rows);
+    document.getElementById('bankPreviewWrap').scrollIntoView({block:'start', behavior:'smooth'});
   }catch(err){
-    console.error('PDF import failed:', err);
+    console.error('Statement import failed:', err);
     statusEl.className = 'err';
     statusEl.textContent = err.message === 'This PDF contains no selectable text'
-      ? 'This PDF is image/scanned-only. Export a CSV from your bank instead, or use a text-based PDF.'
-      : "Couldn't read that statement. Make sure it is a bank PDF with selectable transaction text, then try again.";
+      ? 'This PDF is a scanned image, so Ledger can’t read its text. Download the CSV version of the statement from your bank and import that instead.'
+      : err.message === 'Please choose a PDF or CSV file' ? 'Please choose a PDF or CSV bank statement.'
+      : isCsv ? 'Ledger couldn’t find transactions in that CSV, so nothing was added. It reads bank statement exports (a date column plus an amount, or withdrawal and deposit columns) and budget sheets with months across the top.'
+      : 'Couldn’t find transactions in that PDF. Try the CSV version of the statement from your bank instead.';
+    statusEl.scrollIntoView({block:'center', behavior:'smooth'});
   }finally{
     e.target.value = '';
   }
@@ -2318,9 +2708,25 @@ document.getElementById('bankConfirmBtn').addEventListener('click', async ()=>{
   try{
     const entries=bankPreviewRows.map(r=>r.type==='Expense'?{kind:'expense',entry:{id:crypto.randomUUID(),date:r.date,category:r.category||'Other',amount:Math.abs(Number(r.amount)),description:r.desc||null}}:{kind:'income',entry:{id:crypto.randomUUID(),date:r.date,source:r.desc||'(bank transaction)',amount:Math.abs(Number(r.amount)),description:r.desc||null}}).filter(x=>x.entry.date&&Number.isFinite(x.entry.amount)&&x.entry.amount>0);
     const result=await addEntriesToDatabase(entries);
-    document.getElementById('monthSel').value='0';document.getElementById('yearSel').value='0';await loadState();
-    status.textContent=`Added ${result.added} transaction${result.added===1?'':'s'}${result.skipped?`; skipped ${result.skipped} duplicate${result.skipped===1?'':'s'}`:''}.`;
-    updateStorageStatus(`Bank PDF import: ${result.added} added ✓`);
+    // Every row keeps its own date, so each month gets its own entries. Show the latest
+    // imported month (not "All months") and say which months were added.
+    const dates=entries.map(x=>x.entry.date).sort();
+    const monthName=iso=>longDate(iso,{month:'long',year:'numeric'});
+    const monthSel=document.getElementById('monthSel'), yearSel=document.getElementById('yearSel');
+    if(dates.length){
+      if(monthSel.value==='0') monthSel.value='1';
+      if(yearSel.value==='0') yearSel.value=String(new Date().getFullYear());
+      jumpToDate(dates[dates.length-1]);
+    }
+    await loadState();
+    const added=`Added ${result.added} transaction${result.added===1?'':'s'}${result.skipped?`; skipped ${result.skipped} duplicate${result.skipped===1?'':'s'}`:''}.`;
+    const range=dates.length?(monthName(dates[0])===monthName(dates[dates.length-1])?monthName(dates[0]):`${monthName(dates[0])} to ${monthName(dates[dates.length-1])}`):'';
+    status.textContent=added;
+    const importStatus=document.getElementById('pdfBankStatus');
+    importStatus.className='ok';
+    importStatus.textContent=range?`${added} They cover ${range}, each saved in its own month. Showing ${monthName(dates[dates.length-1])}; pick another month at the top to see the rest.`:added;
+    window.scrollTo({top:0,behavior:'smooth'});
+    updateStorageStatus(`Statement import: ${result.added} added ✓`);
     setTimeout(()=>{document.getElementById('bankPreviewWrap').style.display='none';status.textContent='';},3500);
   }catch(err){
     console.error(err);status.textContent='Could not save imported transactions.';status.style.color='var(--rust)';
@@ -2582,6 +2988,299 @@ function initShortcutsAndOffline(){
 }
 
 initShortcutsAndOffline();
+
+/* ========================= DONUT ========================= */
+// A ring split into rounded segments with a small gap between them; each segment's
+// length is that part's share of the total.
+function renderDonut(parts, total){
+  const r = 52, stroke = 12, circumference = 2 * Math.PI * r, gap = 8;
+  const shown = parts.filter(([, value])=>value > 0);
+  const ring = (color, extra = '') => `<circle cx="60" cy="60" r="${r}" style="stroke:var(--${color})"${extra}/>`;
+  let html, start = 0;
+  if(!shown.length) html = ring('line');
+  else if(shown.length === 1) html = ring(shown[0][2]);
+  else html = shown.map(([, value, color])=>{
+    const length = value / total * circumference;
+    // Round ends stick out half the stroke width on each side, so shorten the dash to keep the gap.
+    const dash = Math.max(0.01, length - gap - stroke);
+    const svg = ring(color, ` stroke-dasharray="${dash.toFixed(2)} ${circumference.toFixed(2)}" stroke-dashoffset="${(-(start + (gap + stroke) / 2)).toFixed(2)}"`);
+    start += length;
+    return svg;
+  }).join('');
+  document.getElementById('donutSegments').innerHTML = html;
+  document.getElementById('donutChart').setAttribute('aria-label', total > 0
+    ? 'Spending split: ' + parts.map(([label, value])=>`${label} ${Math.round(value / total * 100)}%`).join(', ')
+    : 'No spending tracked yet');
+}
+
+/* ========================= TARGET BARS ========================= */
+// Needs and Wants: dollars spent against their limit. Savings: dollars saved against the target.
+// A full orange bar means that part went over.
+function renderTargetBars(income, byType, target){
+  const box = document.getElementById('targetBars');
+  box.hidden = income <= 0;
+  if(income <= 0){ box.innerHTML = ''; return; }
+  box.innerHTML = [['Needs','Need','need'], ['Wants','Want','want'], ['Savings','Savings','save']].map(([label, type, color])=>{
+    const amount = byType[type], goal = target[type], saving = type === 'Savings';
+    const ok = saving ? amount >= goal : amount <= goal;
+    const note = saving ? (ok ? 'target reached' : `${fmt(goal - amount)} to go`) : (ok ? `${fmt(goal - amount)} left` : `${fmt(amount - goal)} over`);
+    const pct = goal > 0 ? Math.min(100, amount / goal * 100) : (amount > 0 ? 100 : 0);
+    return `<div class="tbar"><div class="tbar-top"><span>${label}</span><em>${fmt(amount)} of ${fmt(goal)}</em><strong class="${ok ? 'good' : 'warn'}">${note}</strong></div>`
+      + `<div class="tbar-track" role="img" aria-label="${label}: ${fmt(amount)} of ${fmt(goal)}, ${note}"><span class="tbar-fill" style="width:${pct}%;background:${!saving && !ok ? 'var(--orange)' : `var(--${color})`}"></span></div></div>`;
+  }).join('');
+}
+
+/* ========================= CALENDAR ========================= */
+function calIso(y, m, d){ return `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`; }
+function calToday(){ const n = new Date(); return calIso(n.getFullYear(), n.getMonth()+1, n.getDate()); }
+function calDayNum(iso){ return Date.UTC(+iso.slice(0,4), +iso.slice(5,7)-1, +iso.slice(8,10)) / 86400000; }
+function calAddDays(iso, days){ return new Date((calDayNum(iso) + days) * 86400000).toISOString().slice(0,10); }
+function medianOf(values){ const v = values.slice().sort((a,b)=>a-b), mid = Math.floor(v.length/2); return v.length % 2 ? v[mid] : (v[mid-1] + v[mid]) / 2; }
+function longDate(iso, opts = {weekday:'long', month:'long', day:'numeric'}){ return new Date(iso + 'T00:00:00').toLocaleDateString(undefined, opts); }
+function shortMoney(n){ const a = Math.abs(n), sign = n < 0 ? '-$' : '$'; return a >= 1000 ? sign + (a/1000).toFixed(a >= 10000 ? 0 : 1).replace(/\.0$/,'') + 'k' : sign + Math.round(a); }
+function whenText(iso){
+  const d = calDayNum(iso) - calDayNum(calToday());
+  return d === 0 ? 'today' : d === 1 ? 'tomorrow' : d === -1 ? 'yesterday' : d < 0 ? `${-d} days ago` : `in ${d} days`;
+}
+
+function renderCalendar(patterns = incomePatterns()){
+  const {year, month} = currentPeriod();
+  if(year && month){ cal.year = year; cal.month = month; }
+  if(!cal.year){ const n = new Date(); cal.year = n.getFullYear(); cal.month = n.getMonth()+1; }
+  const first = calIso(cal.year, cal.month, 1), isMonth = cal.mode === 'month';
+  const monthBtn = document.getElementById('calMonthBtn');
+  monthBtn.textContent = longDate(first, {month:'short'});
+  monthBtn.setAttribute('aria-pressed', String(isMonth));
+  document.getElementById('calYearBtn').setAttribute('aria-pressed', String(!isMonth));
+  document.getElementById('calTitle').textContent = isMonth ? longDate(first, {month:'long', year:'numeric'}) : String(cal.year);
+  document.getElementById('calPrev').setAttribute('aria-label', isMonth ? 'Previous month' : 'Previous year');
+  document.getElementById('calNext').setAttribute('aria-label', isMonth ? 'Next month' : 'Next year');
+  document.getElementById('calGrid').hidden = !isMonth;
+  document.getElementById('calDay').hidden = !isMonth;
+  document.getElementById('calYear').hidden = isMonth;
+  if(!isMonth){ renderCalendarYear(); return; }
+
+  const days = {};
+  const add = (e, kind) => {
+    if(!inPeriod(e.date, cal.year, cal.month)) return;
+    const t = days[e.date] = days[e.date] || {inc:0, exp:0, items:[]};
+    t[kind] += e.amount;
+    t.items.push({kind, e});
+  };
+  state.income.forEach(e=>add(e, 'inc'));
+  state.expenses.forEach(e=>add(e, 'exp'));
+  const expected = new Set(patterns.map(p=>p.next));
+  const today = calToday();
+  if(!cal.selected || cal.selected.slice(0,7) !== first.slice(0,7)) cal.selected = today.slice(0,7) === first.slice(0,7) ? today : first;
+
+  const lead = new Date(cal.year, cal.month-1, 1).getDay(), count = new Date(cal.year, cal.month, 0).getDate();
+  let html = ['S','M','T','W','T','F','S'].map(d=>`<div class="cal-dow" aria-hidden="true">${d}</div>`).join('') + '<div class="cal-cell blank"></div>'.repeat(lead);
+  for(let d = 1; d <= count; d++){
+    const iso = calIso(cal.year, cal.month, d), t = days[iso] || {inc:0, exp:0};
+    const due = expected.has(iso) && !t.inc;
+    const label = [longDate(iso), t.inc && `income ${fmt(t.inc)}`, t.exp && `spent ${fmt(t.exp)}`, due && 'income expected'].filter(Boolean).join(', ');
+    html += `<button type="button" class="cal-cell${iso === today ? ' today' : ''}" data-date="${iso}" aria-pressed="${iso === cal.selected}" aria-label="${escapeHtml(label)}">`
+      + `<span class="cal-num">${d}</span>${t.exp ? `<span class="cal-amt">${shortMoney(t.exp)}</span>` : ''}`
+      + `<span class="cal-dots">${t.inc ? '<i class="dot inc"></i>' : ''}${t.exp ? '<i class="dot exp"></i>' : ''}${due ? '<i class="dot due"></i>' : ''}</span></button>`;
+  }
+  html += '<div class="cal-cell blank"></div>'.repeat((7 - (lead + count) % 7) % 7);
+  const grid = document.getElementById('calGrid');
+  grid.innerHTML = html;
+  grid.querySelectorAll('[data-date]').forEach(b=>b.addEventListener('click', ()=>{
+    cal.selected = b.dataset.date;
+    renderCalendar(patterns);
+    grid.querySelector(`[data-date="${cal.selected}"]`).focus();
+  }));
+
+  const t = days[cal.selected];
+  const rows = (t ? t.items : []).map(({kind, e})=>{
+    const note = kind === 'exp' && e.description && e.description !== 'Shared expense' ? ` · ${escapeHtml(e.description)}` : '';
+    return `<li><span>${kind === 'inc' ? escapeHtml(e.source || 'Income') : escapeHtml(e.category) + note}</span><strong class="${kind === 'inc' ? 'in' : 'out'}">${kind === 'inc' ? '+' : '−'}${fmt(e.amount)}</strong></li>`;
+  }).concat(patterns.filter(p=>p.next === cal.selected).map(p=>`<li class="expected"><span>${escapeHtml(p.source)} usually arrives</span><strong class="in">about ${fmt(p.amount)}</strong></li>`));
+  document.getElementById('calDay').innerHTML = `<h3>${longDate(cal.selected)}</h3><div class="cal-day-sum">${t ? `In ${fmt(t.inc)} · Out ${fmt(t.exp)}` : 'Nothing logged on this day.'}</div>${rows.length ? `<ul class="cal-list">${rows.join('')}</ul>` : ''}`;
+}
+
+function renderCalendarYear(){
+  const now = new Date(), box = document.getElementById('calYear');
+  box.innerHTML = Array.from({length:12}, (_, i)=>{
+    const m = i+1;
+    const inc = state.income.filter(e=>inPeriod(e.date, cal.year, m)).reduce((t,e)=>t+e.amount, 0);
+    const exps = state.expenses.filter(e=>inPeriod(e.date, cal.year, m));
+    const out = exps.reduce((t,e)=>t+e.amount, 0), left = inc - out - lentOutOf(exps);
+    const current = cal.year === now.getFullYear() && m === now.getMonth()+1;
+    const body = inc || out
+      ? `<span class="in">In ${shortMoney(inc)}</span><span>Out ${shortMoney(out)}</span><span class="${left >= 0 ? 'good' : 'warn'}">Left ${shortMoney(left)}</span>`
+      : '<span>No entries</span>';
+    return `<button type="button" class="cal-month${current ? ' current' : ''}" data-month="${m}"><strong>${longDate(calIso(cal.year, m, 1), {month:'short'})}</strong>${body}</button>`;
+  }).join('');
+  box.querySelectorAll('[data-month]').forEach(b=>b.addEventListener('click', ()=>{ cal.mode = 'month'; setCalMonth(cal.year, +b.dataset.month); }));
+}
+
+// Moving the calendar also moves the month shown at the top, when it shows a single month.
+function setCalMonth(year, month){
+  const d = new Date(year, month-1, 1);
+  cal.year = d.getFullYear(); cal.month = d.getMonth()+1; cal.selected = null;
+  jumpToDate(calIso(cal.year, cal.month, 1));
+  render();
+}
+document.getElementById('calPrev').addEventListener('click', ()=> cal.mode === 'month' ? setCalMonth(cal.year, cal.month-1) : setCalMonth(cal.year-1, cal.month));
+document.getElementById('calNext').addEventListener('click', ()=> cal.mode === 'month' ? setCalMonth(cal.year, cal.month+1) : setCalMonth(cal.year+1, cal.month));
+document.getElementById('calMonthBtn').addEventListener('click', ()=>{ cal.mode = 'month'; renderCalendar(); });
+document.getElementById('calYearBtn').addEventListener('click', ()=>{ cal.mode = 'year'; renderCalendar(); });
+document.querySelectorAll('[data-cal-add]').forEach(b=>b.addEventListener('click', ()=>{
+  const income = b.dataset.calAdd === 'income';
+  showTab('budget');
+  document.getElementById(income ? 'incDate' : 'expDate').value = (cal.mode === 'month' && cal.selected) || calToday();
+  document.getElementById(income ? 'incomeForm' : 'expenseForm').scrollIntoView({block:'center'});
+  document.getElementById(income ? 'incSource' : 'expAmount').focus({preventScroll:true});
+}));
+
+/* ========================= INCOME PATTERNS & REMINDERS ========================= */
+// Learns regular income: the same source arriving on a steady schedule (weekly, every two
+// weeks or monthly) at least 3 times. Predicts the next date and a typical amount.
+function incomePatterns(){
+  const groups = {};
+  state.income.forEach(e=>{
+    const source = String(e.source || '').trim();
+    if(!source || /^paid back/i.test(source)) return;
+    (groups[source.toLowerCase()] = groups[source.toLowerCase()] || []).push(e);
+  });
+  const today = calDayNum(calToday()), patterns = [];
+  Object.entries(groups).forEach(([key, list])=>{
+    const items = list.slice().sort((a,b)=>a.date.localeCompare(b.date));
+    const days = [...new Set(items.map(e=>calDayNum(e.date)))];
+    if(days.length < 3) return;
+    const gaps = days.slice(1).map((d,i)=>d - days[i]).slice(-6), gap = medianOf(gaps);
+    const schedule = gap >= 6 && gap <= 8 ? 'every week' : gap >= 13 && gap <= 16 ? 'every two weeks' : gap >= 27 && gap <= 32 ? 'every month' : '';
+    if(!schedule || gaps.filter(g=>Math.abs(g - gap) <= 4).length < Math.ceil(gaps.length * 0.75)) return;
+    const recent = items.slice(-4), last = items[items.length-1];
+    let next;
+    if(schedule === 'every month'){
+      const day = Math.round(medianOf(recent.map(e=>+e.date.slice(8,10))));
+      const y = +last.date.slice(0,4), m = +last.date.slice(5,7) + 1;
+      const ny = m > 12 ? y+1 : y, nm = m > 12 ? 1 : m;
+      next = calIso(ny, nm, Math.min(day, new Date(ny, nm, 0).getDate()));
+    }else{
+      next = calAddDays(last.date, Math.round(gap));
+    }
+    if(calDayNum(next) - today < -45) return;   // stopped arriving; not a pattern any more
+    patterns.push({key:`${key}|${next}`, source:last.source, schedule, next, amount:medianOf(recent.map(e=>e.amount))});
+  });
+  return patterns.sort((a,b)=>a.next.localeCompare(b.next));
+}
+
+function readStore(key){ try{ return localStorage.getItem(key); }catch(e){ return null; } }
+function writeStore(key, value){ try{ localStorage.setItem(key, value); }catch(e){} }
+
+// A reminder shows from the day before expected income until 10 days after, unless it has
+// been logged (which moves the next expected date) or snoozed with "Not yet" for today.
+function renderIncomeReminders(){
+  const patterns = incomePatterns(), today = calToday();
+  const due = patterns.filter(p=>{
+    const d = calDayNum(p.next) - calDayNum(today);
+    return d <= 1 && d >= -10 && readStore('ledgerSnooze:' + p.key) !== today;
+  });
+  const box = document.getElementById('incomeReminders');
+  box.innerHTML = due.map((p, i)=>`<div class="income-reminder" role="status"><p><strong>💰 Did your ${escapeHtml(p.source)} arrive?</strong><br>It usually comes around ${longDate(p.next, {month:'short', day:'numeric'})} (${whenText(p.next)}), about ${fmt(p.amount)}.</p><div class="reminder-actions"><button class="btn-primary" type="button" data-remind-add="${i}">Yes, add it</button><button class="btn-secondary" type="button" data-remind-snooze="${i}">Not yet</button></div></div>`).join('');
+  box.querySelectorAll('[data-remind-add]').forEach(b=>b.addEventListener('click', ()=>addExpectedIncome(due[b.dataset.remindAdd])));
+  box.querySelectorAll('[data-remind-snooze]').forEach(b=>b.addEventListener('click', ()=>{
+    writeStore('ledgerSnooze:' + due[b.dataset.remindSnooze].key, today);
+    renderIncomeReminders();
+  }));
+  document.getElementById('incomePatterns').innerHTML = patterns.length
+    ? `<ul class="pattern-list">${patterns.map(p=>`<li><strong>${escapeHtml(p.source)}</strong> · ${p.schedule} · about ${fmt(p.amount)}<small>Next expected ${longDate(p.next, {weekday:'short', month:'short', day:'numeric'})} (${whenText(p.next)})</small></li>`).join('')}</ul>`
+    : '<p class="mini-note">No regular income found yet. Once the same income arrives 3 times on a steady schedule, Ledger learns it.</p>';
+  notifyIncomeDue(due);
+  return patterns;
+}
+
+async function addExpectedIncome(p){
+  if(!requireSignedIn()) return;
+  const answer = prompt(`How much ${p.source} did you get?`, p.amount.toFixed(2));
+  if(answer === null) return;
+  const amount = Math.round(parseFloat(answer) * 100) / 100;
+  if(!Number.isFinite(amount) || amount <= 0){ updateStorageStatus('Enter a valid amount'); return; }
+  const entry = {id:crypto.randomUUID(), date:calToday(), source:p.source, amount};
+  if(hasTransaction(entry, 'income')){ updateStorageStatus('That income entry already exists'); return; }
+  try{
+    await insertTransaction(entry, 'income', makeFingerprint('income', entry));
+    state.income.push(entry);
+    jumpToDate(entry.date);
+    render();
+    updateStorageStatus('Income saved ✓');
+  }catch(err){
+    console.error(err);
+    updateStorageStatus('Could not save income');
+    alert('Could not save income: ' + (err.message || 'Unknown error'));
+  }
+}
+
+// Browser notifications need the page open (there is no push server), so they fire when
+// Ledger is opened or refreshed around payday — once per expected payment.
+function notifyIncomeDue(due){
+  if(!('Notification' in window) || Notification.permission !== 'granted') return;
+  due.forEach(p=>{
+    const tag = 'ledgerNotified:' + p.key;
+    if(readStore(tag)) return;
+    writeStore(tag, '1');
+    const title = 'Payday? 💰';
+    const options = {body:`Your ${p.source} (about ${fmt(p.amount)}) usually arrives ${whenText(p.next)}. Open Ledger to add it.`, icon:'icon-192.png', tag};
+    if(navigator.serviceWorker && navigator.serviceWorker.controller) navigator.serviceWorker.ready.then(r=>r.showNotification(title, options)).catch(()=>{});
+    else { try{ new Notification(title, options); }catch(e){} }
+  });
+}
+function updateNotifyButton(){
+  const btn = document.getElementById('notifyBtn'), status = document.getElementById('notifyStatus');
+  if(!('Notification' in window)){
+    btn.hidden = true;
+    status.textContent = 'This browser can’t show notifications. Reminders still appear at the top of Budget.';
+    return;
+  }
+  btn.hidden = Notification.permission !== 'default';
+  status.textContent = Notification.permission === 'granted' ? 'Notifications are on.'
+    : Notification.permission === 'denied' ? 'Notifications are blocked for this site; allow them in your browser settings.' : '';
+}
+document.getElementById('notifyBtn').addEventListener('click', async ()=>{
+  await Notification.requestPermission();
+  updateNotifyButton();
+  renderIncomeReminders();
+});
+updateNotifyButton();
+
+/* ========================= BADGES ========================= */
+function longestStreak(){
+  const days = [...new Set([...state.income, ...state.expenses].map(e=>calDayNum(e.date)))].sort((a,b)=>a-b);
+  let best = days.length ? 1 : 0, run = 1;
+  for(let i = 1; i < days.length; i++){ run = days[i] - days[i-1] === 1 ? run + 1 : 1; best = Math.max(best, run); }
+  return best;
+}
+// A finished month where Needs + Wants stayed within the target share of income.
+function stayedUnderBudget(){
+  const limit = (parseFloat(document.getElementById('tgtNeed').value)||0) + (parseFloat(document.getElementById('tgtWant').value)||0);
+  const thisMonth = calToday().slice(0,7), months = {};
+  const month = d => months[d.slice(0,7)] = months[d.slice(0,7)] || {income:0, spent:0};
+  state.income.forEach(e=>{ month(e.date).income += e.amount; });
+  state.expenses.forEach(e=>{ if(CAT_TYPE[e.category] !== 'Savings') month(e.date).spent += e.amount; });
+  return Object.entries(months).some(([m, t])=>m < thisMonth && t.income > 0 && t.spent <= t.income * limit / 100);
+}
+function renderBadges(){
+  const goals = state.goals || [];
+  const saved = goals.reduce((t,g)=>t + (Number(g.saved_amount)||0), 0);
+  const streak = longestStreak();
+  const badges = [
+    ['🌱', 'First entry', state.income.length + state.expenses.length > 0, 'Add a transaction'],
+    ['🔥', '7 days in a row', streak >= 7, `${Math.min(streak, 7)} of 7 days`],
+    ['🎯', 'First goal', goals.length > 0, 'Create a savings goal'],
+    ['💵', 'Saved $100', saved >= 100, `$${Math.floor(Math.min(saved, 100))} of $100`],
+    ['💰', 'Saved $1,000', saved >= 1000, `$${Math.floor(saved).toLocaleString()} of $1,000`],
+    ['🛡️', 'Stayed under budget', stayedUnderBudget(), 'Finish a month within your Needs + Wants target'],
+    ['🏆', 'Goal reached', goals.some(g=>g.status === 'achieved' || (Number(g.saved_amount)||0) >= (Number(g.target_amount)||0)), 'Reach a savings goal'],
+    ['🤝', 'Shared a goal', goals.some(g=>currentUser && g.user_id === currentUser.id && (goalMembers[g.id]||[]).length > 0), 'Share a goal with someone'],
+  ];
+  document.getElementById('badgeCount').textContent = `${badges.filter(b=>b[2]).length} of ${badges.length} earned`;
+  document.getElementById('badgeGrid').innerHTML = badges.map(([icon, name, earned, hint])=>
+    `<div class="badge${earned ? '' : ' locked'}"><span class="badge-medal" aria-hidden="true">${icon}</span><strong>${name}</strong><small>${earned ? 'Earned' : hint}</small></div>`).join('');
+}
 
 /* ========================= TAB NAVIGATION ========================= */
 function showTab(name){
