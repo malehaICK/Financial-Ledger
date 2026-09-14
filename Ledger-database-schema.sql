@@ -260,6 +260,38 @@ grant select, insert, update on public.goal_invites to authenticated;
 
 
 -- ----------------------------------------------------------------------------
+-- 5b. Delete account. Every table above references auth.users with
+--     ON DELETE CASCADE, so deleting the user removes their transactions, goals,
+--     and those goals' members and invite links. Memberships added by email
+--     before the person signed in have no user_id, so they are removed by email.
+-- ----------------------------------------------------------------------------
+create or replace function public.delete_my_account()
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_uid   uuid := auth.uid();
+  v_email text := lower(coalesce(auth.jwt() ->> 'email', ''));
+begin
+  if v_uid is null then
+    raise exception 'Not signed in';
+  end if;
+
+  if v_email <> '' then
+    delete from public.goal_members where email = v_email;
+  end if;
+
+  delete from auth.users where id = v_uid;
+end;
+$$;
+
+revoke all on function public.delete_my_account() from public, anon;
+grant execute on function public.delete_my_account() to authenticated;
+
+
+-- ----------------------------------------------------------------------------
 -- 6. Grants. RLS still decides which rows each user can touch.
 -- ----------------------------------------------------------------------------
 grant select, insert, update, delete on public.transactions              to authenticated;
