@@ -1,0 +1,2606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta charset="UTF-8">
+<link rel="manifest" href="./manifest.webmanifest">
+<meta name="theme-color" content="#1B3B36">
+<title>Ledger — Monthly Budget</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+  :root{
+    /* Notebook cream theme */
+    --paper:#F8F4E8;
+    --paper-raised:#FFFDF7;
+    --paper-dark:#F1EBDA;
+    --ink:#2E2A24;
+    --ink-soft:#736C5F;
+    --line:#E6DDC6;
+    --teal:#5E9A6A;        /* success / positive */
+    --teal-deep:#4A7F56;
+    --gold:#E7AE48;
+    --rust:#C4553A;
+    --need:#7D9CC8;
+    --want:#E7AE48;
+    --save:#7DB587;
+    --accent:#D8704B;      /* coral: buttons, active tab */
+    --accent-deep:#B95A38;
+    --radius:18px;
+    --radius-sm:10px;
+    --shadow:0 3px 14px rgba(80,64,30,.07);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Nunito', sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:920px;margin:0 auto;padding:36px 24px 80px;}
+
+  header{margin-bottom:28px;border-bottom:2px solid var(--ink);padding-bottom:18px;}
+  header h1{
+    font-family:'Nunito', serif;
+    font-weight:700;
+    font-style:italic;
+    font-size:34px;
+    margin:0 0 4px;
+    letter-spacing:-0.01em;
+  }
+  header p{margin:0;color:var(--ink-soft);font-size:14.5px;max-width:60ch;line-height:1.5;}
+
+  .month-row{display:flex;align-items:baseline;gap:10px;margin-top:18px;font-family:'IBM Plex Mono',monospace;font-size:14px;}
+  .month-row select{
+    font-family:'IBM Plex Mono',monospace;font-size:14px;background:var(--paper-raised);
+    border:1px solid var(--line);border-radius:3px;padding:5px 8px;color:var(--ink);
+  }
+
+  .value.pos{color:var(--teal-deep);}
+  .value.neg{color:var(--rust);}
+
+  .overview-card{
+    display:flex;align-items:center;gap:36px;flex-wrap:wrap;
+    border:1px solid var(--ink);border-radius:8px;padding:24px 28px;background:var(--paper-raised);
+  }
+  .stats-col{flex:1 1 220px;display:flex;flex-direction:column;gap:12px;min-width:200px;}
+  .stat-row{display:flex;align-items:center;gap:10px;}
+  .stat-row .swatch{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+  .stat-label{flex:1;font-size:14px;color:var(--ink-soft);}
+  .stat-val{font-family:'IBM Plex Mono',monospace;font-size:17px;font-weight:600;}
+  .stat-row.total{border-top:1px solid var(--line);padding-top:10px;margin-top:2px;}
+  .stat-row.total .stat-label{color:var(--ink);font-weight:500;}
+  .stat-row.total .stat-val{font-size:19px;}
+  #lblLeftover.neg{color:var(--rust);}
+  #lblLeftover.pos{color:var(--teal-deep);}
+
+  .donut-wrap{display:flex;flex-direction:column;align-items:center;gap:12px;flex:0 0 auto;}
+  .donut{
+    width:150px;height:150px;border-radius:50%;position:relative;
+    background:conic-gradient(var(--line) 0 100%);
+  }
+  .donut::after{
+    content:'';position:absolute;inset:22%;background:var(--paper-raised);border-radius:50%;
+  }
+  .donut-center{
+    position:absolute;inset:22%;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    font-family:'IBM Plex Mono',monospace;text-align:center;z-index:1;
+  }
+  .donut-center span{font-size:15px;font-weight:600;}
+  .donut-center small{font-size:9.5px;color:var(--ink-soft);font-family:'Nunito';text-transform:uppercase;letter-spacing:.04em;}
+  .donut-wrap .legend{margin-top:0;}
+
+  section{margin-bottom:40px;}
+  h2{
+    font-family:'Nunito', serif;font-weight:600;font-size:19px;margin:0 0 14px;
+    display:flex;align-items:baseline;justify-content:space-between;
+  }
+  h2 .hint{font-family:'Nunito';font-weight:400;font-size:12.5px;color:var(--ink-soft);}
+  h3{font-family:'Nunito', serif;font-weight:600;font-size:16px;margin:0 0 10px;}
+
+  .legend{display:flex;gap:22px;margin-top:10px;font-size:12.5px;color:var(--ink-soft);}
+  .legend span{display:inline-flex;align-items:center;gap:6px;}
+  .swatch{width:10px;height:10px;border-radius:2px;display:inline-block;}
+
+  .recommendation{
+    background:var(--paper-raised);border-left:3px solid var(--teal);padding:16px 18px;
+    font-size:14.5px;line-height:1.55;border-radius:0 4px 4px 0;
+  }
+
+  .entry-columns{display:grid;grid-template-columns:1fr 1fr;gap:26px;}
+  @media(max-width:720px){.entry-columns{grid-template-columns:1fr;}}
+
+  form.entry-form{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;}
+  form.entry-form input, form.entry-form select{
+    font-family:'Nunito';font-size:13px;padding:7px 8px;border:1px solid var(--line);
+    border-radius:3px;background:var(--paper-raised);color:var(--ink);
+  }
+  form.entry-form input[type=date]{flex:1 1 128px;}
+  form.entry-form input[type=text]{flex:1 1 120px;}
+  form.entry-form select{flex:1 1 130px;}
+  form.entry-form input[type=number]{width:90px;}
+  form.entry-form button{
+    background:var(--ink);color:#fff;border:none;border-radius:3px;padding:7px 14px;
+    font-size:13px;cursor:pointer;font-family:'Nunito';font-weight:500;
+  }
+  form.entry-form button:hover{background:var(--teal-deep);}
+
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  .table-wrap{max-width:100%;overflow-x:auto;}
+  thead th{
+    text-align:left;font-weight:500;color:var(--ink-soft);font-size:11px;text-transform:uppercase;
+    letter-spacing:.04em;border-bottom:1px solid var(--ink);padding:6px 4px;
+  }
+  tbody td{padding:7px 4px;border-bottom:1px solid var(--line);font-family:'IBM Plex Mono',monospace;font-size:12.5px;}
+  tbody td.amt{text-align:right;}
+  tbody tr:hover{background:rgba(0,0,0,0.02);}
+  .del{cursor:pointer;color:var(--rust);font-family:'Nunito';font-size:12px;background:none;border:none;padding:0 4px;}
+  .empty-row td{color:var(--ink-soft);font-style:italic;font-family:'Nunito';padding:12px 4px;}
+
+  .tag{font-family:'Nunito';font-size:10.5px;padding:2px 6px;border-radius:10px;color:#fff;}
+  .tag.Need{background:var(--need);}
+  .tag.Want{background:var(--want);}
+  .tag.Savings{background:var(--save);}
+
+  .sync-actions{display:flex;gap:10px;flex-wrap:wrap;}
+  .storage-status{font-size:12px;color:var(--teal-deep);font-family:'Nunito';flex:0 0 100%;}
+  .storage-status.ok{color:var(--teal-deep);}
+  .storage-status.err{color:var(--rust);}
+  .btn-primary{
+    background:var(--ink);border:1px solid var(--ink);color:#fff;border-radius:3px;
+    padding:8px 14px;font-size:13px;font-family:'Nunito';font-weight:500;cursor:pointer;
+  }
+  .btn-primary:hover{background:var(--teal-deep);border-color:var(--teal-deep);}
+  .btn-secondary{
+    background:#fff;border:1px solid var(--ink);color:var(--ink);border-radius:3px;
+    padding:8px 14px;font-size:13px;font-family:'Nunito';font-weight:500;cursor:pointer;
+  }
+  .btn-secondary:hover{background:var(--ink);color:#fff;}
+  .btn-primary:disabled,.btn-secondary:disabled{opacity:.5;cursor:not-allowed;}
+  .btn-primary:disabled:hover{background:var(--ink);border-color:var(--ink);}
+  .btn-secondary:disabled:hover{background:#fff;color:var(--ink);}
+  input[type=file]{display:none;}
+
+  .entry-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;}
+  .entry-heading h3{margin:0;}
+  .entry-tools{display:flex;align-items:center;gap:7px;flex-wrap:wrap;justify-content:flex-end;}
+  .compact-pdf-btn,.compact-scan-btn{display:inline-flex;align-items:center;gap:5px;white-space:nowrap;background:var(--paper-raised);border:1px solid var(--line);border-radius:4px;padding:6px 9px;font-size:11.5px;color:var(--ink);cursor:pointer;font-family:'Nunito';font-weight:500;}
+  .compact-pdf-btn:hover,.compact-scan-btn:hover{background:var(--ink);color:#fff;border-color:var(--ink);}
+  .inline-import-status{font-size:11.5px;color:var(--ink-soft);font-style:italic;}
+  .scan-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+  .scan-row .btn-secondary{padding:7px 12px;font-size:12.5px;}
+  #scanStatus{font-size:12.5px;color:var(--ink-soft);font-style:italic;}
+  #scanStatus.err{color:var(--rust);font-style:normal;}
+  #scanStatus.ok{color:var(--teal-deep);font-style:normal;}
+
+  .bank-review{margin-top:18px;border:1px solid var(--line);border-radius:7px;background:var(--paper-raised);padding:14px 16px;}
+  .bank-review-head{display:flex;justify-content:space-between;gap:14px;align-items:baseline;margin-bottom:10px;font-size:12px;color:var(--ink-soft);}
+  .bank-review-head strong{display:block;color:var(--ink);font-family:'Nunito',serif;font-size:16px;margin-bottom:3px;}
+  #bankConfirmStatus{margin-left:9px;color:var(--teal-deep);font-size:12px;}
+  .bank-review-table{overflow-x:auto;max-height:360px;overflow-y:auto;}
+  .bank-review-actions{display:flex;gap:9px;align-items:center;margin-top:12px;}
+  .bank-review select{font-family:'Nunito';font-size:12px;padding:4px 5px;border:1px solid var(--line);border-radius:3px;background:var(--paper);color:var(--ink);}
+  @media(max-width:720px){.bank-review-head{display:block}.bank-review-head>span{display:block;margin-top:5px;}.entry-tools{justify-content:flex-start;}}
+
+  footer{margin-top:10px;font-size:12px;color:var(--ink-soft);text-align:center;}
+
+#authGate{position:fixed;inset:0;z-index:9999;background:var(--paper);display:flex;align-items:center;justify-content:center;padding:24px}
+#authGate.hidden{display:none}
+.auth-card{width:min(440px,100%);padding:32px;border:1px solid var(--line);border-radius:18px;background:var(--paper-raised);box-shadow:0 14px 40px rgba(0,0,0,.08)}
+.auth-card h1{margin:0 0 8px;font-size:34px}.auth-card .auth-subtitle{margin:0 0 24px;color:var(--ink-soft);line-height:1.5}.auth-card .auth-form{display:grid;gap:12px}.auth-card label{font-size:13px;font-weight:600}.auth-card input{width:100%;box-sizing:border-box;padding:12px 13px;border:1px solid var(--line);border-radius:8px;background:var(--paper);font:inherit}.auth-card button{width:100%;margin-top:4px}.auth-switch{margin-top:16px;text-align:center;font-size:13px;color:var(--ink-soft)}#authGateMessage{min-height:20px;margin-top:12px;font-size:13px}#authGateMessage.err{color:var(--rust)}#authGateMessage.ok{color:var(--teal-deep)}
+
+.auth-password-toggle{
+  position:absolute;
+  right:8px;
+  top:50%;
+  transform:translateY(-50%);
+  border:0 !important;
+  background:transparent !important;
+  color:var(--teal-deep) !important;
+  width:auto !important;
+  padding:6px !important;
+  margin:0 !important;
+  cursor:pointer;
+  font:inherit;
+  font-size:12px;
+}
+
+.ledger-topbar{
+  display:none;position:relative;align-items:center;justify-content:flex-start;margin:2px 0 18px;
+}
+.ledger-topbar.visible{display:flex}
+
+.auth-link{
+  border:0 !important;
+  background:none !important;
+  color:var(--teal-deep) !important;
+  padding:0 !important;
+  margin:0 !important;
+  width:auto !important;
+  cursor:pointer;
+  font:inherit;
+  font-size:13px;
+}
+.auth-link:hover{text-decoration:underline}
+.auth-feedback{min-height:20px;margin-top:10px;font-size:13px;line-height:1.45}
+.auth-feedback.err{color:var(--rust)}
+.auth-feedback.ok{color:var(--teal-deep)}
+.forgot-row{text-align:right;margin-top:-2px}
+#resetPanel{display:none;margin-top:20px;padding-top:18px;border-top:1px solid var(--line)}
+#resetPanel.visible{display:block}
+
+/* Ledger Assistant */
+.chatbot-card{margin-top:24px;border:1px solid var(--line);border-radius:14px;background:var(--paper-raised);overflow:hidden}
+.chatbot-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 18px;border-bottom:1px solid var(--line)}
+.chatbot-head h3{margin:0}
+.chatbot-head p{margin:4px 0 0;color:var(--ink-soft);font-size:12.5px}
+.chatbot-body{padding:16px;display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:16px}
+.chat-messages{min-height:300px;max-height:360px;overflow:auto;padding:4px}
+.chat-msg{display:flex;margin:8px 0}
+.chat-msg.bot{justify-content:flex-start}.chat-msg.user{justify-content:flex-end}
+.chat-bubble{max-width:82%;padding:10px 12px;border-radius:12px;font-size:13px;line-height:1.45;border:1px solid var(--line);background:var(--paper)}
+.chat-msg.user .chat-bubble{background:var(--teal-deep);color:#fff;border-color:var(--teal-deep)}
+.chat-input-row{display:flex;gap:8px;margin-top:10px}
+.chat-input-row input{flex:1;min-width:0;padding:11px 12px;border:1px solid var(--line);border-radius:8px;background:var(--paper);font:inherit}
+.chat-input-row button{white-space:nowrap}
+
+@media(max-width:850px){.chatbot-body{grid-template-columns:1fr}}
+ .assistant-fab{position:fixed;right:24px;bottom:24px;z-index:1200;border:1px solid var(--ink);background:var(--paper-raised);color:var(--ink);border-radius:999px;padding:11px 15px;display:flex;align-items:center;gap:8px;font:600 12px 'Nunito';cursor:pointer;box-shadow:0 8px 24px rgba(0,0,0,.12)}
+.assistant-fab:hover{background:var(--ink);color:#fff}
+.chatbot-card{display:none;position:fixed;right:24px;bottom:78px;width:min(390px,calc(100vw - 32px));z-index:1199;margin:0;border:1px solid var(--ink);border-radius:14px;background:var(--paper-raised);box-shadow:0 18px 45px rgba(0,0,0,.18);overflow:hidden}
+.chatbot-card.open{display:block}
+
+.chatbot-head{padding:12px 14px}.chatbot-head p{font-size:11.5px}.assistant-head-actions{display:flex;gap:6px;align-items:center}.assistant-reset{padding:5px 8px;font-size:11px}.assistant-close{border:0;background:transparent;color:var(--ink);font-size:23px;line-height:1;cursor:pointer;padding:2px 6px}.assistant-close:hover{color:var(--rust)}
+.chatbot-body{padding:12px;display:block}.chat-messages{min-height:180px;max-height:260px}.assistant-fab span{display:inline}
+@media(max-width:560px){.assistant-fab{right:14px;bottom:14px}.chatbot-card{right:12px;bottom:68px;width:calc(100vw - 24px)}}
+
+    .goal-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+    .goal-form input{min-width:0;font:13px 'Nunito';padding:8px;border:1px solid var(--line);border-radius:4px;background:var(--paper-raised);color:var(--ink)}
+    .goal-list{display:grid;gap:10px;margin-top:14px}.goal-item{border:1px solid var(--line);padding:12px}
+    .goal-top{display:flex;justify-content:space-between;gap:10px}.progress{height:8px;background:var(--line);margin:9px 0;border-radius:99px;overflow:hidden}.progress>span{display:block;height:100%;background:var(--save)}
+    .goal-actions{display:flex;gap:8px;flex-wrap:wrap}.mini-note{font-size:12px;color:var(--ink-soft)}
+    
+    .status-inline{font-size:12px;color:var(--ink-soft)}
+    @media(max-width:760px){.goal-form{grid-template-columns:1fr}}
+
+  .ml-metrics{display:grid;grid-template-columns:1fr;gap:9px;}
+  .ml-metrics div{display:flex;justify-content:space-between;gap:12px;padding-bottom:8px;border-bottom:1px solid var(--line);font-size:13px;}
+  .ml-metrics strong{font-family:'IBM Plex Mono',monospace;}
+  .ml-note,.ml-model-details{font-size:12.5px;color:var(--ink-soft);line-height:1.5;margin-top:10px;}
+  .ml-actions{display:flex;align-items:center;gap:12px;margin-top:14px;}
+  .ml-model-details{padding-top:10px;border-top:1px solid var(--line);}
+
+.copilot-chips{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}.copilot-chip{border:1px solid var(--line);background:var(--paper);padding:7px 10px;border-radius:99px;font:12px 'Nunito';cursor:pointer}.copilot-chip:hover{border-color:var(--ink)}
+
+/* Mobile-first auth and layout fixes */
+@media (max-width: 600px){
+  html, body{width:100%; min-width:0; overflow-x:clip;}
+  body{font-size:15px;}
+  .wrap{width:100%; max-width:none; padding:18px 14px 64px;}
+  header{margin-bottom:20px; padding-bottom:14px;}
+  header h1{font-size:32px; line-height:1.05;}
+  header p{font-size:14px; line-height:1.5;}
+  .month-row{flex-wrap:wrap; gap:8px;}
+
+  /* Sign-in screen: use the whole phone width and start near the top. */
+  #authGate{position:fixed; inset:0; width:100%; min-height:100dvh; padding:18px 14px;
+    align-items:flex-start; justify-content:center; overflow-y:auto; -webkit-overflow-scrolling:touch;}
+  .auth-card{width:100%; max-width:430px; margin:5vh auto 20px; padding:22px 18px;
+    border-radius:14px; box-shadow:0 10px 28px rgba(0,0,0,.07);}
+  .auth-card h1{font-size:30px; line-height:1.1;}
+  .auth-card .auth-subtitle{font-size:14px; line-height:1.45; margin-bottom:18px;}
+  .auth-card .auth-form{gap:9px;}
+  .auth-card label{font-size:12px;}
+  .auth-card input{min-height:46px; font-size:16px; padding:11px 12px;}
+  .auth-card button{min-height:42px; font-size:14px;}
+  .auth-password-toggle{min-height:34px !important; font-size:12px !important;}
+  .forgot-row{margin-top:1px; margin-bottom:2px;}
+  #resetPanel{margin-top:16px; padding-top:15px;}
+  #resetPanel input{min-height:46px;}
+  .auth-switch{font-size:11.5px; line-height:1.45; margin-top:14px;}
+
+  /* Account bar/topbar stays compact on phones. */
+  .ledger-topbar{margin:0 0 14px;}
+
+  /* Prevent desktop grids/tables from forcing the viewport wider. */
+  
+  .table-wrap, .bank-review-table{max-width:100%; overflow-x:auto; -webkit-overflow-scrolling:touch;}
+  .entry-columns > div{min-width:0;}
+  .bank-review-table table{min-width:560px;}
+  .card,.panel,.chatbot-card{max-width:100%;}
+
+  /* Buttons/tools should wrap rather than create a horizontal page. */
+  .entry-tools,.bank-review-actions{flex-wrap:wrap;}
+  .entry-tools button, .bank-review-actions button{max-width:100%;}
+
+  /* Floating assistant stays inside the phone viewport. */
+  .assistant-fab{right:14px !important; bottom:16px !important; width:50px; height:50px;}
+  .chatbot-card{right:10px !important; bottom:76px !important; width:calc(100vw - 20px) !important; max-width:none;}
+}
+@media (max-width:380px){
+  .auth-card{padding:19px 15px;}
+  .auth-card h1{font-size:28px;}
+  #authGate{padding-left:10px; padding-right:10px;}
+  .wrap{padding-left:10px; padding-right:10px;}
+}
+
+/* ========================= TAB NAVIGATION ========================= */
+[hidden]{display:none !important;}
+.tabs{position:sticky;top:0;z-index:900;display:flex;gap:2px;margin:0 0 28px;padding-top:6px;background:var(--paper);border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none;}
+.tabs::-webkit-scrollbar{display:none;}
+.tab{flex:0 0 auto;border:0;border-bottom:2px solid transparent;margin-bottom:-1px;background:transparent;color:var(--ink-soft);font:500 14px 'Nunito',sans-serif;padding:11px 16px;cursor:pointer;white-space:nowrap;}
+.tab:hover{color:var(--ink);}
+.tab[aria-selected="true"]{color:var(--ink);font-weight:600;border-bottom-color:var(--ink);}
+.tab:focus-visible{outline:2px solid var(--teal);outline-offset:-2px;}
+.btn-small{padding:5px 11px;font-size:12px;}
+
+#manualChatbot .copilot-chips{margin-top:8px;}
+#manualChatbot .copilot-chip{font-size:11.5px;padding:6px 9px;}
+
+@media(max-width:600px){.tabs{margin-bottom:18px;gap:0;}.tab{flex:1 1 auto;padding:10px 4px;font-size:13px;}.assistant-fab{justify-content:center;padding:0;font-size:22px;}.assistant-fab span{display:none;}}
+
+/* ========================= NOTEBOOK CREAM LAYOUT ========================= */
+body{background:var(--paper);color:var(--ink);font-family:'Nunito',system-ui,sans-serif;}
+.wrap{max-width:1000px;}
+#pdfBankStatus:empty{display:none;}
+.app-header{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;border-bottom:0;margin-bottom:18px;padding-bottom:0;}
+header h1{font-style:normal;font-weight:800;font-size:38px;letter-spacing:-.02em;}
+header p{margin-top:2px;}
+.month-row{margin-top:14px;gap:8px;align-items:center;font-family:'Nunito',sans-serif;}
+.month-row select{font-family:'Nunito',sans-serif;font-weight:700;border-radius:var(--radius-sm);padding:8px 12px;background:var(--paper-raised);border-color:var(--line);}
+.period-hint{font-size:12.5px;color:var(--ink-soft);}
+.ledger-topbar{margin:8px 0 0;gap:10px;align-items:center;flex-shrink:0;}
+.user-name{font-weight:800;font-size:15px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.tab{font-size:15px;padding:11px 18px;}
+.tab[aria-selected="true"]{border-bottom-color:var(--accent);font-weight:800;}
+.tab:focus-visible{outline-color:var(--accent);}
+section{margin-bottom:22px;}
+.card{background:var(--paper-raised);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px 22px;}
+h2.card-title{display:block;font-weight:800;font-size:17px;margin:0 0 12px;}
+h2,h3{font-weight:800;}
+.mini-note{color:var(--ink-soft);}
+.summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:22px;}
+.summary-grid > section{margin:0;}
+.card .overview-card{border:0;border-radius:0;padding:0;background:transparent;gap:18px;flex-wrap:nowrap;}
+.card .stats-col{min-width:0;flex:1 1 auto;}
+.card .donut-wrap .legend{flex-wrap:wrap;justify-content:center;gap:4px 10px;max-width:150px;font-size:11.5px;}
+.donut{width:124px;height:124px;}
+.donut::after,.donut-center{inset:17%;}
+.donut-center span{font-size:12px;letter-spacing:-.02em;}
+.donut-center.warn span{color:var(--rust);}
+.target-body{display:flex;align-items:center;gap:18px;}
+.target-list{flex:1;display:grid;gap:10px;}
+.target-row{display:flex;align-items:center;gap:10px;font-size:14.5px;color:var(--ink);}
+.target-row span{flex:1;}
+.target-row input{width:66px;font-family:'IBM Plex Mono',monospace;font-size:14px;text-align:right;border:1px solid var(--line);border-radius:var(--radius-sm);padding:6px 8px;background:var(--paper);color:var(--ink);}
+.target-row em{font-style:normal;color:var(--ink-soft);width:12px;}
+.recommendation{margin-top:16px;border-left:3px solid var(--accent);border-radius:0 var(--radius-sm) var(--radius-sm) 0;background:var(--paper);font-size:13.5px;padding:10px 14px;}
+.entry-columns{gap:18px;}
+.entry-heading h3{font-size:17px;}
+form.entry-form input,form.entry-form select{border-radius:var(--radius-sm);background:var(--paper);border-color:var(--line);padding:9px 10px;}
+form.entry-form button{background:var(--accent);border-radius:var(--radius-sm);font-weight:700;padding:9px 16px;}
+form.entry-form button:hover{background:var(--accent-deep);}
+form.entry-form button.shared-toggle{background:transparent;color:var(--accent);border:1px dashed var(--accent);padding:8px 12px;}
+form.entry-form button.shared-toggle:hover{background:var(--paper-dark);}
+.shared-fields{flex:1 1 100%;display:flex;flex-wrap:wrap;gap:8px;padding:10px;border:1px dashed var(--line);border-radius:var(--radius-sm);background:var(--paper);}
+form.entry-form .shared-fields input{flex:1 1 120px;width:auto;background:var(--paper-raised);}
+.shared-hint{flex:1 1 100%;font-size:12.5px;color:var(--ink-soft);}
+.shared-field{flex:1 1 120px;display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:700;color:var(--ink-soft);}
+form.entry-form .shared-field input{flex:none;width:100%;}
+.shared-hint.err{color:var(--rust);}
+.compact-pdf-btn,.compact-scan-btn{border-radius:999px;background:var(--paper);border-color:var(--line);font-weight:700;}
+.compact-pdf-btn:hover,.compact-scan-btn:hover{background:var(--accent);border-color:var(--accent);color:#fff;}
+thead th{border-bottom-color:var(--line);font-weight:800;}
+.tag{border-radius:999px;font-weight:700;}
+.tag.Shared{background:transparent;color:var(--ink-soft);border:1px solid var(--line);margin-left:0;}
+.tag.Owed{background:var(--gold);margin-left:0;}
+.tag.Paid{background:var(--save);margin-left:0;}
+.got-back{margin-left:0;border:1px solid var(--accent);background:transparent;color:var(--accent);border-radius:999px;font:700 11px 'Nunito',sans-serif;padding:2px 9px;cursor:pointer;white-space:nowrap;}
+.got-back:hover{background:var(--accent);color:#fff;}
+.row-badges{display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px;margin-top:4px;}
+.tag{white-space:nowrap;}
+#incomeBody td:first-child,#expenseBody td:first-child{white-space:nowrap;}
+.owed-note{margin-top:-4px;text-align:right;font-size:12.5px;font-weight:700;color:var(--gold);}
+.btn-primary{background:var(--accent);border-color:var(--accent);border-radius:var(--radius-sm);font-weight:700;}
+.btn-primary:hover{background:var(--accent-deep);border-color:var(--accent-deep);}
+.btn-primary:disabled:hover{background:var(--accent);border-color:var(--accent);}
+.btn-secondary{background:var(--paper-raised);border-color:var(--line);border-radius:var(--radius-sm);font-weight:700;}
+.btn-secondary:hover{background:var(--ink);border-color:var(--ink);color:#fff;}
+.btn-secondary:disabled:hover{background:var(--paper-raised);color:var(--ink);}
+.bank-review{border-radius:var(--radius);}
+.export-card{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;}
+.export-card h2.card-title{margin-bottom:4px;}
+.export-card .mini-note{margin:0;}
+.export-card .storage-status{display:block;margin-top:6px;}
+.goal-form{margin-top:12px;}
+.goal-form input{background:var(--paper);border-radius:var(--radius-sm);}
+.goal-item{border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--paper);padding:14px;}
+.goal-plan{margin-top:9px;padding:9px 12px;border-left:3px solid var(--save);background:var(--paper-raised);border-radius:0 var(--radius-sm) var(--radius-sm) 0;font-size:13px;line-height:1.5;}
+.goal-actions{margin-top:10px;}
+.goal-badge{display:inline-block;margin-left:6px;padding:1px 8px;border-radius:999px;background:var(--paper-dark);color:var(--ink-soft);font-size:11px;font-weight:700;vertical-align:middle;}
+.share-panel{margin-top:12px;padding:14px;border:1px dashed var(--accent);border-radius:var(--radius-sm);background:var(--paper-raised);display:grid;gap:10px;}
+.share-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+.share-row input{flex:1 1 180px;min-width:0;padding:9px 10px;border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--paper);font:inherit;font-size:13.5px;color:var(--ink);}
+.share-or{font-size:12px;color:var(--ink-soft);text-align:center;}
+.link-btn{border:0;background:none;color:var(--accent);font:700 12.5px 'Nunito',sans-serif;cursor:pointer;padding:4px 2px;}
+.link-btn:hover{text-decoration:underline;}
+.share-status.err{color:var(--rust);}
+.share-status.ok{color:var(--teal-deep);}
+.share-members{list-style:none;margin:0;padding:0;display:grid;gap:6px;}
+.share-members li{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px;}
+.share-members em{color:var(--ink-soft);font-style:normal;font-size:12px;}
+.progress>span{background:var(--save);}
+.intel-grid{display:grid;grid-template-columns:1.3fr 1fr;gap:18px;align-items:start;}
+.intel-grid > section{margin:0;}
+.ml-metrics div{border-bottom-color:var(--line);font-size:14.5px;}
+.ml-actions{margin-top:14px;}
+.assistant-fab{background:var(--accent);color:#fff;border-color:var(--accent);}
+.assistant-fab:hover{background:var(--accent-deep);color:#fff;}
+.chatbot-card{border-color:var(--line);border-radius:var(--radius);}
+.chat-msg.user .chat-bubble{background:var(--accent);border-color:var(--accent);}
+.copilot-chip{border-radius:999px;background:var(--paper);}
+.auth-card{border-radius:var(--radius);box-shadow:var(--shadow);}
+.auth-card h1{font-weight:800;}
+footer{margin-top:26px;}
+.profile-trigger{display:inline-flex;align-items:center;gap:8px;border:1px solid transparent;background:transparent;border-radius:999px;padding:3px 10px 3px 3px;cursor:pointer;font:inherit;color:var(--ink);}
+.profile-trigger:hover,.profile-trigger[aria-expanded="true"]{border-color:var(--line);background:var(--paper-raised);}
+.profile-trigger:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+.avatar{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;background:var(--accent);color:#fff;font-weight:800;font-size:14px;flex-shrink:0;}
+.avatar-lg{width:44px;height:44px;font-size:19px;}
+.profile-panel{position:absolute;right:0;top:calc(100% + 8px);z-index:1100;width:min(320px,calc(100vw - 28px));padding:16px;background:var(--paper-raised);border:1px solid var(--line);border-radius:var(--radius);box-shadow:0 14px 34px rgba(80,64,30,.14);display:grid;gap:12px;}
+.profile-head{display:flex;align-items:center;gap:12px;min-width:0;}
+.profile-head strong{font-size:16px;}
+.profile-head .mini-note{overflow-wrap:anywhere;}
+.profile-field{display:grid;gap:4px;font-size:12px;font-weight:700;color:var(--ink-soft);}
+.profile-field input{padding:9px 10px;border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--paper);font:inherit;font-size:14px;color:var(--ink);}
+.profile-section summary{cursor:pointer;font-weight:700;font-size:13.5px;color:var(--accent);}
+.profile-section[open]{display:grid;gap:10px;}
+.profile-stats{font-size:12px;color:var(--ink-soft);border-top:1px solid var(--line);padding-top:10px;}
+.row-note{font-size:11.5px;color:var(--ink-soft);margin-top:2px;}
+.receipt-meta{font-size:12.5px;color:var(--ink-soft);margin:-2px 0 8px;}
+.receipt-amount{width:84px;text-align:right;font-family:'IBM Plex Mono',monospace;font-size:12px;padding:4px 6px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink);}
+.receipt-totals{margin-top:10px;font-size:13px;line-height:1.5;}
+@media(max-width:760px){.summary-grid,.intel-grid{grid-template-columns:1fr;}}
+@media(max-width:600px){
+  header h1{font-size:30px;}
+  .period-hint{flex-basis:100%;}
+  .month-row select{padding:7px 8px;font-size:13.5px;min-width:0;}
+  .app-header{gap:10px;}
+  .tab{font-size:14.5px;padding:10px 6px;}
+  .card{padding:16px;}
+  .card .overview-card{flex-wrap:wrap;justify-content:center;}
+  .target-body{flex-wrap:wrap;justify-content:center;}
+  .target-list{flex-basis:100%;}
+  .donut{width:112px;height:112px;}
+  .export-card .sync-actions{width:100%;}
+}
+</style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  <!-- pdf.js is loaded on demand by getPdfJs() via dynamic import(), so no static tag is needed here. -->
+</head>
+<body>
+<div id="authGate"><div class="auth-card"><h1>Ledger</h1><p class="auth-subtitle">Sign in to securely access your personal budget and transactions.</p><div class="auth-form"><label for="gateEmail">Email address</label><input type="email" id="gateEmail" placeholder="you@example.com" autocomplete="email"><label for="gatePassword">Password</label><div style="position:relative;">
+      <input type="password" id="gatePassword" placeholder="Enter your password" autocomplete="current-password" style="padding-right:58px;">
+      
+<button class="auth-password-toggle" id="toggleGatePassword" type="button" aria-label="Show password">Show</button>
+
+    </div><div class="forgot-row"><button class="auth-link" id="forgotPasswordBtn" type="button">Forgot password?</button></div>
+<button class="btn-primary" id="gateSignInBtn" type="button">Sign in</button><button class="btn-secondary" id="gateSignUpBtn" type="button">Create account</button></div><div id="authGateMessage" class="auth-feedback"></div>
+<div id="resetPanel">
+  <strong>Reset your password</strong>
+  <p class="auth-subtitle" style="margin:6px 0 12px;">Enter your account email and we'll send a password reset link.</p>
+  <input type="email" id="resetEmail" placeholder="you@example.com" autocomplete="email">
+  <button class="btn-primary" id="sendResetBtn" type="button" style="margin-top:10px;">Send reset email</button>
+  <div id="resetMessage" class="auth-feedback"></div>
+</div><div class="auth-switch">Your financial data stays tied to your account and is not shown until you sign in.</div></div></div>
+<div class="wrap">
+  <header class="app-header">
+    <div class="brand-block">
+      <h1>Ledger</h1>
+      <p>Track what comes in and what goes out, and save toward what matters.</p>
+      <div class="month-row">
+        <select id="monthSel" aria-label="Month"></select>
+        <select id="yearSel" aria-label="Year"></select>
+        <span id="periodHint" class="period-hint"></span>
+      </div>
+    </div>
+    <div id="ledgerTopbar" class="ledger-topbar">
+      <button class="profile-trigger" id="profileBtn" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="profilePanel"><span class="avatar" id="profileAvatar" aria-hidden="true">?</span><span class="user-name" id="signedInName">Account</span></button>
+      <button class="btn-secondary btn-small" id="dashboardLogoutBtn" type="button">Logout</button>
+      <div class="profile-panel" id="profilePanel" role="dialog" aria-label="Your profile" hidden>
+        <div class="profile-head"><span class="avatar avatar-lg" id="profileAvatarLg" aria-hidden="true">?</span><div><strong id="profileNameText">Account</strong><div class="mini-note" id="profileEmailText"></div></div></div>
+        <label class="profile-field"><span>Display name</span><input type="text" id="profileName" maxlength="60" autocomplete="name"></label>
+        <button class="btn-primary" id="profileSaveBtn" type="button">Save name</button>
+        <details class="profile-section"><summary>Change password</summary>
+          <label class="profile-field"><span>New password</span><input type="password" id="profileNewPassword" minlength="8" autocomplete="new-password" placeholder="At least 8 characters"></label>
+          <button class="btn-secondary" id="profilePasswordBtn" type="button">Update password</button>
+        </details>
+        <div class="profile-stats" id="profileStats"></div>
+        <div class="status-inline" id="profileStatus" aria-live="polite"></div>
+      </div>
+    </div>
+  </header>
+
+<nav class="tabs" id="appTabs" role="tablist" aria-label="Ledger sections">
+  <button class="tab" type="button" role="tab" data-tab="budget" aria-selected="true">Budget</button>
+  <button class="tab" type="button" role="tab" data-tab="intelligence" aria-selected="false">Goals</button>
+</nav>
+
+<!-- ===================== BUDGET ===================== -->
+<div class="tab-panel" data-panel="budget" role="tabpanel">
+  <div class="summary-grid">
+    <section class="card overview">
+      <h2 class="card-title">This month</h2>
+    <div class="overview-card">
+      <div class="stats-col">
+        <div class="stat-row"><i class="swatch" style="background:var(--ink)"></i><span class="stat-label">Income</span><span class="stat-val" id="statIncome">$0.00</span></div>
+        <div class="stat-row"><i class="swatch" style="background:var(--want)"></i><span class="stat-label">Expenses</span><span class="stat-val" id="statExpenses">$0.00</span></div>
+        <div class="stat-row"><i class="swatch" style="background:var(--save)"></i><span class="stat-label">Savings</span><span class="stat-val" id="statSavings">$0.00</span></div>
+        <div class="stat-row total"><span class="stat-label">Left in account</span><span class="stat-val" id="lblLeftover">$0.00</span></div>
+        <div class="owed-note" id="owedNote" hidden></div>
+      </div>
+      <div class="donut-wrap">
+        <div class="donut" id="donutChart">
+          <div class="donut-center"><span id="donutCenterVal">$0</span><small>tracked</small></div>
+        </div>
+        <div class="legend">
+          <span><i class="swatch" style="background:var(--need)"></i>Needs</span>
+          <span><i class="swatch" style="background:var(--want)"></i>Wants</span>
+          <span><i class="swatch" style="background:var(--save)"></i>Savings</span>
+        </div>
+      </div>
+    </div>
+    </section>
+
+    <section class="card target-card">
+      <h2 class="card-title">Target</h2>
+      <div class="target-body">
+        <div class="target-list">
+          <label class="target-row"><i class="swatch" style="background:var(--need)"></i><span>Needs</span><input type="number" id="tgtNeed" value="50" min="0" max="100"><em>%</em></label>
+          <label class="target-row"><i class="swatch" style="background:var(--want)"></i><span>Wants</span><input type="number" id="tgtWant" value="30" min="0" max="100"><em>%</em></label>
+          <label class="target-row"><i class="swatch" style="background:var(--save)"></i><span>Savings</span><input type="number" id="tgtSave" value="20" min="0" max="100"><em>%</em></label>
+        </div>
+        <div class="donut-wrap">
+          <div class="donut" id="targetDonut">
+            <div class="donut-center" id="targetDonutCenter"><span id="targetDonutVal">100%</span><small>of income</small></div>
+          </div>
+        </div>
+      </div>
+      <div class="recommendation" id="recommendation">Add income and expenses to see your plan.</div>
+    </section>
+  </div>
+
+  <section class="entry-section">
+    <p id="pdfBankStatus" class="inline-import-status"></p>
+    <div class="entry-columns">
+      <div class="card">
+        <div class="entry-heading"><h3>Income</h3><label class="compact-pdf-btn" for="pdfBankFile">📄 Import PDF</label></div>
+        <form class="entry-form" id="incomeForm">
+          <input type="date" id="incDate" required>
+          <input type="text" id="incSource" placeholder="Source (e.g. Paycheck)" required>
+          <input type="number" id="incAmount" placeholder="Amount" step="0.01" min="0" required>
+          <button type="submit">Add</button>
+        </form>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Date</th><th>Source</th><th style="text-align:right">Amount</th><th></th></tr></thead>
+          <tbody id="incomeBody"></tbody>
+        </table></div>
+      </div>
+      <div class="card">
+        <div class="entry-heading"><h3>Expenses</h3><div class="entry-tools"><label class="compact-pdf-btn" for="pdfBankFile">📄 Import PDF</label><label class="compact-scan-btn" for="receiptFile">📷 Scan receipt</label></div></div>
+        <div class="scan-row">
+          <input type="file" id="receiptFile" accept="image/*" capture="environment">
+          <input type="file" id="pdfBankFile" accept="application/pdf,.pdf">
+          <span id="scanStatus"></span>
+        </div>
+        <form class="entry-form" id="expenseForm">
+          <input type="date" id="expDate" required>
+          <select id="expCategory" required></select>
+          <input type="text" id="expNote" placeholder="Store or note (optional)" maxlength="80" aria-label="Store or note">
+          <input type="number" id="expAmount" placeholder="Amount" step="0.01" min="0" required>
+          <button type="submit">Add</button>
+          <button type="button" class="shared-toggle" id="sharedToggle" aria-expanded="false" aria-controls="sharedFields">＋ Shared</button>
+          <div class="shared-fields" id="sharedFields" hidden>
+            <label class="shared-field"><span>Total amount</span><input type="number" id="expTotal" placeholder="e.g. 60" step="0.01" min="0.01"></label>
+            <label class="shared-field"><span>Your share</span><input type="number" id="expShare" placeholder="e.g. 20" step="0.01" min="0.01"></label>
+            <div class="shared-hint" id="sharedHint">Tap “Got it back” in the list when you’re repaid.</div>
+          </div>
+        </form>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Date</th><th>Category</th><th style="text-align:right">Amount</th><th></th></tr></thead>
+          <tbody id="expenseBody"></tbody>
+        </table></div>
+      </div>
+    </div>
+
+    <div id="bankPreviewWrap" class="bank-review" style="display:none;">
+      <div class="bank-review-head">
+        <div><strong>Review imported statement</strong><span id="bankConfirmStatus"></span></div>
+        <span>Ledger classified each row as Income or Expense automatically. You can correct any row before saving.</span>
+      </div>
+      <div class="bank-review-table">
+        <table>
+          <thead><tr><th>Date</th><th>Description</th><th style="text-align:right">Amount</th><th>Type</th><th>Category</th></tr></thead>
+          <tbody id="bankPreviewBody"></tbody>
+        </table>
+      </div>
+      <div class="bank-review-actions">
+        <button class="btn-primary" id="bankConfirmBtn" type="button">Add these transactions</button>
+        <button class="btn-secondary" id="bankCancelBtn" type="button">Cancel</button>
+      </div>
+    </div>
+
+    <div id="receiptReviewWrap" class="bank-review" hidden>
+      <div class="bank-review-head">
+        <div><strong>Review receipt items</strong><span id="receiptReviewStatus"></span></div>
+        <span>Ledger sorted each item into a category. Change any that look wrong, then add them. Tax and anything the scan missed is shared out so the categories add up to the receipt total.</span>
+      </div>
+      <div class="receipt-meta" id="receiptMeta"></div>
+      <div class="bank-review-table">
+        <table>
+          <thead><tr><th>Add</th><th>Item</th><th style="text-align:right">Amount</th><th>Category</th></tr></thead>
+          <tbody id="receiptItemsBody"></tbody>
+        </table>
+      </div>
+      <div class="receipt-totals" id="receiptTotals"></div>
+      <div class="bank-review-actions">
+        <button class="btn-primary" id="receiptAddBtn" type="button">Add by category</button>
+        <button class="btn-secondary" id="receiptCancelBtn" type="button">Cancel</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="card export-card">
+    <div>
+      <h2 class="card-title">Sync &amp; export</h2>
+      <p class="mini-note">Your entries save to your account automatically. Download a copy any time.</p>
+      <span id="storageStatus" class="storage-status">Database synced</span>
+    </div>
+    <div class="sync-actions">
+      <button class="btn-secondary" id="exportBtn" type="button">Export CSV</button>
+      <button class="btn-secondary" id="exportPdfBtn" type="button">Export PDF</button>
+    </div>
+  </section>
+</div>
+
+<!-- ===================== INTELLIGENCE ===================== -->
+<div class="tab-panel" data-panel="intelligence" role="tabpanel" hidden>
+  <div class="intel-grid">
+    <section class="card">
+      <h2 class="card-title">🎯 Savings goals</h2>
+      <p class="mini-note">A trip, a laptop, an emergency fund — Ledger shows what it takes to reach each one. Tap Share on a goal to save for it with someone else.</p>
+        <form class="goal-form" id="goalForm">
+          <input id="goalName" type="text" placeholder="Goal name (e.g. Japan trip)" required>
+          <input id="goalTarget" type="number" min="0.01" step="0.01" placeholder="Target amount" required>
+          <input id="goalDate" type="date" required>
+          <input id="goalSaved" type="number" min="0" step="0.01" placeholder="Already saved" value="0">
+          <button class="btn-primary" type="submit">Create goal</button>
+        </form>
+        <div id="goalStatus" class="status-inline"></div>
+        <div id="goalList" class="goal-list"></div>
+    </section>
+
+    <section class="card">
+      <h2 class="card-title">🔮 Next month</h2>
+      <div class="ml-metrics"><div><span>Predicted income</span><strong id="mlIncomeForecast">—</strong></div><div><span>Predicted expense</span><strong id="mlExpenseForecast">—</strong></div><div><span>Predicted remainder</span><strong id="mlNetForecast">—</strong></div></div>
+      <div class="ml-note" id="mlForecastNote">Train the model after you have enough monthly history.</div>
+      <div class="ml-actions"><button class="btn-primary" id="trainMlBtn" type="button">Update forecast</button><span id="mlTrainStatus" class="status-inline"></span></div>
+      <div class="ml-model-details" id="mlModelDetails">Model: not trained yet.</div>
+    </section>
+  </div>
+</div>
+
+<button class="assistant-fab" id="assistantFab" type="button" aria-label="Open Ledger Assistant">🤖<span>Ledger Assistant</span></button>
+  <section class="chatbot-card" id="manualChatbot" aria-label="Ledger Assistant">
+    <div class="chatbot-head">
+      <div><h3>🧠 Ledger Assistant</h3><p>Ask about spending, saving, goals, forecasts, or affordability.</p></div>
+      <div class="assistant-head-actions"><button class="btn-secondary assistant-reset" id="chatResetBtn" type="button">Reset</button><button class="assistant-close" id="assistantCloseBtn" type="button" aria-label="Close Ledger Assistant">×</button></div>
+    </div>
+    <div class="chatbot-body">
+      <div>
+        <div class="chat-messages" id="chatMessages"></div>
+        <div class="chat-input-row">
+          <input id="chatInput" type="text" placeholder="Type your message…" autocomplete="off">
+          <button class="btn-primary" id="chatSendBtn" type="button">Send</button>
+        </div>
+    <div class="copilot-chips">
+      <button class="copilot-chip" type="button" data-copilot="Can I afford $100?">Can I afford $100?</button>
+      <button class="copilot-chip" type="button" data-copilot="How can I save $500?">How can I save $500?</button>
+      <button class="copilot-chip" type="button" data-copilot="Where am I spending the most?">Where am I spending the most?</button>
+      <button class="copilot-chip" type="button" data-copilot="What will next month look like?">What will next month look like?</button>
+      <button class="copilot-chip" type="button" data-copilot="What is my next best move?">What is my next best move?</button>
+    </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>Your transactions are stored securely in your account. Bank PDFs and receipt photos are read in your browser and never uploaded.</footer>
+</div>
+
+<script>
+const CATEGORIES = [
+  ["Housing","Need"],["Utilities","Need"],["Groceries","Need"],["Transportation","Need"],
+  ["Insurance","Need"],["Debt Payments","Need"],["Health & Medical","Need"],["Education","Need"],
+  ["Childcare","Need"],["Subscriptions","Want"],["Entertainment","Want"],["Dining Out","Want"],
+  ["Personal Care","Want"],["Shopping","Want"],["Other","Want"],["Savings & Investments","Savings"]
+];
+const CAT_TYPE = Object.fromEntries(CATEGORIES);
+
+/* =========================
+   DATABASE CONFIGURATION
+   =========================
+   Replace these two placeholders with your Supabase project's
+   Project URL and anon/public key.
+
+   NEVER put a Supabase service_role key in this HTML file.
+   Row Level Security (RLS) protects each customer's rows.
+*/
+const SUPABASE_URL = 'https://eudodyfntnxzlnemtdxt.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_KgCUIR8Qg2sMlnT8VDspoA_coGSOFXQ';
+
+let dbClient = null;
+let currentUser = null;
+let state = { income: [], expenses: [], goals: [] };
+let databaseMode = false;
+let splitSchemaAvailable = false;
+let goalsSchemaAvailable = false;
+let fingerprintAvailable = true;
+
+const fmt = n => (n<0?'-$':'$') + Math.abs(Number(n)||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+
+// Supabase must be given a redirect URL that is allowed in
+// Authentication -> URL Configuration. Using the current deployed
+// page keeps password reset and email verification on the same app.
+function getAuthRedirectUrl(){
+  if(window.location.protocol === 'http:' || window.location.protocol === 'https:'){
+    return window.location.origin + window.location.pathname;
+  }
+  return window.location.href.split('#')[0];
+}
+
+function isDatabaseConfigured(){
+  return SUPABASE_URL.startsWith('https://') && !SUPABASE_URL.includes('YOUR_') &&
+         SUPABASE_ANON_KEY && !SUPABASE_ANON_KEY.includes('YOUR_');
+}
+
+function setAppEnabled(enabled){
+  document.querySelectorAll('section input, section select, section button').forEach(el=>{
+    el.disabled = !enabled;
+  });
+}
+
+function normalizeDbRows(rows){
+  const income = [];
+  const expenses = [];
+  (rows || []).forEach(r=>{
+    const amount = Number(r.amount);
+    if(!r.id || !r.transaction_date || !Number.isFinite(amount) || amount < 0) return;
+    if(r.transaction_type === 'income'){
+      income.push({id:String(r.id), date:String(r.transaction_date), source:String(r.source || r.description || '(bank transaction)'), amount});
+    }else if(r.transaction_type === 'expense'){
+      // Shared expenses: amount is the user's own share; grossAmount is the full bill.
+      expenses.push({id:String(r.id), date:String(r.transaction_date), category:String(r.category || 'Other'), amount, grossAmount:r.gross_amount==null?null:Number(r.gross_amount), userShare:r.user_share==null?amount:Number(r.user_share), reimbursementDue:r.reimbursement_due==null?0:Number(r.reimbursement_due), shared:!!r.shared_expense, description:String(r.description||'')});
+    }
+  });
+  return {income, expenses};
+}
+
+async function loadState(){
+  if(!databaseMode || !currentUser){
+    state = {income:[], expenses:[], goals:[]};
+    render();
+    return;
+  }
+  try{
+    // Load the core transaction columns first so Ledger still works when the
+    // optional split-expense columns have not been migrated yet.
+    const baseSelect='id,transaction_date,transaction_type,category,source,description,amount,created_at';
+    let result=await dbClient.from('transactions').select(baseSelect+',gross_amount,user_share,reimbursement_due,shared_expense').eq('user_id',currentUser.id).order('transaction_date',{ascending:true}).order('created_at',{ascending:true});
+    if(result.error){
+      splitSchemaAvailable=false;
+      result=await dbClient.from('transactions').select(baseSelect).eq('user_id',currentUser.id).order('transaction_date',{ascending:true}).order('created_at',{ascending:true});
+    }else{ splitSchemaAvailable=true; }
+    if(result.error) throw result.error;
+    state = normalizeDbRows(result.data||[]);
+    render();
+    await loadGoals();
+    updateStorageStatus(splitSchemaAvailable ? 'Database synced ✓' : 'Database synced ✓ — shared-expense fields not installed');
+  }catch(e){
+    console.error('Ledger database load failed:', e);
+    updateStorageStatus('Database error');
+  }
+}
+
+async function insertTransaction(entry, kind, fingerprint=null){
+  if(!databaseMode || !currentUser) throw new Error('Please sign in first.');
+  const baseRow = {
+    id: entry.id || crypto.randomUUID(), user_id: currentUser.id, transaction_date: entry.date,
+    transaction_type: kind, category: kind === 'expense' ? entry.category : null,
+    source: kind === 'income' ? entry.source : null, description: entry.description || null, amount: Math.abs(Number(entry.amount)), fingerprint: fingerprint || null
+  };
+  if(kind === 'expense' && entry.shared && !splitSchemaAvailable){
+    throw new Error('Shared expenses need the database update. Regular expenses are still available.');
+  }
+  const row = splitSchemaAvailable ? {...baseRow, gross_amount: kind === 'expense' && entry.shared ? Math.abs(Number(entry.grossAmount)) : null, user_share: kind === 'expense' && entry.shared ? Math.abs(Number(entry.userShare)) : null, reimbursement_due: kind === 'expense' && entry.shared ? Math.max(0, Math.abs(Number(entry.grossAmount)) - Math.abs(Number(entry.userShare))) : 0, shared_expense: kind === 'expense' ? !!entry.shared : false} : baseRow;
+  let result=await dbClient.from('transactions').insert(row).select().single();
+  if(result.error && /fingerprint|column .* does not exist|schema cache/i.test(result.error.message||'')){
+    fingerprintAvailable=false;
+    const retryRow={...row}; delete retryRow.fingerprint;
+    result=await dbClient.from('transactions').insert(retryRow).select().single();
+  }
+  if(result.error) throw result.error;
+  return result.data;
+}
+
+async function deleteTransaction(id){
+  if(!databaseMode || !currentUser) throw new Error('Please sign in first.');
+  const {error} = await dbClient.from('transactions').delete().eq('id', id).eq('user_id', currentUser.id);
+  if(error) throw error;
+}
+
+function makeFingerprint(kind, entry){
+  const label = kind === 'income' ? entry.source : entry.category;
+  return `${kind}|${entry.date}|${String(label||'').trim().toLowerCase()}|${Number(entry.amount).toFixed(2)}`;
+}
+
+async function addEntriesToDatabase(entries){
+  if(!databaseMode || !currentUser) throw new Error('Please sign in first.');
+  let added = 0, skipped = 0;
+  for(const item of entries){
+    const kind = item.kind;
+    const entry = item.entry;
+    const fingerprint = makeFingerprint(kind, entry);
+
+    // Check the per-user fingerprint first. This prevents re-uploading the
+    // same statement from creating duplicate rows.
+    let existing=null;
+    if(fingerprintAvailable){
+      const check=await dbClient.from('transactions').select('id').eq('user_id',currentUser.id).eq('fingerprint',fingerprint).limit(1);
+      if(check.error){
+        if(/fingerprint|schema cache|column/i.test(check.error.message||'')){ fingerprintAvailable=false; }
+        else throw check.error;
+      }else existing=check.data;
+    }
+    if((!existing || !existing.length) && hasTransaction(entry,kind)){ existing=[{id:'client-match'}]; }
+    if(existing && existing.length){ skipped++; continue; }
+
+    try{
+      await insertTransaction(entry, kind, fingerprint);
+      added++;
+    }catch(err){
+      // A unique-index race is also treated as a duplicate.
+      if(String(err.message || '').toLowerCase().includes('duplicate') ||
+         String(err.code || '') === '23505'){
+        skipped++;
+      }else{
+        throw err;
+      }
+    }
+  }
+  await loadState();
+  return {added, skipped};
+}
+
+function requireSignedIn(){
+  if(!databaseMode){
+    setAuthGateMessage('Database is not configured. Add your Supabase URL and anon key in the HTML first.', 'err');
+    return false;
+  }
+  if(!currentUser){
+    setAuthGateMessage('Please sign in before adding or importing transactions.', 'err');
+    return false;
+  }
+  return true;
+}
+
+// Supabase's wording for common sign-in problems isn't always clear, so translate it.
+function friendlyAuthError(error){
+  const msg = String((error && error.message) || '');
+  if(/invalid login credentials/i.test(msg)) return 'That email and password don’t match. Check them, or use “Forgot password?” to set a new password.';
+  if(/email not confirmed/i.test(msg)) return 'Please confirm your email first: open the link we emailed you, then sign in.';
+  if(/sending confirmation email|email address not authorized|sending (magic link|recovery|invite) email/i.test(msg)) return 'We couldn’t send the email for this address. Ledger’s email service isn’t fully set up yet, so please ask the app owner to finish the email setup.';
+  if(/rate limit|too many requests/i.test(msg)) return 'Too many attempts in a short time. Please wait a few minutes and try again.';
+  return msg || 'Something went wrong. Please try again.';
+}
+
+function setAuthGateMessage(message,kind=''){const el=document.getElementById('authGateMessage');if(!el)return;el.textContent=message||'';el.className='auth-feedback'+(kind?' '+kind:'')}
+function showAuthGate(show){const gate=document.getElementById('authGate');if(!gate)return;gate.classList.toggle('hidden',!show);document.body.style.overflow=show?'hidden':''}
+async function signInFromGate(){if(!databaseMode){setAuthGateMessage('Database is not configured yet.','err');return}const email=document.getElementById('gateEmail').value.trim();const password=document.getElementById('gatePassword').value;if(!email||!password){setAuthGateMessage('Enter your email and password.','err');return}setAuthGateMessage('Signing in…');document.getElementById('gateSignInBtn').disabled=true;document.getElementById('gateSignUpBtn').disabled=true;const {error}=await dbClient.auth.signInWithPassword({email,password});document.getElementById('gateSignInBtn').disabled=false;document.getElementById('gateSignUpBtn').disabled=false;if(error)setAuthGateMessage(friendlyAuthError(error),'err');else setAuthGateMessage('Signed in successfully.','ok')}
+async function signUpFromGate(){
+  if(!databaseMode){
+    setAuthGateMessage('Database is not configured yet.', 'err');
+    return;
+  }
+
+  const email = document.getElementById('gateEmail').value.trim();
+  const password = document.getElementById('gatePassword').value;
+  if(!email || !password){
+    setAuthGateMessage('Enter an email and password to create your account.', 'err');
+    return;
+  }
+  if(password.length < 8){
+    setAuthGateMessage('Use a password with at least 8 characters.', 'err');
+    return;
+  }
+
+  const signInBtn = document.getElementById('gateSignInBtn');
+  const signUpBtn = document.getElementById('gateSignUpBtn');
+  signInBtn.disabled = true;
+  signUpBtn.disabled = true;
+  setAuthGateMessage('Creating your account…');
+
+  try{
+    const {data, error} = await dbClient.auth.signUp({
+      email,
+      password,
+      options:{ emailRedirectTo:getAuthRedirectUrl() }
+    });
+
+    if(error){
+      setAuthGateMessage(friendlyAuthError(error), 'err');
+      return;
+    }
+
+    // Existing email: Supabase returns a user with no identities and sends nothing.
+    if(data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0){
+      setAuthGateMessage('An account with this email already exists. Sign in instead, or reset your password below if you’ve forgotten it.', 'err');
+      document.getElementById('resetPanel').classList.add('visible');
+      document.getElementById('resetEmail').value = email;
+      return;
+    }
+
+    if(data.session){
+      setAuthGateMessage('Account created and signed in.', 'ok');
+      await handleAuthSession(data.session);
+    }else{
+      setAuthGateMessage('Account created ✓ Check your inbox (and spam folder) for the confirmation email, open the link, then sign in here.', 'ok');
+    }
+  }catch(err){
+    console.error('Sign-up failed:', err);
+    setAuthGateMessage('Could not create the account. Please try again.', 'err');
+  }finally{
+    signInBtn.disabled = false;
+    signUpBtn.disabled = false;
+  }
+}
+
+document.getElementById('toggleGatePassword').addEventListener('click', ()=>{
+  const input = document.getElementById('gatePassword');
+  const button = document.getElementById('toggleGatePassword');
+  const show = input.type === 'password';
+  input.type = show ? 'text' : 'password';
+  button.textContent = show ? 'Hide' : 'Show';
+});
+
+document.getElementById('forgotPasswordBtn').addEventListener('click', ()=>{
+  const panel = document.getElementById('resetPanel');
+  panel.classList.toggle('visible');
+  const email = document.getElementById('gateEmail').value.trim();
+  if(email) document.getElementById('resetEmail').value = email;
+});
+
+document.getElementById('sendResetBtn').addEventListener('click', async ()=>{
+  if(!databaseMode) return;
+
+  const email = document.getElementById('resetEmail').value.trim();
+  const msg = document.getElementById('resetMessage');
+
+  if(!email){
+    msg.textContent = 'Enter your email address.';
+    msg.className = 'auth-feedback err';
+    return;
+  }
+
+  msg.textContent = 'Sending reset email…';
+  msg.className = 'auth-feedback';
+
+  try{
+    const {error} = await dbClient.auth.resetPasswordForEmail(email, {
+      redirectTo:getAuthRedirectUrl()
+    });
+
+    if(error){
+      msg.textContent = friendlyAuthError(error);
+      msg.className = 'auth-feedback err';
+    }else{
+      msg.textContent = 'Check your email for the password reset link.';
+      msg.className = 'auth-feedback ok';
+    }
+  }catch(err){
+    console.error(err);
+    msg.textContent = 'Could not send the reset email. Please try again.';
+    msg.className = 'auth-feedback err';
+  }
+});
+
+document.getElementById('gateSignInBtn').addEventListener('click',signInFromGate);document.getElementById('gateSignUpBtn').addEventListener('click',signUpFromGate);['gateEmail','gatePassword'].forEach(id=>document.getElementById(id).addEventListener('keydown',e=>{if(e.key==='Enter')signInFromGate()}));
+async function initDatabase(){
+  if(!isDatabaseConfigured()){
+    databaseMode = false;
+    setAuthGateMessage('Database not configured — add your Supabase Project URL and anon/public key in the code.', 'err');
+    setAppEnabled(false);
+    updateStorageStatus();
+    return;
+  }
+
+  try{
+    // An invited partner arrives with "type=invite" in the link. Read it before the
+    // Supabase client consumes the link, so they can choose a password once signed in.
+    captureJoinToken();
+    const arrivedFromInvite = /(^|[#&?])type=invite(&|$)/.test(window.location.hash + window.location.search);
+    dbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    databaseMode = true;
+
+    const {data:{session}} = await dbClient.auth.getSession();
+    await handleAuthSession(session);
+    if(arrivedFromInvite && session){
+      history.replaceState(null, '', window.location.pathname);
+      showTab('intelligence');
+      await handlePasswordRecovery('Welcome to Ledger! Choose a password so you can sign in next time (at least 8 characters):');
+    }
+
+    dbClient.auth.onAuthStateChange((event, session)=>{
+      // Don't await directly inside Supabase's auth callback.
+      setTimeout(()=>{
+        if(event === 'PASSWORD_RECOVERY'){
+          handlePasswordRecovery();
+        }else{
+          handleAuthSession(session);
+        }
+      }, 0);
+    });
+  }catch(e){
+    console.error(e);
+    setAuthGateMessage('Could not initialize the database connection.', 'err');
+    setAppEnabled(false);
+  }
+}
+
+async function handlePasswordRecovery(promptText='Enter your new password (at least 8 characters):'){
+  const newPassword = window.prompt(promptText);
+  if(newPassword === null) return;
+
+  if(newPassword.length < 8){
+    alert('Password must be at least 8 characters.');
+    return;
+  }
+
+  try{
+    const {error} = await dbClient.auth.updateUser({password:newPassword});
+    if(error){
+      alert('Could not update your password: ' + error.message);
+    }else{
+      alert('Your password has been updated successfully.');
+    }
+  }catch(err){
+    console.error(err);
+    alert('Could not update your password. Please try again.');
+  }
+}
+
+async function handleAuthSession(session){
+  currentUser=session?.user||null;
+  const signedIn=!!currentUser;
+  showAuthGate(!signedIn);
+  const ledgerTopbar = document.getElementById('ledgerTopbar');
+  if(ledgerTopbar){
+    ledgerTopbar.classList.toggle('visible', signedIn);
+    if(signedIn){
+      document.getElementById('signedInName').title=currentUser.email||'';
+      refreshProfile();
+    }
+  }
+  if(signedIn){setAuthGateMessage('');setAppEnabled(true);await loadState();await processPendingJoin()}else{setAppEnabled(false);state={income:[],expenses:[],goals:[]};goalMembers={};openSharePanel=null;render();document.getElementById('profilePanel').hidden=true;document.getElementById('profileBtn').setAttribute('aria-expanded','false');if(peekPendingJoin())setAuthGateMessage('Sign in or create an account to join the shared goal you were invited to.','ok');updateStorageStatus()}}
+
+async function logoutLedger(){
+  if(!databaseMode) return;
+  const {error} = await dbClient.auth.signOut({scope:'local'});
+  if(error){
+    setAuthGateMessage(error.message, 'err');
+  }else{
+    // handleAuthSession() is triggered by SIGNED_OUT and returns the user to the login gate.
+    setAuthGateMessage('');
+  }
+}
+
+document.getElementById('dashboardLogoutBtn').addEventListener('click', logoutLedger);
+
+// Profile panel: display name, password change, and a small account summary.
+const profileBtn = document.getElementById('profileBtn');
+const profilePanel = document.getElementById('profilePanel');
+function profileDisplayName(){
+  const meta = (currentUser && currentUser.user_metadata) || {};
+  const full = String(meta.full_name || meta.name || '').trim();
+  if(full) return full;
+  const local = String((currentUser && currentUser.email) || '').split('@')[0].split(/[._-]/)[0];
+  return local ? local.charAt(0).toUpperCase() + local.slice(1) : 'Account';
+}
+function refreshProfile(){
+  if(!currentUser) return;
+  const name = profileDisplayName(), initial = name.charAt(0).toUpperCase();
+  document.getElementById('signedInName').textContent = name;
+  document.getElementById('profileAvatar').textContent = initial;
+  document.getElementById('profileAvatarLg').textContent = initial;
+  document.getElementById('profileNameText').textContent = name;
+  document.getElementById('profileEmailText').textContent = currentUser.email || '';
+  const nameInput = document.getElementById('profileName');
+  if(document.activeElement !== nameInput) nameInput.value = name;
+  const since = currentUser.created_at ? new Date(currentUser.created_at).toLocaleDateString(undefined, {month:'short', year:'numeric'}) : '';
+  const tx = (state.income||[]).length + (state.expenses||[]).length, goals = (state.goals||[]).length;
+  document.getElementById('profileStats').textContent =
+    [since && `Member since ${since}`, `${tx} transaction${tx===1?'':'s'}`, `${goals} goal${goals===1?'':'s'}`].filter(Boolean).join(' · ');
+}
+function setProfileOpen(open){
+  profilePanel.hidden = !open;
+  profileBtn.setAttribute('aria-expanded', String(open));
+  if(open){
+    document.getElementById('profileStatus').textContent = '';
+    refreshProfile();
+    document.getElementById('profileName').focus();
+  }
+}
+profileBtn.addEventListener('click', e=>{ e.stopPropagation(); setProfileOpen(profilePanel.hidden); });
+profilePanel.addEventListener('click', e=>e.stopPropagation());
+document.addEventListener('click', ()=>{ if(!profilePanel.hidden) setProfileOpen(false); });
+document.addEventListener('keydown', e=>{
+  if(e.key === 'Escape' && !profilePanel.hidden){ setProfileOpen(false); profileBtn.focus(); }
+});
+document.getElementById('profileSaveBtn').addEventListener('click', async ()=>{
+  if(!requireSignedIn()) return;
+  const status = document.getElementById('profileStatus');
+  const name = document.getElementById('profileName').value.trim();
+  if(!name){ status.textContent = 'Enter a name.'; return; }
+  const {data, error} = await dbClient.auth.updateUser({data:{full_name:name}});
+  if(error){ status.textContent = 'Could not save: ' + error.message; return; }
+  if(data && data.user) currentUser = data.user;
+  refreshProfile();
+  status.textContent = 'Name saved ✓';
+});
+document.getElementById('profilePasswordBtn').addEventListener('click', async ()=>{
+  if(!requireSignedIn()) return;
+  const status = document.getElementById('profileStatus');
+  const input = document.getElementById('profileNewPassword');
+  if(input.value.length < 8){ status.textContent = 'Use at least 8 characters.'; return; }
+  const {error} = await dbClient.auth.updateUser({password:input.value});
+  input.value = '';
+  status.textContent = error ? 'Could not update password: ' + error.message : 'Password updated ✓';
+});
+
+function updateStorageStatus(message){
+  const el = document.getElementById('storageStatus');
+  if(!el) return;
+  if(message){
+    el.textContent = message;
+    el.className = 'storage-status' + (/failed|error|could not|unavailable/i.test(message) ? ' err' : ' ok');
+    clearTimeout(updateStorageStatus.timer);
+    updateStorageStatus.timer = setTimeout(() => updateStorageStatus(), 3000);
+  } else {
+    el.textContent = databaseMode && currentUser ? 'Database synced ✓' : 'Sign in to save data';
+    el.className = 'storage-status' + (databaseMode && currentUser ? ' ok' : ' err');
+  }
+}
+
+function populateSelectors(){
+  const monthSel = document.getElementById('monthSel');
+  const months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  const allMonthOpt = document.createElement('option');
+  allMonthOpt.value = 0;
+  allMonthOpt.textContent = 'All months';
+  monthSel.appendChild(allMonthOpt);
+  months.forEach((m,i)=>{
+    const opt = document.createElement('option'); opt.value = i+1; opt.textContent = m;
+    monthSel.appendChild(opt);
+  });
+  const now = new Date();
+  monthSel.value = now.getMonth()+1;
+
+  const yearSel = document.getElementById('yearSel');
+  const thisYear = now.getFullYear();
+  const allYearOpt = document.createElement('option');
+  allYearOpt.value = 0;
+  allYearOpt.textContent = 'All years';
+  yearSel.appendChild(allYearOpt);
+  for(let y=thisYear-2; y<=thisYear+1; y++){
+    const opt = document.createElement('option'); opt.value = y; opt.textContent = y;
+    yearSel.appendChild(opt);
+  }
+  yearSel.value = thisYear;
+
+  const catSel = document.getElementById('expCategory');
+  CATEGORIES.forEach(([name])=>{
+    const opt = document.createElement('option'); opt.value = name; opt.textContent = name;
+    catSel.appendChild(opt);
+  });
+
+  const today = new Date().toISOString().slice(0,10);
+  document.getElementById('incDate').value = today;
+  document.getElementById('expDate').value = today;
+
+  monthSel.addEventListener('change', render);
+  yearSel.addEventListener('change', render);
+  ['tgtNeed','tgtWant','tgtSave'].forEach(id=>{
+    document.getElementById(id).addEventListener('input', render);
+  });
+}
+
+function currentPeriod(){
+  return { year: parseInt(document.getElementById('yearSel').value), month: parseInt(document.getElementById('monthSel').value) };
+}
+function inPeriod(dateStr, year, month){
+  const d = new Date(dateStr + 'T00:00:00');
+  return (year === 0 || d.getFullYear() === year) && (month === 0 || (d.getMonth()+1) === month);
+}
+
+async function loadGoals(){
+  if(!databaseMode || !currentUser) return;
+  try{
+    // Row Level Security returns the user's own goals and goals shared with them.
+    const {data,error}=await dbClient.from('savings_goals').select('id,user_id,name,target_amount,saved_amount,target_date,status,created_at').order('target_date',{ascending:true});
+    if(error) throw error;
+    state.goals=data||[];
+    goalMembers={};
+    if(state.goals.length){
+      const m=await dbClient.from('goal_members').select('goal_id,email,user_id').in('goal_id',state.goals.map(g=>g.id));
+      if(!m.error) (m.data||[]).forEach(r=>{(goalMembers[r.goal_id]=goalMembers[r.goal_id]||[]).push(r);});
+    }
+    goalsSchemaAvailable=true;
+    renderGoals();
+  }catch(err){
+    console.warn('Savings goals unavailable:',err.message||err);
+    goalsSchemaAvailable=false; state.goals=[]; renderGoals(); document.getElementById('goalStatus').textContent='Savings goals need the database update.';
+  }
+}
+
+// "Solution to reach this goal": the monthly amount needed, checked against the
+// user's recent leftover, and where the gap could come from if it isn't enough.
+function goalPlanText(g){
+  const target = Number(g.target_amount)||0, saved = Number(g.saved_amount)||0;
+  const remaining = Math.max(0, target - saved);
+  if(!remaining) return 'Goal reached — nice work!';
+  const today = new Date(), end = new Date(String(g.target_date) + 'T00:00:00');
+  const months = Math.max(1, (end.getFullYear()-today.getFullYear())*12 + (end.getMonth()-today.getMonth()));
+  const needed = remaining / months;
+  const plan = `Save ${fmt(needed)}/month for ${months} month${months===1?'':'s'} to reach it.`;
+  const s = advisorMonthlyStats();
+  if(!s.rows.length) return plan + ' Add income and expenses so Ledger can check that against your budget.';
+  if(needed <= s.avgNet) return plan + ` Your recent leftover (${fmt(s.avgNet)}/month) covers that.`;
+  const gap = needed - Math.max(0, s.avgNet);
+  const totals = advisorCategoryTotals(), monthsOfData = Math.max(1, s.rows.length);
+  const wants = CATEGORIES.filter(([c])=>CAT_TYPE[c]==='Want')
+    .map(([c])=>[c, (totals[c]||0)/monthsOfData]).filter(x=>x[1]>0).sort((a,b)=>b[1]-a[1]);
+  const top = wants[0];
+  if(top && top[1] >= gap){
+    return plan + ` That’s ${fmt(gap)} more than your recent leftover — spending about ${Math.min(100, Math.ceil(gap/top[1]*100))}% less on ${top[0]} would cover it.`;
+  }
+  return plan + ` That’s ${fmt(gap)} more than your recent leftover — try a later target date or a smaller goal.`;
+}
+
+let goalMembers = {};       // goal id -> [{goal_id, email, user_id}]
+let openSharePanel = null;  // id of the goal whose Share panel is open
+
+function renderGoals(){
+  const list=document.getElementById('goalList'); if(!list) return;
+  const goals=state.goals||[];
+  if(!goals.length){list.innerHTML='<div class="mini-note">No goals yet. Create your first one above.</div>';return;}
+  list.innerHTML='';
+  goals.forEach(g=>{
+    const mine = !g.user_id || !currentUser || g.user_id === currentUser.id;
+    const target=Number(g.target_amount)||0, saved=Number(g.saved_amount)||0, pct=target?Math.min(100,saved/target*100):0;
+    const members = goalMembers[g.id] || [];
+    const badge = !mine ? '<span class="goal-badge">Shared with you</span>'
+      : members.length ? `<span class="goal-badge">Shared with ${members.length}</span>` : '';
+    const sharing = openSharePanel === g.id;
+    const actions = mine
+      ? `<button type="button" class="btn-secondary goal-share" data-id="${g.id}" aria-expanded="${sharing}">${sharing ? 'Close sharing' : 'Share'}</button><button type="button" class="btn-secondary goal-delete" data-id="${g.id}">Delete</button>`
+      : `<button type="button" class="btn-secondary goal-leave" data-id="${g.id}">Leave</button>`;
+    const wrap=document.createElement('div'); wrap.className='goal-item';
+    wrap.innerHTML=`<div class="goal-top"><strong>${escapeHtml(g.name)} ${badge}</strong><span>${fmt(saved)} / ${fmt(target)}</span></div>`
+      + `<div class="progress"><span style="width:${pct}%"></span></div>`
+      + `<div class="mini-note">${pct.toFixed(0)}% complete • Target ${escapeHtml(g.target_date)}</div>`
+      + `<div class="goal-plan">${escapeHtml(goalPlanText(g))}</div>`
+      + `<div class="goal-actions"><button type="button" class="btn-secondary goal-add" data-id="${g.id}">Add savings</button>${actions}</div>`
+      + (mine && sharing ? sharePanelHtml(g, members) : '');
+    list.appendChild(wrap);
+  });
+
+  list.querySelectorAll('.goal-add').forEach(btn=>btn.addEventListener('click',async()=>{
+    if(!requireSignedIn()) return;
+    const amount=parseFloat(prompt('How much did you add to this goal?','25')||'');
+    if(!Number.isFinite(amount)||amount<=0) return;
+    // add_to_goal works for owners and members, and increments on the server.
+    const {error}=await dbClient.rpc('add_to_goal',{p_goal:btn.dataset.id,p_amount:Math.round(amount*100)/100});
+    if(error){alert('Could not update goal: '+error.message);return;}
+    await loadGoals();
+  }));
+  list.querySelectorAll('.goal-delete').forEach(btn=>btn.addEventListener('click',async()=>{
+    if(!requireSignedIn()) return;
+    if(!confirm('Delete this savings goal? Anyone it is shared with will lose access too.'))return;
+    const {error}=await dbClient.from('savings_goals').delete().eq('id',btn.dataset.id).eq('user_id',currentUser.id);
+    if(error){alert('Could not delete goal: '+error.message);return;}
+    if(openSharePanel===btn.dataset.id) openSharePanel=null;
+    await loadGoals();
+  }));
+  list.querySelectorAll('.goal-leave').forEach(btn=>btn.addEventListener('click',async()=>{
+    if(!requireSignedIn()) return;
+    if(!confirm('Leave this shared goal? It will disappear from your list.'))return;
+    const {error}=await dbClient.from('goal_members').delete().eq('goal_id',btn.dataset.id).eq('email',String(currentUser.email||'').toLowerCase());
+    if(error){alert('Could not leave the goal: '+error.message);return;}
+    await loadGoals();
+  }));
+  list.querySelectorAll('.goal-share').forEach(btn=>btn.addEventListener('click',()=>{
+    openSharePanel = openSharePanel===btn.dataset.id ? null : btn.dataset.id;
+    renderGoals();
+  }));
+  list.querySelectorAll('.share-send').forEach(btn=>btn.addEventListener('click',async()=>{
+    if(!requireSignedIn()) return;
+    const goalId=btn.dataset.id;
+    const email=btn.closest('.share-panel').querySelector('.share-email').value.trim().toLowerCase();
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ setShareStatus(goalId,'Enter a valid email address.','err'); return; }
+    if(email===String(currentUser.email||'').toLowerCase()){ setShareStatus(goalId,'That’s your own email.','err'); return; }
+    btn.disabled=true;
+    setShareStatus(goalId,'Adding them and sending the invite…');
+    const added=await dbClient.from('goal_members').insert({goal_id:goalId,email});
+    if(added.error && added.error.code!=='23505'){
+      btn.disabled=false;
+      setShareStatus(goalId,'Could not add that person: '+added.error.message,'err');
+      return;
+    }
+    const result=await sendGoalInvite(goalId,email);
+    await loadGoals();
+    setShareStatus(goalId,result.message,result.ok?'ok':'err');
+  }));
+  list.querySelectorAll('.share-copy').forEach(btn=>btn.addEventListener('click',async()=>{
+    if(!requireSignedIn()) return;
+    const goalId=btn.dataset.id;
+    try{
+      const link=await getInviteLink(goalId);
+      const copied=await copyText(link);
+      const offline=location.protocol==='file:' ? ' This link only works once Ledger is online (for example on Netlify).' : '';
+      setShareStatus(goalId,(copied?'Link copied ✓ ':'')+'Anyone who opens it and signs in joins this goal.'+offline,'ok');
+    }catch(err){
+      setShareStatus(goalId,'Could not create a link: '+(err.message||'Unknown error'),'err');
+    }
+  }));
+  list.querySelectorAll('.share-revoke').forEach(btn=>btn.addEventListener('click',async()=>{
+    if(!requireSignedIn()) return;
+    const goalId=btn.dataset.id;
+    const {error}=await dbClient.from('goal_invites').update({revoked_at:new Date().toISOString()}).eq('goal_id',goalId).is('revoked_at',null);
+    setShareStatus(goalId, error ? 'Could not turn off the link: '+error.message
+      : 'Link turned off ✓ Old links no longer work. People who already joined keep access.', error?'err':'ok');
+  }));
+  list.querySelectorAll('.member-remove').forEach(btn=>btn.addEventListener('click',async()=>{
+    if(!requireSignedIn()) return;
+    if(!confirm(`Remove ${btn.dataset.email} from this goal?`))return;
+    const {error}=await dbClient.from('goal_members').delete().eq('goal_id',btn.dataset.goal).eq('email',btn.dataset.email);
+    if(error){ setShareStatus(btn.dataset.goal,'Could not remove them: '+error.message,'err'); return; }
+    await loadGoals();
+  }));
+}
+
+async function createGoal(e){
+  e.preventDefault(); if(!requireSignedIn())return;
+  if(!goalsSchemaAvailable){document.getElementById('goalStatus').textContent='Savings goals are not enabled in this database yet. Run the database setup SQL, then reload Ledger.';return;}
+  const name=document.getElementById('goalName').value.trim(), target=parseFloat(document.getElementById('goalTarget').value), date=document.getElementById('goalDate').value, saved=parseFloat(document.getElementById('goalSaved').value)||0;
+  if(!name||!Number.isFinite(target)||target<=0||!date||saved<0||saved>target){document.getElementById('goalStatus').textContent='Enter a valid goal, target date, and saved amount.';return;}
+  const {error}=await dbClient.from('savings_goals').insert({user_id:currentUser.id,name,target_amount:target,saved_amount:saved,target_date:date,status:saved>=target?'achieved':'active'});
+  if(error){document.getElementById('goalStatus').textContent='Could not create goal: '+error.message;return;}
+  e.target.reset();document.getElementById('goalSaved').value='0';document.getElementById('goalStatus').textContent='Goal created ✓';await loadGoals();
+}
+
+function render(){
+  const {year, month} = currentPeriod();
+  const hint = document.getElementById('periodHint');
+  if(hint) hint.textContent = (year === 0 || month === 0) ? 'Showing all saved transactions' : 'Showing this month';
+  const incomeThis = state.income.filter(e => inPeriod(e.date, year, month));
+  const expenseThis = state.expenses.filter(e => inPeriod(e.date, year, month));
+
+  const totalIncome = incomeThis.reduce((s,e)=>s+e.amount,0);
+  const byType = {Need:0, Want:0, Savings:0};
+  expenseThis.forEach(e=>{ byType[CAT_TYPE[e.category]||'Want'] += e.amount; });
+  const totalExpenses = byType.Need + byType.Want + byType.Savings;
+  // Money paid on someone else's behalf (the non-share part of a shared bill) isn't the
+  // user's spending, but it did leave the account, so it still reduces what's left.
+  const lentOut = expenseThis.reduce((t,e)=>t + (e.shared ? Math.max(0,(Number(e.grossAmount)||0)-(Number(e.amount)||0)) : 0), 0);
+  const leftover = totalIncome - totalExpenses - lentOut;
+
+  document.getElementById('statIncome').textContent = fmt(totalIncome);
+  document.getElementById('statExpenses').textContent = fmt(byType.Need + byType.Want);
+  document.getElementById('statSavings').textContent = fmt(byType.Savings);
+  const leftEl = document.getElementById('lblLeftover');
+  leftEl.textContent = fmt(leftover);
+  leftEl.className = 'stat-val ' + (leftover>=0?'pos':'neg');
+  const owedBack = expenseThis.reduce((t,e)=>t + (e.shared ? Number(e.reimbursementDue)||0 : 0), 0);
+  const owedNote = document.getElementById('owedNote');
+  owedNote.hidden = owedBack <= 0;
+  owedNote.textContent = owedBack > 0 ? `+ ${fmt(owedBack)} owed back to you` : '';
+
+  const tgtNeed = parseFloat(document.getElementById('tgtNeed').value)||0;
+  const tgtWant = parseFloat(document.getElementById('tgtWant').value)||0;
+  const tgtSave = parseFloat(document.getElementById('tgtSave').value)||0;
+
+  // Target pie chart: the split the user is aiming for. Warns when it doesn't add to 100%.
+  const tgtTotal = tgtNeed + tgtWant + tgtSave;
+  const targetDonut = document.getElementById('targetDonut');
+  if(tgtTotal > 0){
+    const n = tgtNeed/tgtTotal*100, w = n + tgtWant/tgtTotal*100;
+    targetDonut.style.background = `conic-gradient(var(--need) 0% ${n}%, var(--want) ${n}% ${w}%, var(--save) ${w}% 100%)`;
+  } else {
+    targetDonut.style.background = 'conic-gradient(var(--line) 0 100%)';
+  }
+  document.getElementById('targetDonutVal').textContent = Math.round(tgtTotal) + '%';
+  document.getElementById('targetDonutCenter').classList.toggle('warn', Math.round(tgtTotal) !== 100);
+
+  // Donut chart: how the tracked money (Needs + Wants + Savings) actually split this month
+  const donut = document.getElementById('donutChart');
+  const centerVal = document.getElementById('donutCenterVal');
+  if(totalExpenses > 0){
+    const needPct = byType.Need/totalExpenses*100;
+    const wantPct = byType.Want/totalExpenses*100;
+    const needEnd = needPct;
+    const wantEnd = needPct + wantPct;
+    donut.style.background = `conic-gradient(var(--need) 0% ${needEnd}%, var(--want) ${needEnd}% ${wantEnd}%, var(--save) ${wantEnd}% 100%)`;
+    centerVal.textContent = fmt(totalExpenses);
+  } else {
+    donut.style.background = 'conic-gradient(var(--line) 0 100%)';
+    centerVal.textContent = '$0';
+  }
+
+  // recommendation engine
+  const targetSavingsAmt = totalIncome * (tgtSave/100);
+  const gap = byType.Savings - targetSavingsAmt;
+  const periodLabel = (year === 0 || month === 0) ? 'the selected data' : 'the month';
+  const needsVsTarget = byType.Need - totalIncome*(tgtNeed/100);
+  const wantsVsTarget = byType.Want - totalIncome*(tgtWant/100);
+  let rec;
+  if(totalIncome === 0){
+    rec = "Add income and expenses to see your plan.";
+  } else if(gap >= 0){
+    rec = `You're at or above your savings target for ${periodLabel} — nice work. Consider moving the extra ${fmt(gap)} into savings or investments before it gets spent.`;
+  } else if(wantsVsTarget > 0){
+    rec = `You're ${fmt(wantsVsTarget)} over your Wants target. Trimming dining out, subscriptions, or shopping by that amount would close most of your ${fmt(-gap)} savings gap.`;
+  } else if(needsVsTarget > 0){
+    rec = `You're ${fmt(needsVsTarget)} over your Needs target. Look for a recurring cost to renegotiate or cut (a subscription, insurance shop-around, or a cheaper plan) rather than a one-time fix.`;
+  } else {
+    rec = `Your spending fits your Needs/Wants split, but savings are still ${fmt(-gap)} short of target — automating a transfer to savings on payday is the most reliable fix.`;
+  }
+  document.getElementById('recommendation').textContent = rec;
+
+  // tables
+  const incomeBody = document.getElementById('incomeBody');
+  incomeBody.innerHTML = '';
+  if(incomeThis.length===0){
+    incomeBody.innerHTML = '<tr class="empty-row"><td colspan="4">No income logged for this month yet.</td></tr>';
+  } else {
+    incomeThis.slice().sort((a,b)=>a.date.localeCompare(b.date)).forEach(e=>{
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${e.date}</td><td class="td-text">${escapeHtml(e.source)}</td><td class="amt">${fmt(e.amount)}</td><td><button class="del" data-id="${e.id}" data-kind="income">✕</button></td>`;
+      incomeBody.appendChild(tr);
+    });
+  }
+
+  const expenseBody = document.getElementById('expenseBody');
+  expenseBody.innerHTML = '';
+  if(expenseThis.length===0){
+    expenseBody.innerHTML = '<tr class="empty-row"><td colspan="4">No expenses logged for this month yet.</td></tr>';
+  } else {
+    expenseThis.slice().sort((a,b)=>a.date.localeCompare(b.date)).forEach(e=>{
+      const type = CAT_TYPE[e.category]||'Want';
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${e.date}</td><td class="td-text">${escapeHtml(e.category)} <span class="tag ${type}">${type}</span>${sharedBadges(e)}${expenseNoteHtml(e)}</td><td class="amt">${fmt(e.amount)}</td><td><button class="del" data-id="${e.id}" data-kind="expense">✕</button></td>`;
+      expenseBody.appendChild(tr);
+    });
+  }
+
+  renderGoals();
+  if(!ledgerMlModel) mlFallbackForecast(mlMonthlyData());
+
+  document.querySelectorAll('.del').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      const id = btn.dataset.id, kind = btn.dataset.kind;
+      if(!requireSignedIn()) return;
+      try{
+        btn.disabled = true;
+        await deleteTransaction(id);
+        if(kind==='income') state.income = state.income.filter(e=>e.id!==id);
+        else state.expenses = state.expenses.filter(e=>e.id!==id);
+        updateStorageStatus('Deleted ✓');
+        render();
+      }catch(err){
+        console.error(err);
+        updateStorageStatus('Delete failed');
+        btn.disabled = false;
+        alert('Could not delete this transaction: ' + (err.message || 'Unknown error'));
+      }
+    });
+  });
+  document.querySelectorAll('.got-back').forEach(btn=>btn.addEventListener('click',()=>markPaidBack(btn.dataset.id)));
+}
+
+// Store name / note under an expense (receipt store, bank description, or typed note).
+function expenseNoteHtml(e){
+  const note = String(e.description || '');
+  if(!note || note === 'Shared expense') return '';
+  return `<div class="row-note">${escapeHtml(note)}</div>`;
+}
+
+// Row badges for shared expenses: what's still owed, plus a "Got it back" button.
+function sharedBadges(e){
+  if(!e.shared) return '';
+  const due = Number(e.reimbursementDue)||0;
+  const shareOf = `<span class="tag Shared">Your share of ${fmt(Number(e.grossAmount)||0)}</span>`;
+  return '<div class="row-badges">' + shareOf + (due > 0
+    ? `<span class="tag Owed">Owed ${fmt(due)}</span><button type="button" class="got-back" data-id="${e.id}">Got it back</button>`
+    : '<span class="tag Paid">Paid back</span>') + '</div>';
+}
+
+// "Got it back": the other person repaid some or all of a shared expense. The repayment
+// is saved as income (dated today) and the expense's remaining amount owed is reduced.
+async function markPaidBack(expenseId){
+  if(!requireSignedIn()) return;
+  const exp = state.expenses.find(e=>e.id===expenseId);
+  if(!exp || !exp.shared) return;
+  const due = Number(exp.reimbursementDue)||0;
+  if(due <= 0) return;
+
+  const answer = prompt(`How much did you get back? (Still owed: ${fmt(due)})`, due.toFixed(2));
+  if(answer === null) return;
+  const amount = Math.round(parseFloat(answer)*100)/100;
+  if(!Number.isFinite(amount) || amount <= 0 || amount > due){
+    alert(`Enter an amount between $0.01 and ${fmt(due)}.`);
+    return;
+  }
+
+  const today = new Date().toISOString().slice(0,10);
+  const income = {id:crypto.randomUUID(), date:today, source:`Paid back · ${exp.category}`, amount, description:`reimbursement:${exp.id}`};
+  try{
+    // Fingerprint includes both ids so repeated partial repayments never collide.
+    await insertTransaction(income, 'income', `income|reimbursement|${exp.id}|${income.id}`);
+  }catch(err){
+    alert('Could not record the repayment: ' + (err.message || 'Unknown error'));
+    return;
+  }
+
+  const remaining = Math.round((due - amount)*100)/100;
+  const {error} = await dbClient.from('transactions').update({reimbursement_due: remaining}).eq('id', exp.id).eq('user_id', currentUser.id);
+  if(error){
+    // Keep the two records consistent: undo the income entry if the expense didn't update.
+    await deleteTransaction(income.id).catch(()=>{});
+    alert('Could not update the shared expense: ' + error.message);
+    return;
+  }
+
+  state.income.push(income);
+  exp.reimbursementDue = remaining;
+  jumpToDate(today);
+  render();
+  updateStorageStatus(remaining > 0 ? `Got ${fmt(amount)} back ✓ — ${fmt(remaining)} still owed` : `Got ${fmt(amount)} back ✓ — fully paid back`);
+}
+
+function transactionKey(r, kind){
+  if(kind === 'income') return `I|${r.date}|${String(r.source).trim().toLowerCase()}|${Number(r.amount).toFixed(2)}`;
+  return `E|${r.date}|${String(r.category).trim().toLowerCase()}|${Number(r.amount).toFixed(2)}`;
+}
+function hasTransaction(r, kind){
+  const list = kind === 'income' ? state.income : state.expenses;
+  const key = transactionKey(r, kind);
+  return list.some(x => transactionKey(x, kind) === key);
+}
+
+// If the entry's date falls in a month/year not currently on screen, jump the
+// viewer there so the numbers you just added are the ones you see change.
+function jumpToDate(dateStr){
+  const monthSel = document.getElementById('monthSel');
+  const yearSel = document.getElementById('yearSel');
+  if(monthSel.value === '0' || yearSel.value === '0') return;
+  const d = new Date(dateStr + 'T00:00:00');
+  const y = d.getFullYear(), m = d.getMonth()+1;
+  if(![...yearSel.options].some(o => parseInt(o.value) === y)){
+    const opt = document.createElement('option'); opt.value = y; opt.textContent = y;
+    yearSel.appendChild(opt);
+    yearSel.innerHTML = [...yearSel.options].sort((a,b)=>a.value-b.value)
+      .map(o=>`<option value="${o.value}">${o.textContent}</option>`).join('');
+  }
+  yearSel.value = y;
+  document.getElementById('monthSel').value = m;
+}
+
+document.getElementById('incomeForm').addEventListener('submit', async e=>{
+  e.preventDefault();
+  if(!requireSignedIn()) return;
+
+  const date = document.getElementById('incDate').value;
+  const source = document.getElementById('incSource').value.trim();
+  const amount = parseFloat(document.getElementById('incAmount').value);
+  if(!date || !source || !Number.isFinite(amount) || amount <= 0){
+    updateStorageStatus('Enter date, source, and a valid amount');
+    return;
+  }
+
+  const entry = {id:crypto.randomUUID(), date, source, amount};
+  if(hasTransaction(entry, 'income')){
+    updateStorageStatus('That income entry already exists');
+    return;
+  }
+
+  try{
+    await insertTransaction(entry, 'income', makeFingerprint('income', entry));
+    state.income.push(entry);
+    jumpToDate(date);
+    render();
+    updateStorageStatus('Income saved ✓');
+    e.target.reset();
+    document.getElementById('incDate').value = new Date().toISOString().slice(0,10);
+  }catch(err){
+    console.error(err);
+    updateStorageStatus('Could not save income');
+    alert('Could not save income: ' + (err.message || 'Unknown error'));
+  }
+});
+
+document.getElementById('expenseForm').addEventListener('submit', async e=>{
+  e.preventDefault();
+  if(!requireSignedIn()) return;
+
+  const date = document.getElementById('expDate').value;
+  const category = document.getElementById('expCategory').value;
+  const note = document.getElementById('expNote').value.trim();
+  const shared = !document.getElementById('sharedFields').hidden;
+  let entry;
+
+  if(shared){
+    // Shared: only the user's share counts as spending. The part paid for someone else is
+    // tracked as owed back, and becomes income when they mark it "Got it back".
+    const gross = parseFloat(document.getElementById('expTotal').value);
+    const share = parseFloat(document.getElementById('expShare').value);
+    if(!date || !category || !Number.isFinite(gross) || !Number.isFinite(share) || gross <= 0 || share <= 0 || share > gross){
+      setSharedHint('Enter the total amount, and a share no bigger than the total.', 'err');
+      return;
+    }
+    if(!splitSchemaAvailable){
+      setSharedHint('Shared expenses need the database update. Regular expenses still work.', 'err');
+      return;
+    }
+    entry = {id:crypto.randomUUID(), date, category, amount:share, grossAmount:gross, userShare:share, reimbursementDue:Math.round((gross-share)*100)/100, shared:true, description:note||'Shared expense'};
+  }else{
+    const amount = parseFloat(document.getElementById('expAmount').value);
+    if(!date || !category || !Number.isFinite(amount) || amount <= 0){
+      updateStorageStatus('Enter date, category, and a valid amount');
+      return;
+    }
+    entry = {id:crypto.randomUUID(), date, category, amount, description:note||null};
+  }
+
+  if(hasTransaction(entry, 'expense')){
+    updateStorageStatus('That expense entry already exists');
+    return;
+  }
+
+  try{
+    await insertTransaction(entry, 'expense', makeFingerprint('expense', entry));
+    state.expenses.push(entry);
+    jumpToDate(date);
+    render();
+    updateStorageStatus(shared ? `Shared expense saved ✓ — ${fmt(entry.grossAmount - entry.userShare)} owed back to you` : 'Expense saved ✓');
+    document.getElementById('expDate').value = new Date().toISOString().slice(0,10);
+    ['expAmount','expTotal','expShare','expNote'].forEach(id=>{ document.getElementById(id).value=''; });
+    if(shared) setSharedHint('Tap “Got it back” in the list when you’re repaid.');
+  }catch(err){
+    console.error(err);
+    updateStorageStatus('Could not save expense');
+    alert('Could not save expense: ' + (err.message || 'Unknown error'));
+  }
+});
+
+// "+ Shared" swaps the single Amount box for Total amount + Your share.
+const sharedToggle = document.getElementById('sharedToggle');
+const sharedFields = document.getElementById('sharedFields');
+const expAmountInput = document.getElementById('expAmount');
+function setSharedHint(message, kind=''){
+  const el = document.getElementById('sharedHint');
+  el.textContent = message;
+  el.className = 'shared-hint' + (kind ? ' ' + kind : '');
+}
+sharedToggle.addEventListener('click', ()=>{
+  const on = sharedFields.hidden;
+  sharedFields.hidden = !on;
+  sharedToggle.setAttribute('aria-expanded', String(on));
+  sharedToggle.textContent = on ? '− Shared' : '＋ Shared';
+  expAmountInput.hidden = on;
+  expAmountInput.required = !on;
+  if(on) document.getElementById('expTotal').focus();
+});
+['expTotal','expShare'].forEach(id=>document.getElementById(id).addEventListener('input', ()=>{
+  const gross = parseFloat(document.getElementById('expTotal').value);
+  const share = parseFloat(document.getElementById('expShare').value);
+  if(!Number.isFinite(gross) || !Number.isFinite(share)) return setSharedHint('Tap “Got it back” in the list when you’re repaid.');
+  if(share > gross) return setSharedHint('Your share can’t be more than the total.', 'err');
+  setSharedHint(`Your share: ${fmt(share)} · owed back to you: ${fmt(gross - share)}`);
+}));
+
+document.getElementById('goalForm').addEventListener('submit',createGoal);
+function setDefaultGoalDates(){
+  const d=new Date().toISOString().slice(0,10); ['goalDate'].forEach(id=>{const el=document.getElementById(id);if(el&&!el.value)el.value=d;});
+}
+setDefaultGoalDates();
+
+/* =========================
+   LEDGER ASSISTANT
+   =========================
+   Rule-based: answers questions from the data already in Ledger (see copilotAnswer).
+   Nothing typed here is sent to an AI service.
+*/
+class LedgerAssistant {
+  constructor(){
+    this.messagesEl=document.getElementById('chatMessages');
+    this.inputEl=document.getElementById('chatInput');
+  }
+  start(){
+    this.messagesEl.innerHTML='';
+    this.addMessage('bot','Hi! I\'m your Ledger Financial Copilot. Ask me about spending, saving, goals, forecasts, or whether a purchase fits your current cash flow.');
+    this.addMessage('bot','I use the data Ledger currently has and clearly label estimates.');
+    this.inputEl.disabled=false;
+    this.inputEl.value='';
+  }
+  handle(raw){
+    const text=String(raw??'').trim();
+    if(!text) return;
+    this.addMessage('user',text);
+    this.addMessage('bot',copilotAnswer(text));
+  }
+  addMessage(who,text){
+    const wrap=document.createElement('div'); wrap.className='chat-msg '+who;
+    const bubble=document.createElement('div'); bubble.className='chat-bubble'; bubble.textContent=text;
+    wrap.appendChild(bubble); this.messagesEl.appendChild(wrap); this.messagesEl.scrollTop=this.messagesEl.scrollHeight;
+  }
+}
+
+let ledgerChatbot=null;
+function initLedgerChatbot(){
+  ledgerChatbot=new LedgerAssistant();
+  document.getElementById('chatSendBtn').addEventListener('click',()=>{
+    const value=ledgerChatbot.inputEl.value.trim();
+    if(!value || ledgerChatbot.inputEl.disabled) return;
+    ledgerChatbot.inputEl.value='';
+    ledgerChatbot.handle(value);
+  });
+  ledgerChatbot.inputEl.addEventListener('keydown',e=>{
+    if(e.key==='Enter') document.getElementById('chatSendBtn').click();
+  });
+  document.getElementById('chatResetBtn').addEventListener('click',()=>ledgerChatbot.start());
+  ledgerChatbot.start();
+}
+
+// Spreadsheet export
+function csvEscape(value){
+  const s = String(value ?? '');
+  return /[",\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+}
+
+function buildCsv(){
+  const rows = [['SECTION','Date','Source or Category','Amount','Type']];
+  state.income.forEach(e => rows.push(['Income', e.date, e.source, Number(e.amount).toFixed(2), '']));
+  state.expenses.forEach(e => rows.push(['Expense', e.date, e.category, Number(e.amount).toFixed(2), CAT_TYPE[e.category] || 'Want']));
+  return rows.map(row => row.map(csvEscape).join(',')).join('\r\n') + '\r\n';
+}
+
+function downloadBlob(content, filename, type){
+  const blob = new Blob([content], {type});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+document.getElementById('exportBtn').addEventListener('click', ()=>{
+  if(!requireSignedIn()) return;
+  downloadBlob(buildCsv(), 'ledger-export.csv', 'text/csv;charset=utf-8');
+});
+
+// PDF export: builds a printable report of the selected period and opens the
+// browser's print dialog, where "Save as PDF" produces the file. No library needed.
+document.getElementById('exportPdfBtn').addEventListener('click', ()=>{
+  if(!requireSignedIn()) return;
+  const {year, month} = currentPeriod();
+  const byDate = (a,b)=>a.date.localeCompare(b.date);
+  const inc = state.income.filter(e=>inPeriod(e.date, year, month)).sort(byDate);
+  const exp = state.expenses.filter(e=>inPeriod(e.date, year, month)).sort(byDate);
+  const monthName = month ? document.getElementById('monthSel').selectedOptions[0].textContent : 'All months';
+  const period = `${monthName} ${year || '(all years)'}`;
+  const sum = arr => arr.reduce((t,e)=>t + (Number(e.amount)||0), 0);
+  const savings = exp.filter(e=>CAT_TYPE[e.category]==='Savings');
+  const spending = exp.filter(e=>CAT_TYPE[e.category]!=='Savings');
+  const lent = exp.reduce((t,e)=>t + (e.shared ? Math.max(0,(Number(e.grossAmount)||0)-(Number(e.amount)||0)) : 0), 0);
+  const rows = (arr, label) => arr.map(e=>`<tr><td>${e.date}</td><td>${escapeHtml(label(e))}</td><td class="r">${fmt(e.amount)}</td></tr>`).join('')
+    || '<tr><td colspan="3" class="empty">None recorded</td></tr>';
+  const html = `<!doctype html><html><head><meta charset="utf-8"><title>Ledger — ${escapeHtml(period)}</title><style>
+    body{font-family:Helvetica,Arial,sans-serif;color:#2E2A24;margin:32px}
+    h1{margin:0 0 4px;font-size:24px}.sub{color:#736C5F;margin:0 0 20px}
+    .sum{display:flex;gap:10px;margin-bottom:20px}.sum div{flex:1;border:1px solid #E6DDC6;border-radius:8px;padding:10px 12px;font-size:12px;color:#736C5F}
+    .sum b{display:block;font-size:16px;color:#2E2A24;margin-top:3px}
+    h2{font-size:15px;margin:22px 0 6px}table{width:100%;border-collapse:collapse;font-size:12px}
+    th,td{text-align:left;padding:6px 4px;border-bottom:1px solid #E6DDC6}.r{text-align:right}.empty{color:#999;font-style:italic}
+  </style></head><body>
+    <h1>Ledger report</h1><p class="sub">${escapeHtml(period)} · generated ${new Date().toLocaleDateString()}</p>
+    <div class="sum"><div>Income<b>${fmt(sum(inc))}</b></div><div>Expenses<b>${fmt(sum(spending))}</b></div><div>Savings<b>${fmt(sum(savings))}</b></div><div>Left in account<b>${fmt(sum(inc)-sum(exp)-lent)}</b></div></div>
+    <h2>Income</h2><table><thead><tr><th>Date</th><th>Source</th><th class="r">Amount</th></tr></thead><tbody>${rows(inc, e=>e.source)}</tbody></table>
+    <h2>Expenses</h2><table><thead><tr><th>Date</th><th>Category</th><th class="r">Amount</th></tr></thead><tbody>${rows(exp, e=>e.category + (e.shared ? ` (your share of ${fmt(e.grossAmount)})` : ''))}</tbody></table>
+  </body></html>`;
+  const frame = document.createElement('iframe');
+  frame.id = 'ledgerPrintFrame';
+  frame.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0';
+  document.body.appendChild(frame);
+  frame.contentDocument.open();
+  frame.contentDocument.write(html);
+  frame.contentDocument.close();
+  setTimeout(()=>{
+    frame.contentWindow.focus();
+    frame.contentWindow.print();
+    setTimeout(()=>frame.remove(), 1000);
+  }, 250);
+});
+
+// Receipt scanning — OCR runs locally via Tesseract.js. The extracted total,
+// date, and merchant text are used to prefill the expense form; the image
+// itself never leaves the browser.
+document.getElementById('receiptFile').addEventListener('change', async (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+
+  const statusEl = document.getElementById('scanStatus');
+  statusEl.className = '';
+  statusEl.textContent = 'Reading receipt… this can take a little while.';
+
+  try{
+    if(typeof Tesseract === 'undefined'){
+      throw new Error('OCR library did not load');
+    }
+
+    const result = await Tesseract.recognize(file, 'eng', {
+      logger: info => {
+        if(info.status === 'recognizing text' && typeof info.progress === 'number'){
+          statusEl.textContent = `Reading receipt… ${Math.round(info.progress * 100)}%`;
+        }
+      }
+    });
+
+    const text = result.data.text || '';
+    if(!text.trim()) throw new Error('No text found');
+
+    const parsed = parseReceiptOcr(text);
+    const today = new Date().toISOString().slice(0,10);
+
+    // Fill the Expense form with the receipt total and the store name.
+    if(!document.getElementById('sharedFields').hidden) document.getElementById('sharedToggle').click();
+    document.getElementById('expDate').value = parsed.date || today;
+    if(parsed.category) document.getElementById('expCategory').value = parsed.category;
+    if(parsed.amount !== null) document.getElementById('expAmount').value = parsed.amount.toFixed(2);
+    document.getElementById('expNote').value = parsed.store || '';
+
+    statusEl.className = 'ok';
+    const fromStore = parsed.store ? ` from ${parsed.store}` : '';
+    if(parsed.amount === null){
+      statusEl.textContent = `Receipt read${fromStore}, but the total was unclear — enter the amount below, then click Add.`;
+    }else if(parsed.items.length >= 2){
+      statusEl.textContent = `Receipt${fromStore}: total ${fmt(parsed.amount)}. Sort its ${parsed.items.length} items by category below, or just click Add for the total.`;
+      renderReceiptReview(parsed, parsed.date || today);
+    }else{
+      statusEl.textContent = `Receipt${fromStore}: total ${fmt(parsed.amount)}. Check the fields below, then click Add.`;
+    }
+  }catch(err){
+    console.error('Receipt OCR failed:', err);
+    statusEl.className = 'err';
+    statusEl.textContent = "Couldn't read that receipt automatically. Enter the date, category, and amount manually below.";
+  }finally{
+    e.target.value = '';
+  }
+});
+
+// Item keywords -> category. Leading word boundary only, so plurals ("bananas") match.
+const RECEIPT_ITEM_KEYWORDS = [
+  ['Groceries', /\b(milk|bread|egg|cheese|butter|yog|banana|apple|orange|grape|berr|lettuce|tomato|potato|onion|carrot|chicken|beef|pork|fish|salmon|rice|pasta|flour|sugar|cereal|juice|coffee|tea\b|water|soda|chips|snack|cookie|cracker|fruit|veg|produce|meat|deli|bakery|frozen|grocer|sauce|soup|bean|nuts?\b|chocolate|candy|avocado|lemon|lime|pepper|cucumber|spinach|broccoli|cream|oats)/i],
+  ['Personal Care', /\b(shampoo|conditioner|soap|body\s*wash|lotion|deodorant|toothpaste|toothbrush|floss|razor|makeup|cosmetic|nail|hair|skin|sunscreen|tissue|cotton|mouthwash)/i],
+  ['Health & Medical', /\b(pharm|rx\b|prescription|vitamin|tylenol|advil|ibuprofen|acetaminophen|aspirin|allergy|cough|cold\s*med|bandage|band-aid|first\s*aid|medicine|supplement|antacid)/i],
+  ['Childcare', /\b(diaper|wipes|formula|baby)/i],
+  ['Dining Out', /\b(burger|pizza|sandwich|fries|combo|meal|latte|cappuccino|espresso|donut|muffin|bagel|wrap|taco|burrito|sushi|noodle|entree|appetizer|dessert|tip\b|gratuity)/i],
+  ['Transportation', /\b(gas\b|fuel|diesel|unleaded|car\s*wash|parking|oil\s*change|transit|fare)/i],
+  ['Entertainment', /\b(movie|ticket|game|streaming|concert|toy)/i],
+  ['Shopping', /\b(shirt|pants|jeans|dress|sock|shoe|jacket|cloth|book|cable|charger|batter|headphone|phone\s*case|electronic|kitchen|towel|pillow|decor|gift|stationery|pen\b|notebook|bag\b|detergent|paper\s*towel|cleaner)/i],
+];
+// Lines that are totals, taxes, payment details or promotions, never items.
+const RECEIPT_SKIP_LINE = /\b(sub\s*-?\s*total|total|tax|gst|hst|pst|qst|vat|change|cash|tender|visa|master\s*card|amex|debit|credit|card|balance|amount\s*due|payment|approved|auth|ref\b|terminal|saving|discount|coupon|you\s*saved|points|reward|loyalty|thank|items?\s*sold|qty|quantity)\b/i;
+
+function guessItemCategory(name, fallback){
+  for(const [category, re] of RECEIPT_ITEM_KEYWORDS){ if(re.test(name)) return category; }
+  return fallback;
+}
+
+// The store name is normally one of the first lines: mostly letters, and not an
+// address, phone number, date or a generic word such as "receipt".
+function receiptStoreName(lines){
+  for(const raw of lines.slice(0, 6)){
+    const line = raw.replace(/[^A-Za-z0-9&'.\- ]/g, ' ').replace(/\s+/g, ' ').trim();
+    const letters = (line.match(/[A-Za-z]/g) || []).length;
+    if(line.length < 3 || letters < 3 || letters / line.length < 0.6) continue;
+    if(/\b(receipt|invoice|welcome|tel|phone|www|http|store\s*#|st|street|ave|avenue|rd|road|blvd|suite|unit|date|time|cashier|order)\b/i.test(line)) continue;
+    if(/\d{3}[\s.-]?\d{3}[\s.-]?\d{4}/.test(raw)) continue;
+    return line.split(' ')
+      .map(w=>w.length > 1 && /[A-Z]/.test(w) && w === w.toUpperCase() ? w.charAt(0) + w.slice(1).toLowerCase() : w)
+      .join(' ').slice(0, 60);
+  }
+  return '';
+}
+
+// Receipt text -> store, date, total, and items with a suggested category each.
+// OCR output is noisy, so everything it produces stays editable in the review.
+function parseReceiptOcr(text){
+  const lines = text.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
+  const joined = lines.join(' ');
+
+  let date = null;
+  for(const re of [/\b(20\d{2})[-\/](\d{1,2})[-\/](\d{1,2})\b/, /\b(\d{1,2})[-\/](\d{1,2})[-\/](20\d{2})\b/, /\b(\d{1,2})[-\/](\d{1,2})[-\/](\d{2})\b/]){
+    const m = joined.match(re);
+    if(!m) continue;
+    let y, mo, d;
+    if(m[1].length === 4){ y=+m[1]; mo=+m[2]; d=+m[3]; }
+    else { mo=+m[1]; d=+m[2]; y=+m[3]; if(y < 100) y += 2000; }
+    if(mo>=1 && mo<=12 && d>=1 && d<=31){ date = `${y}-${String(mo).padStart(2,'0')}-${String(d).padStart(2,'0')}`; break; }
+  }
+
+  // The last amount on a line is that line's price.
+  const priceOf = line => {
+    const all = [...line.matchAll(/(\d{1,5}(?:,\d{3})*\.\d{2})/g)];
+    return all.length ? {value: parseFloat(all[all.length-1][1].replace(/,/g,'')), firstIndex: all[0].index} : null;
+  };
+  const priced = lines.map(line=>({line, price: priceOf(line)})).filter(x=>x.price);
+
+  // Total: the largest amount on a TOTAL / AMOUNT DUE line (not subtotal, tax, savings…).
+  const isTotalLine = line => /\b(grand\s*total|total\s*due|amount\s*due|balance\s*due|total)\b/i.test(line)
+    && !/\b(sub\s*-?\s*total|total\s*(tax|savings?|discount|items?|qty|quantity|points)|tax\s*total)\b/i.test(line);
+  const totals = priced.filter(x=>isTotalLine(x.line));
+  let amount = null;
+  if(totals.length) amount = Math.max(...totals.map(x=>x.price.value));
+  else {
+    const plausible = priced.filter(x=>!/\b(change|cash|tender)/i.test(x.line));
+    if(plausible.length) amount = Math.max(...plausible.map(x=>x.price.value));
+  }
+
+  const lower = joined.toLowerCase();
+  let category = 'Groceries';
+  if(/\b(restaurant|cafe|coffee|pizza|burger|diner|takeout|delivery|starbucks|tim\s*hortons|mcdonald)/.test(lower)) category = 'Dining Out';
+  else if(/\b(pharmacy|drug\s*mart|shoppers|clinic|dental|medical|hospital)/.test(lower)) category = 'Health & Medical';
+  else if(/\b(gas\b|fuel|shell|esso|petro|uber|lyft|transit|taxi)/.test(lower)) category = 'Transportation';
+  else if(/\b(amazon|best\s*buy|winners|ikea|canadian\s*tire|clothing|shoes)/.test(lower)) category = 'Shopping';
+  else if(/\b(netflix|spotify|disney|prime\s*video|subscription)/.test(lower)) category = 'Subscriptions';
+
+  const store = receiptStoreName(lines);
+
+  // Items are the priced lines above the first subtotal/total line.
+  const stopAt = lines.findIndex(l=>/\b(sub\s*-?\s*total|total|amount\s*due|balance\s*due)\b/i.test(l));
+  const items = [];
+  (stopAt >= 0 ? lines.slice(0, stopAt) : lines).forEach(line=>{
+    const price = priceOf(line);
+    if(!price || RECEIPT_SKIP_LINE.test(line)) return;
+    const name = line.slice(0, price.firstIndex).replace(/^[\d\s#*xX@]+/, '').replace(/[^A-Za-z0-9&%'.\- ]/g, ' ').replace(/\s+/g, ' ').trim();
+    if(price.value <= 0 || name.length < 2 || !/[A-Za-z]{2}/.test(name)) return;
+    if(amount !== null && price.value > amount) return;
+    items.push({name: name.slice(0, 48), amount: price.value, category: guessItemCategory(name, category)});
+  });
+
+  return {date, amount, category, store, items};
+}
+
+// ---- Receipt item review: one row per item, saved as one expense per category.
+let receiptReview = null;   // {store, date, total, items:[{name, amount, category, include}]}
+
+function renderReceiptReview(parsed, date){
+  receiptReview = {store: parsed.store, date, total: parsed.amount, items: parsed.items.map(it=>({...it, include:true}))};
+  const body = document.getElementById('receiptItemsBody');
+  body.innerHTML = '';
+  receiptReview.items.forEach((it, i)=>{
+    const options = CATEGORIES.map(([name])=>`<option value="${escapeHtml(name)}"${name===it.category?' selected':''}>${escapeHtml(name)}</option>`).join('');
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td><input type="checkbox" data-i="${i}" data-field="include" checked aria-label="Include ${escapeHtml(it.name)}"></td>`
+      + `<td class="td-text">${escapeHtml(it.name)}</td>`
+      + `<td class="amt"><input type="number" class="receipt-amount" step="0.01" min="0" value="${it.amount.toFixed(2)}" data-i="${i}" data-field="amount" aria-label="Amount for ${escapeHtml(it.name)}"></td>`
+      + `<td><select data-i="${i}" data-field="category" aria-label="Category for ${escapeHtml(it.name)}">${options}</select></td>`;
+    body.appendChild(tr);
+  });
+  body.querySelectorAll('[data-field]').forEach(el=>el.addEventListener(el.type === 'checkbox' ? 'change' : 'input', ()=>{
+    const it = receiptReview.items[+el.dataset.i];
+    if(el.dataset.field === 'include') it.include = el.checked;
+    else if(el.dataset.field === 'amount') it.amount = Math.max(0, parseFloat(el.value) || 0);
+    else it.category = el.value;
+    updateReceiptTotals();
+  }));
+  document.getElementById('receiptMeta').textContent = [receiptReview.store, receiptReview.date, `Receipt total ${fmt(receiptReview.total)}`].filter(Boolean).join(' · ');
+  document.getElementById('receiptReviewStatus').textContent = '';
+  document.getElementById('receiptReviewWrap').hidden = false;
+  updateReceiptTotals();
+}
+
+// Tax and anything the scan missed (receipt total minus all item prices) is shared across
+// the included items in proportion to their prices. Unticked items are left out entirely.
+function receiptCategoryTotals(){
+  const round = n => Math.round(n*100)/100;
+  const all = receiptReview.items.filter(it=>it.amount > 0);
+  const included = all.filter(it=>it.include);
+  const allSum = all.reduce((t,it)=>t + it.amount, 0);
+  const includedSum = included.reduce((t,it)=>t + it.amount, 0);
+  if(!includedSum) return {byCat:{}, itemsSum:0, extra:0, addTotal:0};
+  const extra = allSum ? round((receiptReview.total - allSum) * includedSum / allSum) : 0;
+  const raw = {};
+  included.forEach(it=>{ raw[it.category] = (raw[it.category] || 0) + it.amount; });
+  const cats = Object.keys(raw), byCat = {};
+  let allocated = 0;
+  cats.forEach((c, i)=>{
+    const share = i === cats.length - 1 ? round(extra - allocated) : round(extra * raw[c] / includedSum);
+    allocated = round(allocated + share);
+    byCat[c] = Math.max(0, round(raw[c] + share));
+  });
+  return {byCat, itemsSum: round(includedSum), extra, addTotal: round(includedSum + extra)};
+}
+
+function updateReceiptTotals(){
+  const {byCat, itemsSum, extra, addTotal} = receiptCategoryTotals();
+  const parts = Object.entries(byCat).map(([c,v])=>`${escapeHtml(c)} ${fmt(v)}`);
+  document.getElementById('receiptTotals').innerHTML = parts.length
+    ? `Items ${fmt(itemsSum)} ${extra >= 0 ? '+' : '−'} tax &amp; other ${fmt(Math.abs(extra))} = <strong>${fmt(addTotal)}</strong><br>Will add: ${parts.join(' · ')}`
+    : 'Tick at least one item.';
+}
+
+document.getElementById('receiptAddBtn').addEventListener('click', async ()=>{
+  if(!receiptReview || !requireSignedIn()) return;
+  const status = document.getElementById('receiptReviewStatus');
+  const {byCat} = receiptCategoryTotals();
+  const entries = Object.entries(byCat).filter(([,v])=>v > 0).map(([category, amount])=>({
+    kind:'expense',
+    entry:{id:crypto.randomUUID(), date:receiptReview.date, category, amount, description:receiptReview.store || 'Receipt'}
+  }));
+  if(!entries.length){ status.textContent = ' Tick at least one item.'; return; }
+  try{
+    const result = await addEntriesToDatabase(entries);
+    status.textContent = ` Added ${result.added} expense${result.added===1?'':'s'}${result.skipped ? `, skipped ${result.skipped} duplicate${result.skipped===1?'':'s'}` : ''}.`;
+    ['expAmount','expNote'].forEach(id=>{ document.getElementById(id).value=''; });
+    document.getElementById('scanStatus').textContent = '';
+    jumpToDate(receiptReview.date);
+    render();
+    setTimeout(()=>{ document.getElementById('receiptReviewWrap').hidden = true; receiptReview = null; }, 2500);
+  }catch(err){
+    status.textContent = ' Could not add these expenses: ' + (err.message || 'Unknown error');
+  }
+});
+document.getElementById('receiptCancelBtn').addEventListener('click', ()=>{
+  document.getElementById('receiptReviewWrap').hidden = true;
+  receiptReview = null;
+});
+
+// ---------------------------------------------------------------------
+// Bank statement import: PDF only. The PDF is parsed locally, transactions
+// are classified as Income or Expense, categories are suggested, and the
+// user gets a review table before anything is saved.
+// ---------------------------------------------------------------------
+const CATEGORY_KEYWORDS = [
+  ["Groceries", ["walmart","target","costco","kroger","safeway","trader joe","whole foods","aldi","publix","grocery","supermarket"]],
+  ["Transportation", ["uber","lyft","shell","chevron","exxon","mobil","gas station","transit","parking","dmv","auto repair","tesla supercharge"]],
+  ["Dining Out", ["restaurant","mcdonald","starbucks","chipotle","doordash","grubhub","ubereats","cafe","coffee","pizza","taco","diner"]],
+  ["Subscriptions", ["netflix","spotify","hulu","disney+","apple.com/bill","prime video","subscription","icloud","youtube premium"]],
+  ["Housing", ["rent","mortgage","hoa","property mgmt","landlord"]],
+  ["Utilities", ["electric","water utility","gas utility","comcast","xfinity","verizon","at&t","t-mobile","internet","spectrum","utility"]],
+  ["Insurance", ["insurance","geico","progressive","state farm","allstate"]],
+  ["Health & Medical", ["pharmacy","cvs","walgreens","medical","dental","clinic","doctor","hospital"]],
+  ["Personal Care", ["gym","fitness","salon","spa","barber","haircut"]],
+  ["Shopping", ["amazon","best buy","clothing","ebay","etsy","macy","nordstrom","ikea"]],
+  ["Debt Payments", ["loan payment","credit card payment","student loan","auto loan"]],
+  ["Education", ["tuition","university","college","school fee"]],
+  ["Childcare", ["daycare","childcare","babysit"]],
+];
+const INCOME_KEYWORDS = ["payroll","salary","paycheck","direct dep","direct deposit","deposit from","employer","refund","reimbursement","interest earned","cashback","cash back","credit"];
+const EXPENSE_KEYWORDS = ["debit","withdrawal","purchase","payment","fee","charge","transfer out","bill pay","autopay","pos ","purchase at"];
+function guessCategory(desc){const d=desc.toLowerCase();for(const [cat,words] of CATEGORY_KEYWORDS){if(words.some(w=>d.includes(w)))return cat;}return "Other";}
+function looksLikeIncome(desc){const d=desc.toLowerCase();return INCOME_KEYWORDS.some(w=>d.includes(w));}
+function looksLikeExpense(desc){const d=desc.toLowerCase();return EXPENSE_KEYWORDS.some(w=>d.includes(w));}
+function findDirectionFromText(desc){const d=desc.toLowerCase();if(/\b(cr|credit)\b/.test(d)||looksLikeIncome(d))return 'Income';if(/\b(dr|debit)\b/.test(d)||looksLikeExpense(d))return 'Expense';return null;}
+function toIsoDate(raw){if(!raw)return null;raw=raw.trim();if(/^\d{4}-\d{2}-\d{2}$/.test(raw))return raw;let m=raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);if(m){let[_,mo,da,yr]=m;if(yr.length===2)yr='20'+yr;return `${yr}-${mo.padStart(2,'0')}-${da.padStart(2,'0')}`;}m=raw.match(/^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+(\d{1,2})(?:,?\s+(\d{2,4}))?$/i);if(m){const months={jan:1,feb:2,mar:3,apr:4,may:5,jun:6,jul:7,aug:8,sep:9,oct:10,nov:11,dec:12};const mo=months[m[1].slice(0,3).toLowerCase()];const da=+m[2];const yr=m[3]?(m[3].length===2?'20'+m[3]:m[3]):new Date().getFullYear();return `${yr}-${String(mo).padStart(2,'0')}-${String(da).padStart(2,'0')}`;}const d=new Date(raw);if(!isNaN(d.getTime()))return d.toISOString().slice(0,10);return null;}
+let bankPreviewRows=[];
+function renderBankPreview(rows){const body=document.getElementById('bankPreviewBody');if(!body)return;body.innerHTML='';bankPreviewRows=rows.map((r,i)=>({...r,id:i,amount:Math.abs(Number(r.signedAmount)),category:guessCategory(r.desc)}));bankPreviewRows.forEach(r=>{const tr=document.createElement('tr');const typeOpts=['Expense','Income'].map(t=>`<option value="${t}" ${t===r.type?'selected':''}>${t}</option>`).join('');const catOpts=CATEGORIES.map(([name])=>`<option value="${name}" ${name===r.category?'selected':''}>${name}</option>`).join('');tr.innerHTML=`<td>${r.date}</td><td class="td-text">${escapeHtml(r.desc)}</td><td class="amt">${fmt(r.amount)}</td><td><select data-id="${r.id}" data-field="type" style="font-size:12px;">${typeOpts}</select></td><td><select data-id="${r.id}" data-field="category" style="font-size:12px;" ${r.type==='Income'?'disabled':''}>${catOpts}</select></td>`;body.appendChild(tr);});body.querySelectorAll('select').forEach(sel=>{sel.addEventListener('change',()=>{const row=bankPreviewRows.find(r=>r.id===parseInt(sel.dataset.id));if(!row)return;row[sel.dataset.field]=sel.value;if(sel.dataset.field==='type'){const catSelect=sel.closest('tr').querySelector('select[data-field="category"]');catSelect.disabled=(sel.value==='Income');}});});document.getElementById('bankPreviewWrap').style.display=rows.length?'block':'none';}
+
+// PDF statement import — browser-side PDF text extraction. This avoids requiring
+// an Anthropic API key in the HTML file and works with normal text-based bank PDFs.
+let pdfjsReady = null;
+async function getPdfJs(){
+  if(pdfjsReady) return pdfjsReady;
+  pdfjsReady = import('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.min.mjs').then(pdfjsLib=>{
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs';
+    return pdfjsLib;
+  });
+  return pdfjsReady;
+}
+
+// Reads every text item with its position, grouped into visual lines per page.
+async function extractPdfLines(file, statusEl){
+  const pdfjsLib = await getPdfJs();
+  const pdf = await pdfjsLib.getDocument({data: await file.arrayBuffer()}).promise;
+  const lines = [];
+  for(let pageNo=1; pageNo<=pdf.numPages; pageNo++){
+    statusEl.textContent = `Reading statement… page ${pageNo} of ${pdf.numPages}`;
+    const page = await pdf.getPage(pageNo);
+    const content = await page.getTextContent();
+    const rows = [];
+    for(const item of content.items || []){
+      const str = (item.str || '').trim();
+      if(!str || !item.transform) continue;
+      const x = item.transform[4], y = item.transform[5];
+      let row = rows.find(r=>Math.abs(r.y - y) <= 3);
+      if(!row){ row = {y, items:[]}; rows.push(row); }
+      row.items.push({str, x, right: x + (item.width || 0)});
+    }
+    rows.sort((a,b)=>b.y - a.y).forEach(r=>{
+      r.items.sort((a,b)=>a.x - b.x);
+      lines.push({page:pageNo, items:r.items, text:r.items.map(i=>i.str).join(' ').replace(/\s+/g,' ').trim()});
+    });
+  }
+  return lines;
+}
+
+const BANK_DATE_AT_START = /^(\d{1,2}[\/-]\d{1,2}(?:[\/-]\d{2,4})?|\d{4}[\/-]\d{1,2}[\/-]\d{1,2}|(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s+\d{1,2}(?:,?\s+\d{2,4})?|\d{1,2}\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?(?:\s+\d{2,4})?)/i;
+const BANK_MONEY_ITEM = /^\(?-?\$?\s?(?:\d{1,3}(?:,\d{3})+|\d+)\.\d{2}\)?-?$/;
+const BANK_MONEY_IN_TEXT = /\d\.\d{2}\b/;
+
+function bankLineIsoDate(raw){
+  let t = raw.trim().replace(/\./g,'');
+  const year = new Date().getFullYear();
+  const dayFirst = t.match(/^(\d{1,2})\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*(?:\s+(\d{2,4}))?$/i);
+  if(dayFirst) t = `${dayFirst[2]} ${dayFirst[1]}${dayFirst[3] ? ', ' + dayFirst[3] : ''}`;
+  if(/^\d{1,2}[\/-]\d{1,2}$/.test(t)) t += '/' + year;
+  if(/^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)/i.test(t) && !/\d{4}/.test(t)) t += ' ' + year;
+  return toIsoDate(t);
+}
+
+// A column header row names both a withdrawals-type and a deposits-type column and
+// holds no amounts itself (so "Total withdrawals 500.00 Total deposits 800.00" is ignored).
+function bankHeaderColumns(line){
+  if(BANK_DATE_AT_START.test(line.text) || line.items.some(i=>BANK_MONEY_ITEM.test(i.str))) return null;
+  const find = re => line.items.find(i=>re.test(i.str));
+  const withdrawal = find(/\b(withdrawals?|debits?|money\s+out|paid\s+out|charges)\b/i);
+  const deposit = find(/\b(deposits?|credits?|money\s+in|paid\s+in)\b/i);
+  if(!withdrawal || !deposit || withdrawal === deposit) return null;
+  const balance = find(/\bbalance\b/i);
+  const col = i => i ? {right:i.right, center:(i.x + i.right)/2} : null;
+  return {withdrawal:col(withdrawal), deposit:col(deposit), balance:col(balance)};
+}
+
+function nearestBankColumn(cols, item){
+  const center = (item.x + item.right)/2;
+  let best = null, bestDistance = Infinity;
+  for(const name of ['withdrawal','deposit','balance']){
+    const col = cols[name];
+    if(!col) continue;
+    const distance = Math.min(Math.abs(item.right - col.right), Math.abs(center - col.center));
+    if(distance < bestDistance){ bestDistance = distance; best = name; }
+  }
+  return best;
+}
+
+// Bank statements usually have separate Withdrawals and Deposits columns. Once the
+// header row is found, each amount is classified by the column it sits under:
+// withdrawal -> Expense, deposit -> Income, balance -> ignored. Statements without
+// such a header fall back to the text parser (keywords, signs, running balance).
+function parseBankStatement(lines){
+  const rows = [], fallback = [];
+  let cols = null;
+  for(const line of lines){
+    const header = bankHeaderColumns(line);
+    if(header){ cols = header; continue; }
+    if(!cols){ fallback.push(line.text); continue; }
+
+    const dateMatch = line.text.match(BANK_DATE_AT_START);
+    if(!dateMatch) continue;
+    const moneyItems = line.items.filter(i=>BANK_MONEY_ITEM.test(i.str));
+    if(!moneyItems.length){
+      // Amounts glued into one text item can't be placed in a column; use the text parser.
+      if(BANK_MONEY_IN_TEXT.test(line.text)) fallback.push(line.text);
+      continue;
+    }
+    const iso = bankLineIsoDate(dateMatch[1]);
+    if(!iso) continue;
+
+    let desc = line.items.filter(i=>!BANK_MONEY_ITEM.test(i.str) && i.str !== '$').map(i=>i.str).join(' ').replace(/\s+/g,' ').trim();
+    const descDate = desc.match(BANK_DATE_AT_START);
+    if(descDate) desc = desc.slice(descDate[0].length).trim();
+    desc = desc || '(no description)';
+
+    for(const item of moneyItems){
+      const value = Math.abs(parseFloat(item.str.replace(/[$,()\s-]/g,'')));
+      if(!Number.isFinite(value) || value === 0) continue;
+      const column = nearestBankColumn(cols, item);
+      if(column === 'withdrawal') rows.push({date:iso, desc, signedAmount:-value, type:'Expense'});
+      else if(column === 'deposit') rows.push({date:iso, desc, signedAmount:value, type:'Income'});
+    }
+  }
+  const textRows = fallback.length ? parseBankPdfText(fallback.join('\n')) : [];
+  const seen = new Set();
+  return [...rows, ...textRows]
+    .filter(r=>{ const k = `${r.date}|${r.desc}|${r.signedAmount}`; if(seen.has(k)) return false; seen.add(k); return true; })
+    .sort((a,b)=>a.date.localeCompare(b.date));
+}
+
+function parseBankPdfText(text){
+  const lines=text.split(/\r?\n/).map(x=>x.replace(/\s+/g,' ').trim()).filter(Boolean);
+  const candidates=[]; let currentYear=new Date().getFullYear(); let previousBalance=null;
+  const openingMatch=text.match(/(?:opening|beginning)\s+balance[^$\d-]*\(?-?([\d,]+(?:\.\d{2})?)\)?/i);
+  if(openingMatch) previousBalance=parseFloat(openingMatch[1].replace(/,/g,''));
+  const dateAtStart=/^(\d{1,2}[\/-]\d{1,2}(?:[\/-]\d{2,4})?|\d{4}[\/-]\d{1,2}[\/-]\d{1,2}|(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{1,2}(?:,?\s+\d{2,4})?)/i;
+  const money=/(?:\$\s*)?\(?-?\d{1,3}(?:,\d{3})*(?:\.\d{2})\)?|(?:\$\s*)?\(?-?\d+(?:\.\d{2})\)?/g;
+  const skip=/^(date|transaction date|posted|description|details|merchant|amount|balance|opening balance|closing balance|account|statement|page \d|total|subtotal|summary|debits?|credits?|withdrawals?|deposits?)/i;
+  for(const line of lines){
+    if(skip.test(line)) continue;
+    const dm=line.match(dateAtStart); if(!dm) continue;
+    let dateText=dm[1];
+    if(/^\d{1,2}[\/-]\d{1,2}$/.test(dateText)) dateText+='/'+currentYear;
+    if(/^(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)/i.test(dateText)&&!/\d{4}/.test(dateText)) dateText+=' '+currentYear;
+    const iso=toIsoDate(dateText); if(!iso) continue;
+    const rest=line.slice(dm[0].length).trim();
+    const matches=[]; let mm; money.lastIndex=0;
+    while((mm=money.exec(rest))!==null) matches.push({raw:mm[0],index:mm.index});
+    if(!matches.length) continue;
+    const parsedAmounts=matches.map(m=>({raw:m.raw,index:m.index,value:parseFloat(m.raw.replace(/[$,\s]/g,'').replace(/^\((.*)\)$/,'-$1'))})).filter(x=>Number.isFinite(x.value));
+    if(!parsedAmounts.length) continue;
+    const first=parsedAmounts[0];
+    const last=parsedAmounts[parsedAmounts.length-1];
+    const desc=rest.slice(0,first.index).trim() || rest.replace(first.raw,'').trim() || '(no description)';
+    const lower=rest.toLowerCase();
+    const explicit=findDirectionFromText(rest);
+    const hasNegative=/^-|^\(/.test(first.raw);
+    const hasCredit=/\b(cr|credit|deposit|deposited|payroll|salary|direct\s+dep(?:osit)?)\b/i.test(lower);
+    const hasDebit=/\b(dr|debit|withdrawal|withdrawn|purchase|payment|fee|charge|autopay|bill\s+pay|pos)\b/i.test(lower);
+    let typeHint=explicit || (hasCredit&&!hasDebit?'Income':hasDebit&&!hasCredit?'Expense':null);
+    let balance=null;
+    // On statements with a running balance, the last amount is normally the balance.
+    if(parsedAmounts.length>=2) balance=last.value;
+    let signedAmount=hasNegative ? -Math.abs(first.value) : Math.abs(first.value);
+    if(!typeHint && Number.isFinite(balance) && Number.isFinite(previousBalance)){
+      const delta=balance-previousBalance;
+      if(delta>0.005) { typeHint='Income'; signedAmount=Math.abs(first.value); }
+      else if(delta<-0.005) { typeHint='Expense'; signedAmount=-Math.abs(first.value); }
+    }
+    candidates.push({date:iso,desc,signedAmount,typeHint,balance});
+    if(Number.isFinite(balance)) previousBalance=balance;
+  }
+  const rows=candidates.map(r=>{
+    // Never assume a positive amount is income. Bank statements often print
+    // both deposits and withdrawals as positive numbers; keywords or balance
+    // movement are used first, with Expense as the conservative final fallback.
+    const type=r.typeHint || 'Expense';
+    return {date:r.date,desc:r.desc,signedAmount:type==='Income'?Math.abs(r.signedAmount):-Math.abs(r.signedAmount),type};
+  });
+  const seen=new Set();
+  return rows.filter(r=>{const k=`${r.date}|${r.desc}|${r.signedAmount}`;if(seen.has(k))return false;seen.add(k);return true;});
+}
+
+document.getElementById('pdfBankFile').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if(!file) return;
+  const statusEl = document.getElementById('pdfBankStatus');
+  statusEl.className = '';
+  statusEl.textContent = 'Opening PDF…';
+  try{
+    if(file.type && file.type !== 'application/pdf' && !/\.pdf$/i.test(file.name)) throw new Error('Please choose a PDF file');
+    const lines = await extractPdfLines(file, statusEl);
+    if(!lines.some(l=>l.text)) throw new Error('This PDF contains no selectable text');
+    const rows = parseBankStatement(lines);
+    if(!rows.length) throw new Error('No transaction rows found');
+
+    statusEl.className = 'ok';
+    const deposits = rows.filter(r=>r.type==='Income').length;
+    statusEl.textContent = `Found ${rows.length} transactions: ${deposits} deposit${deposits===1?'':'s'} as income, ${rows.length-deposits} withdrawal${rows.length-deposits===1?'':'s'} as expenses. Review before adding.`;
+    renderBankPreview(rows);
+  }catch(err){
+    console.error('PDF import failed:', err);
+    statusEl.className = 'err';
+    statusEl.textContent = err.message === 'This PDF contains no selectable text'
+      ? 'This PDF is image/scanned-only. Export a CSV from your bank instead, or use a text-based PDF.'
+      : "Couldn't read that statement. Make sure it is a bank PDF with selectable transaction text, then try again.";
+  }finally{
+    e.target.value = '';
+  }
+});
+
+document.getElementById('bankConfirmBtn').addEventListener('click', async ()=>{
+  if(!bankPreviewRows.length || !requireSignedIn()) return;
+  const status=document.getElementById('bankConfirmStatus');
+  try{
+    const entries=bankPreviewRows.map(r=>r.type==='Expense'?{kind:'expense',entry:{id:crypto.randomUUID(),date:r.date,category:r.category||'Other',amount:Math.abs(Number(r.amount)),description:r.desc||null}}:{kind:'income',entry:{id:crypto.randomUUID(),date:r.date,source:r.desc||'(bank transaction)',amount:Math.abs(Number(r.amount)),description:r.desc||null}}).filter(x=>x.entry.date&&Number.isFinite(x.entry.amount)&&x.entry.amount>0);
+    const result=await addEntriesToDatabase(entries);
+    document.getElementById('monthSel').value='0';document.getElementById('yearSel').value='0';await loadState();
+    status.textContent=`Added ${result.added} transaction${result.added===1?'':'s'}${result.skipped?`; skipped ${result.skipped} duplicate${result.skipped===1?'':'s'}`:''}.`;
+    updateStorageStatus(`Bank PDF import: ${result.added} added ✓`);
+    setTimeout(()=>{document.getElementById('bankPreviewWrap').style.display='none';status.textContent='';},3500);
+  }catch(err){
+    console.error(err);status.textContent='Could not save imported transactions.';status.style.color='var(--rust)';
+  }
+});
+
+document.getElementById('bankCancelBtn').addEventListener('click',()=>{
+  document.getElementById('bankPreviewWrap').style.display='none';
+  document.getElementById('pdfBankStatus').textContent='';
+  bankPreviewRows=[];
+});
+
+populateSelectors();
+setAppEnabled(false);
+initDatabase();
+
+/* =========================
+   BUDGET STATS USED BY GOALS AND THE ASSISTANT
+   ========================= */
+function advisorMonthlyStats(){const rows=mlMonthlyData();const recent=rows.slice(-3);const n=recent.length||1;const avgIncome=recent.reduce((a,x)=>a+x.income,0)/n;const avgExpense=recent.reduce((a,x)=>a+x.expense,0)/n;return {rows,recent,avgIncome,avgExpense,avgNet:avgIncome-avgExpense};}
+function advisorCategoryTotals(){const totals={};(state.expenses||[]).forEach(e=>{const c=e.category||'Other';totals[c]=(totals[c]||0)+Math.abs(Number(e.amount)||0);});return totals;}
+function advisorGoalMonthlyNeed(){const today=new Date();let need=0;(state.goals||[]).forEach(g=>{const remaining=Math.max(0,(Number(g.target_amount)||0)-(Number(g.saved_amount)||0));if(!remaining)return;const end=new Date(String(g.target_date)+'T00:00:00');const months=Math.max(1,(end.getFullYear()-today.getFullYear())*12+(end.getMonth()-today.getMonth()));need+=remaining/months;});return need;}
+
+/* =========================
+   NEXT-MONTH FORECAST (TensorFlow.js, runs in the browser)
+   ========================= */
+let ledgerMlModel = null;
+
+function mlMonthlyData(){
+  const byMonth = new Map();
+  (state.income||[]).forEach(x=>{
+    const k=String(x.date).slice(0,7); if(!/^\d{4}-\d{2}$/.test(k)) return;
+    if(!byMonth.has(k)) byMonth.set(k,{income:0,expense:0});
+    byMonth.get(k).income += Math.abs(Number(x.amount)||0);
+  });
+  (state.expenses||[]).forEach(x=>{
+    const k=String(x.date).slice(0,7); if(!/^\d{4}-\d{2}$/.test(k)) return;
+    if(!byMonth.has(k)) byMonth.set(k,{income:0,expense:0});
+    // Cash out: the user's share plus anything paid on someone else's behalf.
+    byMonth.get(k).expense += Math.abs(Number(x.amount)||0) + (x.shared ? Math.max(0,(Number(x.grossAmount)||0)-(Number(x.amount)||0)) : 0);
+  });
+  return [...byMonth.entries()].sort((a,b)=>a[0].localeCompare(b[0])).map(([month,v])=>({month,income:v.income,expense:v.expense,net:v.income-v.expense}));
+}
+
+function mlSetStatus(text,kind=''){
+  const el=document.getElementById('mlTrainStatus'); if(!el)return; el.textContent=text; el.className='status-inline'+(kind?' '+kind:'');
+}
+
+function mlFallbackForecast(rows){
+  const n=Math.min(3,rows.length);
+  if(!n){
+    ['mlIncomeForecast','mlExpenseForecast','mlNetForecast'].forEach(id=>{document.getElementById(id).textContent='—';});
+    document.getElementById('mlForecastNote').textContent='No monthly history yet. Add income and expenses, then train the model.';
+    return;
+  }
+  const recent=rows.slice(-n);
+  const avgIncome=recent.reduce((a,x)=>a+x.income,0)/n; const avgExpense=recent.reduce((a,x)=>a+x.expense,0)/n;
+  document.getElementById('mlIncomeForecast').textContent=fmt(avgIncome);
+  document.getElementById('mlExpenseForecast').textContent=fmt(avgExpense);
+  document.getElementById('mlNetForecast').textContent=fmt(avgIncome-avgExpense);
+  document.getElementById('mlForecastNote').textContent=`Baseline estimate from the last ${n} month${n===1?'':'s'}. Add at least 4 complete months to train the neural forecasting model.`;
+}
+
+async function trainLedgerML(){
+  if(!requireSignedIn())return;
+  const rows=mlMonthlyData();
+  if(rows.length<4){
+    mlFallbackForecast(rows);
+    mlSetStatus('Need at least 4 months of history for ML.','err');
+    document.getElementById('mlModelDetails').textContent=`Model not trained. Current dataset: ${rows.length} month${rows.length===1?'':'s'}. Keep importing/logging transactions; the model will become more useful with more history.`;
+    return;
+  }
+  if(typeof tf==='undefined'){mlSetStatus('ML library unavailable.','err');return;}
+  const btn=document.getElementById('trainMlBtn'); btn.disabled=true; mlSetStatus('Training locally…');
+  try{
+    const inputs=[],targets=[];
+    // Three-month rolling window: [income, expense, net] for each month.
+    for(let i=3;i<rows.length;i++){
+      const win=rows.slice(i-3,i);
+      inputs.push(win.flatMap(r=>[r.income,r.expense,r.net]));
+      targets.push([rows[i].income,rows[i].expense]);
+    }
+    const maxAbs=Math.max(1,...inputs.flat().map(x=>Math.abs(x)),...targets.flat().map(x=>Math.abs(x)));
+    const X=tf.tensor2d(inputs).div(maxAbs); const Y=tf.tensor2d(targets).div(maxAbs);
+    if(ledgerMlModel){ledgerMlModel.dispose(); ledgerMlModel=null;}
+    const model=tf.sequential();
+    model.add(tf.layers.dense({inputShape:[9],units:24,activation:'relu'}));
+    model.add(tf.layers.dense({units:12,activation:'relu'}));
+    model.add(tf.layers.dense({units:2,activation:'linear'}));
+    model.compile({optimizer:tf.train.adam(0.01),loss:'meanSquaredError'});
+    const epochs=Math.min(120,Math.max(50,rows.length*10));
+    await model.fit(X,Y,{epochs,batchSize:Math.min(8,inputs.length),shuffle:false,verbose:0});
+    X.dispose();Y.dispose();
+    ledgerMlModel=model;
+    const last3=rows.slice(-3);
+    const feature=tf.tensor2d([last3.flatMap(r=>[r.income,r.expense,r.net])]).div(maxAbs);
+    const pred=model.predict(feature); const vals=Array.from(await pred.data()); feature.dispose(); pred.dispose();
+    const income=Math.max(0,vals[0]*maxAbs), expense=Math.max(0,vals[1]*maxAbs), net=income-expense;
+    document.getElementById('mlIncomeForecast').textContent=fmt(income);
+    document.getElementById('mlExpenseForecast').textContent=fmt(expense);
+    document.getElementById('mlNetForecast').textContent=fmt(net);
+    document.getElementById('mlForecastNote').textContent=`Neural forecast trained on ${rows.length} monthly observations using a three-month rolling window. This is an estimate, not a guarantee.`;
+    document.getElementById('mlModelDetails').textContent=`Model: TensorFlow.js dense neural network • Inputs: previous 3 months of income, spending, and net cash flow • Training observations: ${inputs.length} • Epochs: ${epochs} • Training is performed locally in this browser.`;
+    mlSetStatus('Model trained ✓','ok');
+  }catch(err){console.error(err);mlSetStatus('Training failed.','err');document.getElementById('mlModelDetails').textContent='ML training error: '+(err.message||'Unknown error');}
+  finally{btn.disabled=false;}
+}
+
+document.getElementById('trainMlBtn').addEventListener('click',trainLedgerML);
+
+initLedgerChatbot();
+const assistantFab=document.getElementById('assistantFab'), assistantPanel=document.getElementById('manualChatbot'), assistantClose=document.getElementById('assistantCloseBtn');
+function openLedgerAssistant(){assistantPanel.classList.add('open');assistantFab.style.display='none';}
+function closeLedgerAssistant(){assistantPanel.classList.remove('open');assistantFab.style.display='flex';}
+assistantFab.addEventListener('click',openLedgerAssistant);
+assistantClose.addEventListener('click',closeLedgerAssistant);
+
+function escapeHtml(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+
+/* ========================= GOAL SHARING =========================
+   Any savings goal can be shared. The owner either emails an invite (through the
+   invite-partner Edge Function) or copies a link. Opening a link and signing in calls
+   the join_goal database function, which adds the visitor to that one goal only.
+*/
+// captureJoinToken() runs during start-up, before this part of the script has executed,
+// so the pending token uses `var` without an initializer and the storage key is inlined.
+var pendingJoinToken;
+
+// Remember a ?join=<token> link through sign-in or email confirmation, then tidy the URL.
+function captureJoinToken(){
+  const params = new URLSearchParams(window.location.search);
+  const token = params.get('join');
+  if(!token) return;
+  pendingJoinToken = token;
+  try{ localStorage.setItem('ledgerPendingJoin', token); }catch(e){}
+  params.delete('join');
+  const query = params.toString();
+  history.replaceState(null, '', window.location.pathname + (query ? '?' + query : '') + window.location.hash);
+}
+
+function peekPendingJoin(){
+  try{ return pendingJoinToken || localStorage.getItem('ledgerPendingJoin'); }catch(e){ return pendingJoinToken; }
+}
+
+async function processPendingJoin(){
+  if(!databaseMode || !currentUser) return;
+  const token = peekPendingJoin();
+  if(!token) return;
+  pendingJoinToken = null;
+  try{ localStorage.removeItem('ledgerPendingJoin'); }catch(e){}
+  showTab('intelligence');
+  const status = document.getElementById('goalStatus');
+  const {error} = await dbClient.rpc('join_goal', {p_token: token});
+  if(error){
+    status.textContent = 'Could not join the shared goal: ' + (error.message || 'Unknown error');
+    return;
+  }
+  status.textContent = 'You joined a shared goal ✓ It’s in your savings goals below.';
+  await loadGoals();
+}
+
+function sharePanelHtml(g, members){
+  const people = members.length
+    ? members.map(m=>`<li><span>${escapeHtml(m.email)}${m.user_id ? '' : ' <em>(invited)</em>'}</span><button type="button" class="link-btn member-remove" data-goal="${g.id}" data-email="${escapeHtml(m.email)}">Remove</button></li>`).join('')
+    : '<li class="mini-note">Nobody yet.</li>';
+  return `<div class="share-panel" data-goal="${g.id}">
+    <strong>Share “${escapeHtml(g.name)}”</strong>
+    <div class="share-row"><input type="email" class="share-email" placeholder="Partner’s email" aria-label="Partner’s email"><button type="button" class="btn-primary share-send" data-id="${g.id}">Send invite</button></div>
+    <div class="share-or">or</div>
+    <div class="share-row"><button type="button" class="btn-secondary share-copy" data-id="${g.id}">Copy invite link</button><button type="button" class="link-btn share-revoke" data-id="${g.id}">Turn off link</button></div>
+    <div class="share-status mini-note" aria-live="polite">Anyone with the link can join after signing in.</div>
+    <ul class="share-members">${people}</ul>
+  </div>`;
+}
+
+function setShareStatus(goalId, message, kind=''){
+  const el = document.querySelector(`.share-panel[data-goal="${goalId}"] .share-status`);
+  if(!el) return;
+  el.textContent = message;
+  el.className = 'share-status mini-note' + (kind ? ' ' + kind : '');
+}
+
+// Emails the invite through the invite-partner Edge Function. The function holds the
+// Supabase secret key on the server; that key must never be placed in this file.
+async function sendGoalInvite(goalId, email){
+  const {data, error} = await dbClient.functions.invoke('invite-partner', {
+    body:{goal_id:goalId, email, redirect_to:getAuthRedirectUrl()}
+  });
+  if(error){
+    let detail = error.message || 'unknown error';
+    try{ const body = await error.context.json(); if(body && body.error) detail = body.error; }catch(e){}
+    return {ok:false, message:`${email} was added, but the invite email couldn’t be sent (${detail}). Use “Copy invite link” to share it another way.`};
+  }
+  return {ok:true, message: data && data.status === 'existing_user'
+    ? `${email} already has a Ledger account, so they were emailed a sign-in link. The goal is waiting in their savings goals.`
+    : `Invite sent to ${email} ✓ Once they accept and sign in, the goal appears in their savings goals.`};
+}
+
+// Reuses the goal's active invite link, or creates one.
+async function getInviteLink(goalId){
+  const {data, error} = await dbClient.from('goal_invites').select('token').eq('goal_id', goalId).is('revoked_at', null).order('created_at', {ascending:false}).limit(1);
+  if(error) throw error;
+  let token = data && data[0] && data[0].token;
+  if(!token){
+    const created = await dbClient.from('goal_invites').insert({goal_id: goalId}).select('token').single();
+    if(created.error) throw created.error;
+    token = created.data.token;
+  }
+  return `${getAuthRedirectUrl()}?join=${encodeURIComponent(token)}`;
+}
+
+async function copyText(text){
+  try{
+    await navigator.clipboard.writeText(text);
+    return true;
+  }catch(e){
+    window.prompt('Copy this link:', text);
+    return false;
+  }
+}
+
+function copilotStats(){
+  const rows=mlMonthlyData(), recent=rows.slice(-3), n=recent.length||1;
+  const avgIncome=recent.reduce((a,x)=>a+x.income,0)/n,avgExpense=recent.reduce((a,x)=>a+x.expense,0)/n,avgNet=avgIncome-avgExpense;
+  const totals=advisorCategoryTotals(); const ranked=Object.entries(totals).sort((a,b)=>b[1]-a[1]);
+  return {rows,recent,avgIncome,avgExpense,avgNet,totals,ranked};
+}
+function copilotAnswer(q){
+  const text=String(q||'').toLowerCase(); const s=copilotStats();
+  if(!s.rows.length)return 'I need some transaction history before I can give you a useful financial answer. Start by adding a few income and expense records or importing a statement.';
+  const amountMatch=text.match(/(?:\$|cad\s*)?(\d+(?:\.\d{1,2})?)/); const amount=amountMatch?Number(amountMatch[1]):null;
+  if(/afford|buy|purchase|spend .*\$/.test(text)){
+    const safe=Math.max(0,s.avgNet-advisorGoalMonthlyNeed()-Math.max(100,s.avgIncome*.10));
+    if(amount&&amount<=safe)return `Based on your recent history, about ${fmt(safe)} is your estimated flexible room after goal funding and a safety buffer. A ${fmt(amount)} purchase fits inside that estimate, assuming your upcoming income and expenses are similar.`;
+    return `I estimate about ${fmt(safe)} of flexible room after recent spending, active goal funding, and a safety buffer. ${amount?`A ${fmt(amount)} purchase is above that estimate by about ${fmt(Math.max(0,amount-safe))}. `:''}Consider waiting, or ask me about a smaller amount.`;
+  }
+  if(/save|saving|goal/.test(text)&&amount){
+    const months=Math.max(1,Number((text.match(/(\d+)\s*(?:month|months)/)||[])[1]||3)); const needed=amount/months;
+    return `To save ${fmt(amount)} in ${months} month${months===1?'':'s'}, you would need about ${fmt(needed)} per month. Your recent average leftover is about ${fmt(s.avgNet)} per month. ${needed<=s.avgNet?'That target is within your recent average leftover.':'That target is above your recent average leftover, so Ledger would focus on flexible spending or additional income.'}`;
+  }
+  if(/where.*spend|spending.*most|largest|category/.test(text)){
+    if(!s.ranked.length)return 'I do not have enough categorized expenses yet.';
+    const top=s.ranked.slice(0,3).map(([c,v])=>`${c}: ${fmt(v)}`).join(' • '); return `Your largest recorded spending categories are ${top}. Start with the largest flexible category rather than cutting essentials blindly.`;
+  }
+  if(/next month|forecast|predict|future/.test(text)){
+    const rows=s.rows; const last=rows[rows.length-1]; return `Ledger's current baseline is about ${fmt(s.avgIncome)} income and ${fmt(s.avgExpense)} spending per month based on your recent history. ${last?`Your latest recorded month was ${last.month}, with ${fmt(last.income)} income and ${fmt(last.expense)} spending. `:''}For a stronger forecast, open the Goals tab and update the forecast once you have four months of history.`;
+  }
+  if(/best move|what should i do|what.*do now|advice|recommend/.test(text)){
+    if(s.avgNet<0)return `Your recent average cash flow is negative by ${fmt(Math.abs(s.avgNet))}/month. Your best first move is to review the largest flexible category and recurring costs.`;
+    const top=s.ranked[0]; return `Your recent average leftover is about ${fmt(s.avgNet)}/month. Protect part of it for goals first; ${top?`your largest recorded category is ${top[0]} at ${fmt(top[1])}, so even a modest reduction there could create more room.`:''}`;
+  }
+  if(/anomal|unusual/.test(text))return 'Ledger doesn’t flag unusual spending in this version. Ask me where you’re spending the most instead.';
+  if(/balance|leftover|cash flow|income|expense/.test(text))return `Your recent average is about ${fmt(s.avgIncome)} income, ${fmt(s.avgExpense)} spending, and ${fmt(s.avgNet)} leftover per month. These are averages from your recorded history, not guaranteed future amounts.`;
+  return `I can help with affordability, saving targets, spending reductions, forecasts, anomalies, and your next best move. Try “Can I afford $100?” or “How can I save $500?”`;
+}
+function initShortcutsAndOffline(){
+  document.querySelectorAll('[data-copilot]').forEach(b=>b.addEventListener('click',()=>{openLedgerAssistant();setTimeout(()=>{const v=b.dataset.copilot;ledgerChatbot.inputEl.value=v;document.getElementById('chatSendBtn').click();},50);}));
+  if('serviceWorker' in navigator && location.protocol!=='file:') navigator.serviceWorker.register('./sw.js').catch(()=>{});
+}
+
+initShortcutsAndOffline();
+
+/* ========================= TAB NAVIGATION ========================= */
+function showTab(name){
+  const panels=[...document.querySelectorAll('[data-panel]')];
+  if(!panels.some(p=>p.dataset.panel===name)) name=panels[0].dataset.panel;
+  panels.forEach(p=>{p.hidden=p.dataset.panel!==name;});
+  document.querySelectorAll('#appTabs [data-tab]').forEach(t=>{
+    const on=t.dataset.tab===name;
+    t.setAttribute('aria-selected',String(on));
+    t.tabIndex=on?0:-1;
+  });
+  try{localStorage.setItem('ledgerTab',name);}catch(e){}
+}
+document.querySelectorAll('#appTabs [data-tab], [data-go]').forEach(btn=>btn.addEventListener('click',()=>{
+  showTab(btn.dataset.tab||btn.dataset.go);
+  window.scrollTo({top:0});
+}));
+(function(){let saved=null;try{saved=localStorage.getItem('ledgerTab');}catch(e){}showTab(saved||'budget');})();
+
+</script>
+</body>
+</html>
