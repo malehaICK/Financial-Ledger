@@ -204,20 +204,8 @@ This prevents August and September transactions from being overwritten or accide
 
 ```text
 index.html                                   the app
-manifest.webmanifest, sw.js, icon-*.png      install and offline support
 Ledger-database-schema.sql                   full database setup for a new Supabase project
-supabase/migrations/20260913_goal_sharing.sql   goal sharing, for projects created earlier
-supabase/migrations/20260915_delete_account.sql Delete account, for projects created earlier
-supabase/functions/invite-partner/index.ts   Edge Function that emails goal invites
 ```
-
-## Setup
-
-1. Create a Supabase project.
-2. In the Supabase SQL Editor, run `Ledger-database-schema.sql`. For a project set up with an earlier version, run the files in `supabase/migrations/` that it doesn't have yet instead.
-3. In `index.html`, set `SUPABASE_URL` and `SUPABASE_ANON_KEY` to your project URL and **publishable** key.
-4. Host the files over HTTPS (for example Netlify or GitHub Pages), and add the site address under **Authentication → URL Configuration** in Supabase.
-5. Optional, for goal invite emails: set up a custom SMTP provider under **Authentication → Emails**, then deploy `supabase/functions/invite-partner`. Without it, goals can still be shared with **Copy invite link**.
 
 ## Current Status
 
