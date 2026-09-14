@@ -1,69 +1,114 @@
-# Ledger — Secure Personal Finance Management Platform
+# Ledger — Finance Management
 
-Ledger is a personal finance management application designed to help users track income, expenses, savings, shared expenses, and monthly budgets in one place.
+Ledger is a personal finance management application that helps users track income, expenses, savings, shared expenses, savings goals, and monthly budgets in one place.
 
-The platform is being built with a focus on **multi-user support, secure data separation, privacy-conscious financial document processing, and an intuitive conversational interface** for entering transactions.
+The platform is built with a focus on **multi-user support, secure data separation, and privacy-conscious financial document processing**: bank statements and receipt photos are read in the browser and are never uploaded.
 
 ## Features
 
-###  Income & Expense Tracking
+### Income & Expense Tracking
 
-* Add income and expenses manually.
-* Organize expenses into categories such as groceries, housing, transportation, subscriptions, and more.
-* Automatically calculate total income, expenses, savings, and remaining balance.
+* Add income and expenses manually, with an optional store name or note.
+* Organize expenses into categories such as groceries, housing, transportation, subscriptions, and more. Each category counts as a Need, Want, or Savings.
+* Automatically calculate total income, expenses, savings, and what is left in the account.
 
-###  Monthly Budget Dashboard
+### Monthly Budget Dashboard
 
 * View financial activity by month and year.
-* Keep transactions associated with their actual transaction date.
-* Prevent transactions from one month from being incorrectly merged into another month.
+* Keep transactions associated with their actual transaction date, so one month is never merged into another.
+* A **This month** card with a pie chart of needs, wants, and savings.
+* Under the totals, a bar for Needs, Wants, and Savings shows dollars spent or saved against each target (for example "Wants: $195.99 of $967.50 · $771.51 left"), followed by a one-line verdict such as "Needs are $312.50 over".
+* Targets default to 50 / 30 / 20 of income and can be changed under **Change targets**.
+
+### Calendar
+
+* Sits next to **This month** on the Budget tab.
+* A month calendar with a green dot on each day with income, an orange dot on each day with expenses, and the amount spent that day.
+* Tap a day to see its transactions; **Add expense** and **Add income** open the form with that date filled in.
+* A **Year** view shows income, spending, and what was left for each month.
+
+### Income Pattern Reminders
+
+* Learns regular income (the same source arriving weekly, every two weeks, or monthly) and marks the next expected day on the calendar. The learned patterns are listed on the Goals tab.
+* Around payday, the Budget tab asks "Did your paycheck arrive?" with a one-tap **Yes, add it**.
+* Optional browser notifications. There is no push server, so they appear when Ledger is opened around payday.
+
+### Bank Statement Import (PDF or CSV)
+
+* Import text-based PDF statements or CSV exports; files are read locally in the browser.
+* PDFs: reads the statement's **Withdrawals** and **Deposits** columns, so withdrawals become expenses and deposits become income. Statements without separate columns fall back to keywords, +/- signs, and the running balance.
+* CSVs: works with a signed Amount column, separate Withdrawal/Deposit (Debit/Credit) columns, a Debit/Credit type column, or no header row at all.
+* Budget-tracker spreadsheets saved as CSV also work: months across the top with Week 1 / Week 2 / Month Total columns, and separate EXPENSE and INCOME sections. Each filled week becomes one transaction, totals are skipped, and category names such as Rent, Grocery, or Credit Card are matched to Ledger's categories.
+* If a file's layout isn't recognized, nothing is added and Ledger explains which layouts it can read.
+* After an import, each transaction is saved in its own month. Ledger shows the latest imported month and lists the months that were added.
+* Suggests a category for each transaction and shows a review table before anything is saved.
+* Detects duplicates, so importing the same statement twice does not add transactions twice.
+
+### Receipt Scanning
+
+* Scan a receipt with the device camera or upload a photo; text recognition (OCR) runs in the browser.
+* Fills in the receipt **total** and the **store name** from the top of the receipt.
+* Lists the items on the receipt with a suggested category for each (for example groceries, personal care, health). Users can change any category or untick items, then add them as one expense per category. Tax is shared across the categories so they add up to the receipt total.
+* The receipt image is never uploaded or stored.
+
+### Shared / Split Expenses
+
+* Mark an expense as **Shared** and enter the total amount paid and your share.
+* Only your share counts as your spending; the rest is tracked as money owed back to you.
+* **Got it back** records the repayment (full or partial) as income.
+* "Left in account" still counts money paid on someone else's behalf, so it always matches the bank balance.
+
+### Savings Goals & Sharing
+
+* Create savings goals with a target amount and date.
+* Each goal shows a plan: how much to save per month, whether recent leftover covers it, and which flexible category could close the gap.
+* **Share** any goal by emailing an invite or copying an invite link. People who join can see the goal and add savings; only the owner can edit or delete it.
+* Owners can remove people or turn off an invite link; members can leave a goal.
+
+### Badges
+
+* Earned for milestones such as a first entry, logging 7 days in a row, saving $100 and $1,000, staying within budget for a month, reaching a goal, and sharing a goal. Badges not earned yet are shown greyed out with what's left to do.
+
+### Next-Month Forecast
+
+* Predicted income, expenses, and remainder for next month.
+* Starts with a baseline from recent months; with four or more months of history, a small neural network (TensorFlow.js) is trained in the browser.
 
 ### Ledger Assistant
 
-A conversational interface allows users to enter transactions without filling out traditional forms.
-It then creates a transaction preview and adds the information to the appropriate Ledger section.
+* A floating assistant that answers questions such as "Can I afford $100?", "How can I save $500?", or "Where am I spending the most?" using the user's own Ledger data.
+* Rule-based: nothing typed into it is sent to an AI service.
 
-###  Bank Statement Import
+### Profile
 
-* Import bank statements through CSV.
-* Import supported PDF statements.
-* Extract transaction information for review before adding it.
-* Categorize transactions automatically where possible.
-* Detect duplicate transactions before saving.
-
-###  Receipt Processing
-
-* Scan receipts using the device camera or upload an image.
-* Extract relevant transaction information.
-* Avoid storing unnecessary personal information from the receipt.
-
-###  Shared / Split Expenses
-
-Users can record an expense that was paid on behalf of multiple people.
-
-Ledger records only the user's actual financial responsibility as their budget expense while tracking the remaining amount as money owed back to them.
+* A profile sheet with the user's initial, name, email, and three numbers: left this month, saved in goals, and goals reached.
+* Rename, change password, export data, import a bank statement, delete account, and log out.
+* **Delete account** asks the user to type DELETE, then removes the account and all of its transactions and goals.
 
 ### Authentication & Data Isolation
 
-* Individual user accounts.
-* Secure login and registration.
-* Password reset functionality.
-* Each user's transactions are associated with their own user ID.
-* Database-level Row Level Security is used to prevent users from accessing another user's financial records.
+* Individual user accounts with sign in, registration, and password reset.
+* Clear messages for common problems, such as signing up with an email that already has an account.
+* Each user's transactions and goals are tied to their user ID.
+* Database-level Row Level Security prevents users from accessing another user's financial records. Shared goals are visible only to the owner and the people they share with.
 
-###  Data Export
+### Data Export
 
 * Export transactions as CSV.
-* Export an Excel-compatible spreadsheet.
-* Import previously exported CSV data.
+* Export a PDF report for the selected month.
+
+### Install as an App
+
+* Includes a web app manifest and offline app shell, so Ledger can be installed from supported browsers when hosted over HTTPS.
 
 ## Technology
 
 ### Frontend
 
-* HTML5
-* CSS3
-* JavaScript
+* HTML5, CSS3, JavaScript (single page, no build step)
+* pdf.js — PDF statement reading
+* Tesseract.js — receipt OCR
+* TensorFlow.js — next-month forecast
 
 ### Backend & Database
 
@@ -71,14 +116,7 @@ Ledger records only the user's actual financial responsibility as their budget e
 * PostgreSQL
 * Supabase Authentication
 * Row Level Security (RLS)
-
-### Data Processing
-
-* CSV parsing
-* PDF transaction extraction
-* Browser-based OCR for receipts
-* Transaction normalization
-* Duplicate detection
+* Supabase Edge Function (`invite-partner`) for goal invite emails
 
 ## Architecture
 
@@ -86,63 +124,73 @@ Ledger records only the user's actual financial responsibility as their budget e
 User
   │
   ▼
-Ledger Web Application
+Ledger Web Application (runs in the browser)
   │
-  ├── Manual Entry
-  ├── Ledger Assistant
-  ├── Receipt Scanner
-  └── Bank Statement Import
+  ├── Budget: manual entry, shared expenses, targets
+  ├── Bank statement import (PDF, read locally)
+  ├── Receipt scanner (OCR, read locally)
+  ├── Goals: plans, forecast, sharing
+  └── Ledger Assistant
   │
   ▼
-Authentication
+Supabase Authentication
   │
   ▼
 Supabase
   │
-  ├── PostgreSQL Database
-  └── Row Level Security
+  ├── PostgreSQL + Row Level Security
+  └── Edge Function: invite-partner (sends goal invite emails)
   │
   ▼
-User-specific Transactions
+User-specific transactions and goals
 ```
 
 ## Security & Privacy
 
 Ledger is designed around the principle of collecting and storing only the financial information required for budgeting.
 
-The database is intentionally designed to avoid storing unnecessary sensitive information such as:
+The database intentionally does not store sensitive information such as:
 
 * Full payment card numbers
 * Bank account numbers
 * Home addresses
-* Raw receipt images
-* Raw bank statement files
+* Receipt images
+* Bank statement files
 
-Uploaded financial documents should be processed only as necessary to extract transaction information, with temporary files deleted when they are no longer required.
+Bank statements and receipts are processed in the browser; only the extracted transaction fields are saved.
 
-Database access is protected through authenticated users and Row Level Security policies so that a customer can only access their own transactions.
+The page uses Supabase's **publishable** key, which is designed to be public. Database access is protected by authentication and Row Level Security policies. The Supabase secret key is used only inside the Edge Function and must never be added to the HTML.
 
 > **Important:** This project is currently under development and should not be considered production-ready for real financial information until security, privacy, retention, authentication, and deployment controls have been fully reviewed.
 
 ## Database Structure
 
-The main transaction record contains information such as:
+**transactions** — one row per income or expense:
 
 ```text
 id
 user_id
 transaction_date
-transaction_type
+transaction_type      income | expense
 category
 source
 description
-amount
-gross_amount
+amount                for shared expenses, the user's own share
+fingerprint           duplicate detection
+gross_amount          full amount paid (shared expenses)
 user_share
-reimbursement_due
-is_split
+reimbursement_due     amount still owed back
+shared_expense
 created_at
 ```
+
+**savings_goals** — each user's goals (name, target amount, saved amount, target date, status).
+
+**goal_members** — people a goal is shared with (by email).
+
+**goal_invites** — invite link tokens, which the owner can turn off.
+
+Database functions `join_goal` (join through an invite link) and `add_to_goal` (add savings as the owner or a member) enforce who can do what. `delete_my_account` lets signed-in users delete only their own account.
 
 Transactions are separated by:
 
@@ -152,40 +200,50 @@ Transactions are separated by:
 
 This prevents August and September transactions from being overwritten or accidentally merged.
 
-## Project Goals
+## Project Structure
 
-The long-term goal of Ledger is to become a secure, intelligent personal finance platform that combines:
+```text
+index.html                                   the app
+manifest.webmanifest, sw.js, icon-*.png      install and offline support
+Ledger-database-schema.sql                   full database setup for a new Supabase project
+supabase/migrations/20260913_goal_sharing.sql   goal sharing, for projects created earlier
+supabase/migrations/20260915_delete_account.sql Delete account, for projects created earlier
+supabase/functions/invite-partner/index.ts   Edge Function that emails goal invites
+```
 
-* Automated transaction tracking
-* Conversational financial data entry
-* Bank statement processing
-* Receipt recognition
-* Shared expense tracking
-* Personalized budgeting recommendations
-* Secure multi-user financial data management
+## Setup
+
+1. Create a Supabase project.
+2. In the Supabase SQL Editor, run `Ledger-database-schema.sql`. For a project set up with an earlier version, run the files in `supabase/migrations/` that it doesn't have yet instead.
+3. In `index.html`, set `SUPABASE_URL` and `SUPABASE_ANON_KEY` to your project URL and **publishable** key.
+4. Host the files over HTTPS (for example Netlify or GitHub Pages), and add the site address under **Authentication → URL Configuration** in Supabase.
+5. Optional, for goal invite emails: set up a custom SMTP provider under **Authentication → Emails**, then deploy `supabase/functions/invite-partner`. Without it, goals can still be shared with **Copy invite link**.
 
 ## Current Status
 
- **Active Development**
+**Active Development**
 
 Current functionality includes:
 
-* User authentication
-* PostgreSQL transaction storage
-* Row Level Security
-* Manual income/expense entry
-* Conversational transaction entry
-* CSV imports
-* Receipt OCR
-* Monthly transaction filtering
+* User authentication, profile, and password reset
+* PostgreSQL storage with Row Level Security
+* Manual income and expense entry with store names and notes
+* Monthly dashboard with a spending pie chart, target bars, and a one-line verdict
+* Calendar with month and year views
+* Income pattern reminders and optional notifications
+* Badges
+* PDF and CSV bank statement import (withdrawals and deposits)
+* Receipt OCR with item categories
+* Shared expenses with repayment tracking
+* Savings goals with plans, sharing, and invite links
+* Next-month forecast
+* Ledger Assistant
 * Duplicate detection
-* Split expense tracking
-* CSV/Excel export
+* CSV and PDF export
 
 ## Author
 
-**Maleha Isrta Chowdhury**
+**Maleha Israt Chowdhury**
 
 Computer Engineering / Computer Science
 Canada
-
