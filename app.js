@@ -6,15 +6,7 @@ const CATEGORIES = [
 ];
 const CAT_TYPE = Object.fromEntries(CATEGORIES);
 
-/* =========================
-   DATABASE CONFIGURATION
-   =========================
-   Replace these two placeholders with your Supabase project's
-   Project URL and anon/public key.
 
-   NEVER put a Supabase service_role key in this HTML file.
-   Row Level Security (RLS) protects each customer's rows.
-*/
 const SUPABASE_URL = 'https://eudodyfntnxzlnemtdxt.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_KgCUIR8Qg2sMlnT8VDspoA_coGSOFXQ';
 
@@ -25,14 +17,12 @@ let databaseMode = false;
 let splitSchemaAvailable = false;
 let goalsSchemaAvailable = false;
 let fingerprintAvailable = true;
-// Calendar tab: which month/year it shows, month or year view, and the selected day.
+
 const cal = { mode: 'month', year: 0, month: 0, selected: null, dayOpen: false };
 
 const fmt = n => (n<0?'-$':'$') + Math.abs(Number(n)||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
 
-// Supabase must be given a redirect URL that is allowed in
-// Authentication -> URL Configuration. Using the current deployed
-// page keeps password reset and email verification on the same app.
+
 function getAuthRedirectUrl(){
   if(window.location.protocol === 'http:' || window.location.protocol === 'https:'){
     return window.location.origin + window.location.pathname;
@@ -74,8 +64,7 @@ async function loadState(){
     return;
   }
   try{
-    // Load the core transaction columns first so Ledger still works when the
-    // optional split-expense columns have not been migrated yet.
+    
     const baseSelect='id,transaction_date,transaction_type,category,source,description,amount,created_at';
     let result=await dbClient.from('transactions').select(baseSelect+',gross_amount,user_share,reimbursement_due,shared_expense').eq('user_id',currentUser.id).order('transaction_date',{ascending:true}).order('created_at',{ascending:true});
     if(result.error){
@@ -120,7 +109,7 @@ async function deleteTransaction(id){
   if(error) throw error;
 }
 
-// Saves an edited row: date and amount, plus the source (income) or category and note (expense).
+
 async function updateTransaction(id, kind, entry){
   if(!databaseMode || !currentUser) throw new Error('Please sign in first.');
   const row = {transaction_date: entry.date, amount: Math.abs(Number(entry.amount))};
@@ -153,8 +142,7 @@ async function addEntriesToDatabase(entries){
     const entry = item.entry;
     const fingerprint = makeFingerprint(kind, entry);
 
-    // Check the per-user fingerprint first. This prevents re-uploading the
-    // same statement from creating duplicate rows.
+
     let existing=null;
     if(fingerprintAvailable){
       const check=await dbClient.from('transactions').select('id').eq('user_id',currentUser.id).eq('fingerprint',fingerprint).limit(1);
@@ -195,7 +183,7 @@ function requireSignedIn(){
   return true;
 }
 
-// Supabase's wording for common sign-in problems isn't always clear, so translate it.
+
 function friendlyAuthError(error){
   const msg = String((error && error.message) || '');
   if(/invalid login credentials/i.test(msg)) return 'That email and password don’t match. Check them, or use “Forgot password?” to set a new password.';
@@ -243,7 +231,7 @@ async function signUpFromGate(){
       return;
     }
 
-    // Existing email: Supabase returns a user with no identities and sends nothing.
+  
     if(data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0){
       setAuthGateMessage('An account with this email already exists. Sign in instead, or reset your password below if you’ve forgotten it.', 'err');
       document.getElementById('resetPanel').classList.add('visible');
@@ -326,8 +314,7 @@ async function initDatabase(){
   }
 
   try{
-    // An invited partner arrives with "type=invite" in the link. Read it before the
-    // Supabase client consumes the link, so they can choose a password once signed in.
+   
     captureJoinToken();
     const arrivedFromInvite = /(^|[#&?])type=invite(&|$)/.test(window.location.hash + window.location.search);
     dbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -342,7 +329,7 @@ async function initDatabase(){
     }
 
     dbClient.auth.onAuthStateChange((event, session)=>{
-      // Don't await directly inside Supabase's auth callback.
+  
       setTimeout(()=>{
         if(event === 'PASSWORD_RECOVERY'){
           handlePasswordRecovery();
@@ -400,12 +387,12 @@ async function logoutLedger(){
   if(error){
     setAuthGateMessage(error.message, 'err');
   }else{
-    // handleAuthSession() is triggered by SIGNED_OUT and returns the user to the login gate.
+
     setAuthGateMessage('');
   }
 }
 
-// Profile panel: display name, password change, and a small account summary.
+
 const profileBtn = document.getElementById('profileBtn');
 const profilePanel = document.getElementById('profilePanel');
 function profileDisplayName(){
@@ -430,7 +417,7 @@ function refreshProfile(){
   document.getElementById('profileStats').textContent =
     [since && `Member since ${since}`, `${tx} transaction${tx===1?'':'s'}`].filter(Boolean).join(' · ');
 
-  // Three numbers, whole dollars so they fit side by side. Green = good, orange = watch out.
+  
   const whole = n => (n<0?'-$':'$') + Math.round(Math.abs(n)).toLocaleString();
   const setNumber = (id, text, tone, title) => {
     const el = document.getElementById(id);
@@ -448,7 +435,7 @@ function refreshProfile(){
   const reached = goals.filter(g => g.status === 'achieved' || (Number(g.saved_amount)||0) >= (Number(g.target_amount)||0)).length;
   setNumber('profileGoals', goals.length ? `${reached} of ${goals.length}` : '0', reached ? 'good' : '');
 }
-// Menu rows open one section at a time (Rename, Change password, Export data, Delete account).
+
 function setProfileSection(id){
   document.querySelectorAll('#profilePanel .menu-item[aria-controls]').forEach(btn=>{
     const open = btn.getAttribute('aria-controls') === id;
@@ -525,7 +512,7 @@ document.getElementById('profilePasswordBtn').addEventListener('click', async ()
   status.textContent = error ? 'Could not update password: ' + error.message : 'Password updated ✓';
 });
 
-// Save and delete messages show briefly as a toast; called with no message, it hides.
+
 function updateStorageStatus(message){
   const el = document.getElementById('storageStatus');
   if(!el) return;
@@ -591,7 +578,7 @@ function inPeriod(dateStr, year, month){
 async function loadGoals(){
   if(!databaseMode || !currentUser) return;
   try{
-    // Row Level Security returns the user's own goals and goals shared with them.
+   
     const {data,error}=await dbClient.from('savings_goals').select('id,user_id,name,target_amount,saved_amount,target_date,status,created_at').order('target_date',{ascending:true});
     if(error) throw error;
     state.goals=data||[];
@@ -608,8 +595,7 @@ async function loadGoals(){
   }
 }
 
-// "Solution to reach this goal": the monthly amount needed, checked against the
-// user's recent leftover, and where the gap could come from if it isn't enough.
+
 function goalPlanText(g){
   const target = Number(g.target_amount)||0, saved = Number(g.saved_amount)||0;
   const remaining = Math.max(0, target - saved);
@@ -632,8 +618,8 @@ function goalPlanText(g){
   return plan + ` That’s ${fmt(gap)} more than your recent leftover — try a later target date or a smaller goal.`;
 }
 
-let goalMembers = {};       // goal id -> [{goal_id, email, user_id}]
-let openSharePanel = null;  // id of the goal whose Share panel is open
+let goalMembers = {};       
+let openSharePanel = null; 
 
 function renderGoals(){
   renderBadges();
@@ -665,7 +651,7 @@ function renderGoals(){
     if(!requireSignedIn()) return;
     const amount=parseFloat(prompt('How much did you add to this goal?','25')||'');
     if(!Number.isFinite(amount)||amount<=0) return;
-    // add_to_goal works for owners and members, and increments on the server.
+   
     const {error}=await dbClient.rpc('add_to_goal',{p_goal:btn.dataset.id,p_amount:Math.round(amount*100)/100});
     if(error){alert('Could not update goal: '+error.message);return;}
     await loadGoals();
@@ -745,8 +731,7 @@ async function createGoal(e){
   e.target.reset();document.getElementById('goalSaved').value='0';document.getElementById('goalStatus').textContent='Goal created ✓';await loadGoals();
 }
 
-// Money paid on someone else's behalf (the non-share part of a shared bill) isn't the
-// user's spending, but it did leave the account, so it still reduces what's left.
+
 function lentOutOf(expenses){
   return expenses.reduce((t,e)=>t + (e.shared ? Math.max(0,(Number(e.grossAmount)||0)-(Number(e.amount)||0)) : 0), 0);
 }
@@ -816,7 +801,6 @@ function render(){
   document.querySelectorAll('.got-back').forEach(btn=>btn.addEventListener('click',()=>markPaidBack(btn.dataset.id)));
 }
 
-// Income and expense lists show the newest few entries; "Show more" reveals the rest.
 const LIST_PREVIEW = 4;
 const listExpanded = {income:false, expense:false};
 function renderEntryList(kind, entries, cellsHtml){
@@ -838,7 +822,7 @@ function renderEntryList(kind, entries, cellsHtml){
   more.setAttribute('aria-expanded', String(listExpanded[kind]));
 }
 
-// The pencil turns a row into inputs; ✓ saves and ✕ cancels. One row is edited at a time.
+
 function startEdit(kind, id){
   if(!requireSignedIn()) return;
   if(document.querySelector('tr.editing')) render();
@@ -953,8 +937,7 @@ function sharedBadges(e){
     : '<span class="tag Paid">Paid back</span>') + '</div>';
 }
 
-// "Got it back": the other person repaid some or all of a shared expense. The repayment
-// is saved as income (dated today) and the expense's remaining amount owed is reduced.
+
 async function markPaidBack(expenseId){
   if(!requireSignedIn()) return;
   const exp = state.expenses.find(e=>e.id===expenseId);
@@ -983,7 +966,7 @@ async function markPaidBack(expenseId){
   const remaining = Math.round((due - amount)*100)/100;
   const {error} = await dbClient.from('transactions').update({reimbursement_due: remaining}).eq('id', exp.id).eq('user_id', currentUser.id);
   if(error){
-    // Keep the two records consistent: undo the income entry if the expense didn't update.
+ 
     await deleteTransaction(income.id).catch(()=>{});
     alert('Could not update the shared expense: ' + error.message);
     return;
@@ -1006,8 +989,7 @@ function hasTransaction(r, kind){
   return list.some(x => transactionKey(x, kind) === key);
 }
 
-// If the entry's date falls in a month/year not currently on screen, jump the
-// viewer there so the numbers you just added are the ones you see change.
+
 function jumpToDate(dateStr){
   const monthSel = document.getElementById('monthSel');
   const yearSel = document.getElementById('yearSel');
@@ -1068,8 +1050,7 @@ document.getElementById('expenseForm').addEventListener('submit', async e=>{
   let entry;
 
   if(shared){
-    // Shared: only the user's share counts as spending. The part paid for someone else is
-    // tracked as owed back, and becomes income when they mark it "Got it back".
+    
     const gross = parseFloat(document.getElementById('expTotal').value);
     const share = parseFloat(document.getElementById('expShare').value);
     if(!date || !category || !Number.isFinite(gross) || !Number.isFinite(share) || gross <= 0 || share <= 0 || share > gross){
@@ -1111,7 +1092,7 @@ document.getElementById('expenseForm').addEventListener('submit', async e=>{
   }
 });
 
-// "+ Shared" swaps the single Amount box for Total amount + Your share.
+
 const sharedToggle = document.getElementById('sharedToggle');
 const sharedFields = document.getElementById('sharedFields');
 const expAmountInput = document.getElementById('expAmount');
@@ -1143,12 +1124,7 @@ function setDefaultGoalDates(){
 }
 setDefaultGoalDates();
 
-/* =========================
-   LEDGER ASSISTANT
-   =========================
-   Rule-based: answers questions from the data already in Ledger (see copilotAnswer).
-   Nothing typed here is sent to an AI service.
-*/
+
 class LedgerAssistant {
   constructor(){
     this.messagesEl=document.getElementById('chatMessages');
@@ -1190,7 +1166,7 @@ function initLedgerChatbot(){
   ledgerChatbot.start();
 }
 
-// Spreadsheet export
+
 function csvEscape(value){
   const s = String(value ?? '');
   return /[",\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
@@ -1220,8 +1196,7 @@ document.getElementById('exportBtn').addEventListener('click', ()=>{
   downloadBlob(buildCsv(), 'ledger-export.csv', 'text/csv;charset=utf-8');
 });
 
-// PDF export: builds a printable report of the selected period and opens the
-// browser's print dialog, where "Save as PDF" produces the file. No library needed.
+
 document.getElementById('exportPdfBtn').addEventListener('click', ()=>{
   if(!requireSignedIn()) return;
   const {year, month} = currentPeriod();
@@ -1263,16 +1238,7 @@ document.getElementById('exportPdfBtn').addEventListener('click', ()=>{
   }, 250);
 });
 
-/* =========================
-   UPLOAD: RECEIPTS, PAY STUBS, STATEMENTS AND CSVs
-   =========================
-   Files are read in the browser: pdf.js for PDFs, Tesseract.js OCR for photos and scanned
-   PDFs. Each file is sorted into income or expense. A single document (a receipt, pay stub,
-   refund or transfer confirmation) is added straight away, with Undo; a statement with many
-   rows opens the review table so its rows can be checked before they are saved. */
 
-// Words that mark a document as money coming in or going out. Each hit is one vote; a tie
-// counts as an expense, since receipts are the most common upload.
 const INCOME_DOC_WORDS = /\b(net\s*pay|gross\s*pay|pay\s*(?:stub|slip|statement|period|date|cheque|check)|earnings|salary|wages?|payroll|direct\s*deposit|deposited|you(?:'ve)?\s*received|payment\s*received|money\s*received|received\s*from|funds\s*(?:received|deposited)|refund(?:ed)?|reimburse(?:ment|d)?|cash\s*back|remittance|invoice\s*paid|paid\s*to\s*you)\b/gi;
 const EXPENSE_DOC_WORDS = /\b(receipt|sub\s*-?\s*total|total\s*due|amount\s*due|balance\s*due|hst|gst|pst|vat|sales\s*tax|cashier|change\s*due|visa|master\s*card|amex|debit\s*card|purchase|you\s*paid|you\s*sent|sent\s*to|order\s*(?:total|summary)|billing|thank\s*you\s*for\s*shopping)\b/gi;
 const DOC_MONEY = /\$?\s?(\d{1,3}(?:,\d{3})+|\d+)\.(\d{2})\b/g;
@@ -1286,8 +1252,7 @@ function amountsIn(line){
   return [...line.matchAll(DOC_MONEY)].map(m=>parseFloat(m[1].replace(/,/g, '') + '.' + m[2])).filter(v=>v > 0);
 }
 
-// Pay stubs print this period before year-to-date, so the first amount on the matching line
-// is used — or on the line under it, where screenshots often put the number.
+
 function incomeDocAmount(lines){
   const labels = [/\bnet\s*(pay|amount|deposit)\b/i, /\b(amount|total)\s*(received|deposited|refunded|paid)\b/i, /\b(deposit|refund|reimbursement|amount|total)\b/i];
   for(const re of labels){
@@ -1300,7 +1265,7 @@ function incomeDocAmount(lines){
   return null;
 }
 
-// Who the income is from: a "from / paid by" name, otherwise the name at the top of the document.
+
 function incomeDocSource(text, lines){
   const store = receiptStoreName(lines);
   const m = text.match(/\b(?:received\s+from|deposit\s+from|paid\s+by|from|employer|sender)\s*:?\s+([^\n]{2,60})/i);
@@ -1318,7 +1283,7 @@ function incomeDocSource(text, lines){
   return store || 'Income';
 }
 
-// Dates written with a month name, such as "Sep 12, 2026" or "12 September 2026".
+
 function wordDate(text){
   const monthFirst = text.match(/\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s+(\d{1,2}),?\s+(20\d{2})\b/i);
   const dayFirst = text.match(/\b(\d{1,2})\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?,?\s+(20\d{2})\b/i);
@@ -1327,7 +1292,7 @@ function wordDate(text){
   return null;
 }
 
-// Pay stubs list the pay period before the pay date, so a labelled pay/deposit date wins.
+
 function incomeDocDate(lines){
   const i = lines.findIndex(l=>/\b(pay|deposit|payment|transfer)\s*date\b|\bdate\s*(paid|deposited|received)\b/i.test(l));
   if(i < 0) return null;
@@ -1346,7 +1311,7 @@ function analyzeDocumentText(text){
   const amount = type === 'Income' ? (incomeDocAmount(lines) ?? receipt.amount) : receipt.amount;
   if(!(amount > 0) && statementRows.length) return {kind:'statement', rows:statementRows};
   if(type === 'Income') return {kind:'single', type, amount, date, source:incomeDocSource(text, lines)};
-  // The receipt parser falls back to Groceries; the store keywords can do better.
+
   const guessed = guessCategory(text);
   const category = receipt.category === 'Groceries' && guessed !== 'Other' ? guessed : receipt.category;
   return {kind:'single', type, amount, date, category, store:receipt.store, receipt};
@@ -1362,7 +1327,7 @@ async function ocrText(source, statusEl, label){
   return result.data.text || '';
 }
 
-// Scanned PDFs have no text layer, so their first pages are drawn to a canvas and read with OCR.
+
 async function ocrPdfPages(bytes, statusEl, label, maxPages = 3){
   const pdfjsLib = await getPdfJs();
   const pdf = await pdfjsLib.getDocument({data: bytes.slice(0)}).promise;
@@ -1389,7 +1354,7 @@ async function readUpload(file, statusEl, label){
   }
   if(/\.pdf$/i.test(name) || file.type === 'application/pdf'){
     statusEl.textContent = `Opening ${label}…`;
-    // Read once; pdf.js takes ownership of the bytes it is given, so each reader gets a copy.
+    
     const bytes = new Uint8Array(await file.arrayBuffer());
     if(!bytes.length) return {kind:'unreadable', reason:'the browser could not read this file. If it is in OneDrive or still downloading, save a local copy and upload that.'};
     const lines = await extractPdfLines(bytes, statusEl);
@@ -1419,7 +1384,7 @@ function setImportStatus(kind, html){
   return el;
 }
 
-// When an amount can't be found, the matching form is filled in so only the amount is left.
+
 function prefillEntryForm(doc){
   if(doc.type === 'Income'){
     document.getElementById('incDate').value = doc.date;
@@ -1534,8 +1499,7 @@ async function undoUpload(ids, btn){
 }
 
 const uploadZone = document.getElementById('uploadZone');
-// The input is cleared only after the files are read: some browsers return empty files
-// once the input has been reset.
+
 document.getElementById('smartFile').addEventListener('change', async e=>{
   try{ await handleUploads([...e.target.files]); }
   finally{ e.target.value = ''; }
@@ -1550,7 +1514,7 @@ uploadZone.addEventListener('drop', e=>{
   if(!document.getElementById('smartFile').disabled) handleUploads(e.dataTransfer.files);
 });
 
-// Item keywords -> category. Leading word boundary only, so plurals ("bananas") match.
+
 const RECEIPT_ITEM_KEYWORDS = [
   ['Groceries', /\b(milk|bread|egg|cheese|butter|yog|banana|apple|orange|grape|berr|lettuce|tomato|potato|onion|carrot|chicken|beef|pork|fish|salmon|rice|pasta|flour|sugar|cereal|juice|coffee|tea\b|water|soda|chips|snack|cookie|cracker|fruit|veg|produce|meat|deli|bakery|frozen|grocer|sauce|soup|bean|nuts?\b|chocolate|candy|avocado|lemon|lime|pepper|cucumber|spinach|broccoli|cream|oats)/i],
   ['Personal Care', /\b(shampoo|conditioner|soap|body\s*wash|lotion|deodorant|toothpaste|toothbrush|floss|razor|makeup|cosmetic|nail|hair|skin|sunscreen|tissue|cotton|mouthwash)/i],
@@ -1569,8 +1533,7 @@ function guessItemCategory(name, fallback){
   return fallback;
 }
 
-// The store name is normally one of the first lines: mostly letters, and not an
-// address, phone number, date or a generic word such as "receipt".
+
 function receiptStoreName(lines){
   for(const raw of lines.slice(0, 6)){
     const line = raw.replace(/[^A-Za-z0-9&'.\- ]/g, ' ').replace(/\s+/g, ' ').trim();
@@ -1585,8 +1548,7 @@ function receiptStoreName(lines){
   return '';
 }
 
-// Receipt text -> store, date, total, and items with a suggested category each.
-// OCR output is noisy, so everything it produces stays editable in the review.
+
 function parseReceiptOcr(text){
   const lines = text.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
   const joined = lines.join(' ');
@@ -1601,14 +1563,14 @@ function parseReceiptOcr(text){
     if(mo>=1 && mo<=12 && d>=1 && d<=31){ date = `${y}-${String(mo).padStart(2,'0')}-${String(d).padStart(2,'0')}`; break; }
   }
 
-  // The last amount on a line is that line's price.
+
   const priceOf = line => {
     const all = [...line.matchAll(/(\d{1,5}(?:,\d{3})*\.\d{2})/g)];
     return all.length ? {value: parseFloat(all[all.length-1][1].replace(/,/g,'')), firstIndex: all[0].index} : null;
   };
   const priced = lines.map(line=>({line, price: priceOf(line)})).filter(x=>x.price);
 
-  // Total: the largest amount on a TOTAL / AMOUNT DUE line (not subtotal, tax, savings…).
+ 
   const isTotalLine = line => /\b(grand\s*total|total\s*due|amount\s*due|balance\s*due|total)\b/i.test(line)
     && !/\b(sub\s*-?\s*total|total\s*(tax|savings?|discount|items?|qty|quantity|points)|tax\s*total)\b/i.test(line);
   const totals = priced.filter(x=>isTotalLine(x.line));
@@ -1629,7 +1591,7 @@ function parseReceiptOcr(text){
 
   const store = receiptStoreName(lines);
 
-  // Items are the priced lines above the first subtotal/total line.
+
   const stopAt = lines.findIndex(l=>/\b(sub\s*-?\s*total|total|amount\s*due|balance\s*due)\b/i.test(l));
   const items = [];
   (stopAt >= 0 ? lines.slice(0, stopAt) : lines).forEach(line=>{
@@ -1644,7 +1606,7 @@ function parseReceiptOcr(text){
   return {date, amount, category, store, items};
 }
 
-// ---- Receipt item review: one row per item, saved as one expense per category.
+
 let receiptReview = null;   // {store, date, total, items:[{name, amount, category, include}]}
 
 function renderReceiptReview(parsed, date){
@@ -1673,8 +1635,6 @@ function renderReceiptReview(parsed, date){
   updateReceiptTotals();
 }
 
-// Tax and anything the scan missed (receipt total minus all item prices) is shared across
-// the included items in proportion to their prices. Unticked items are left out entirely.
 function receiptCategoryTotals(){
   const round = n => Math.round(n*100)/100;
   const all = receiptReview.items.filter(it=>it.amount > 0);
@@ -1712,7 +1672,7 @@ document.getElementById('receiptAddBtn').addEventListener('click', async ()=>{
     entry:{id:crypto.randomUUID(), date:receiptReview.date, category, amount, description:receiptReview.store || 'Receipt'}
   }));
   if(!entries.length){ status.textContent = ' Tick at least one item.'; return; }
-  // A receipt that was already added as one total is replaced by its per-category expenses.
+  
   const replaced = receiptReview.replaceId ? state.expenses.find(e=>e.id === receiptReview.replaceId) : null;
   try{
     if(replaced){
@@ -1744,11 +1704,7 @@ document.getElementById('receiptCancelBtn').addEventListener('click', ()=>{
   receiptReview = null;
 });
 
-// ---------------------------------------------------------------------
-// Bank statement import: PDF only. The PDF is parsed locally, transactions
-// are classified as Income or Expense, categories are suggested, and the
-// user gets a review table before anything is saved.
-// ---------------------------------------------------------------------
+
 const CATEGORY_KEYWORDS = [
   ["Groceries", ["walmart","target","costco","kroger","safeway","trader joe","whole foods","aldi","publix","grocery","supermarket"]],
   ["Transportation", ["uber","lyft","shell","chevron","exxon","mobil","gas station","transit","parking","dmv","auto repair","tesla supercharge"]],
@@ -1775,8 +1731,7 @@ function toIsoDate(raw){if(!raw)return null;raw=raw.trim();if(/^\d{4}-\d{2}-\d{2
 let bankPreviewRows=[];
 function renderBankPreview(rows){const body=document.getElementById('bankPreviewBody');if(!body)return;body.innerHTML='';bankPreviewRows=rows.map((r,i)=>({...r,id:i,amount:Math.abs(Number(r.signedAmount)),category:r.category||guessCategory(r.desc)}));bankPreviewRows.forEach(r=>{const tr=document.createElement('tr');const typeOpts=['Expense','Income'].map(t=>`<option value="${t}" ${t===r.type?'selected':''}>${t}</option>`).join('');const catOpts=CATEGORIES.map(([name])=>`<option value="${name}" ${name===r.category?'selected':''}>${name}</option>`).join('');tr.innerHTML=`<td>${r.date}</td><td class="td-text">${escapeHtml(r.desc)}</td><td class="amt">${fmt(r.amount)}</td><td><select data-id="${r.id}" data-field="type" style="font-size:12px;">${typeOpts}</select></td><td><select data-id="${r.id}" data-field="category" style="font-size:12px;" ${r.type==='Income'?'disabled':''}>${catOpts}</select></td>`;body.appendChild(tr);});body.querySelectorAll('select').forEach(sel=>{sel.addEventListener('change',()=>{const row=bankPreviewRows.find(r=>r.id===parseInt(sel.dataset.id));if(!row)return;row[sel.dataset.field]=sel.value;if(sel.dataset.field==='type'){const catSelect=sel.closest('tr').querySelector('select[data-field="category"]');catSelect.disabled=(sel.value==='Income');}});});document.getElementById('bankPreviewWrap').style.display=rows.length?'block':'none';}
 
-// PDF statement import — browser-side PDF text extraction. This avoids requiring
-// an Anthropic API key in the HTML file and works with normal text-based bank PDFs.
+
 let pdfjsReady = null;
 async function getPdfJs(){
   if(pdfjsReady) return pdfjsReady;
@@ -1827,8 +1782,7 @@ function bankLineIsoDate(raw){
   return toIsoDate(t);
 }
 
-// A column header row names both a withdrawals-type and a deposits-type column and
-// holds no amounts itself (so "Total withdrawals 500.00 Total deposits 800.00" is ignored).
+
 function bankHeaderColumns(line){
   if(BANK_DATE_AT_START.test(line.text) || line.items.some(i=>BANK_MONEY_ITEM.test(i.str))) return null;
   const find = re => line.items.find(i=>re.test(i.str));
@@ -1852,10 +1806,7 @@ function nearestBankColumn(cols, item){
   return best;
 }
 
-// Bank statements usually have separate Withdrawals and Deposits columns. Once the
-// header row is found, each amount is classified by the column it sits under:
-// withdrawal -> Expense, deposit -> Income, balance -> ignored. Statements without
-// such a header fall back to the text parser (keywords, signs, running balance).
+
 function parseBankStatement(lines){
   const rows = [], fallback = [];
   let cols = null;
@@ -1911,8 +1862,7 @@ const CARD_SPEND_CATEGORIES = [
   [/^foreign currency transactions$/i, 'Other'],
   [/^other transactions$/i, 'Other'],
 ];
-// The card's own category wins when it names the kind of place precisely; otherwise the
-// merchant name decides (so APPLE.COM/BILL under "Retail and Grocery" is a subscription).
+
 const CARD_PRECISE_CATEGORIES = new Set(['Dining Out', 'Entertainment', 'Transportation', 'Health & Medical']);
 
 function parseCardStatement(lines){
@@ -1922,8 +1872,7 @@ function parseCardStatement(lines){
     && /\b(purchases|new charges)\b/i.test(text);
   if(!isCard) return null;
 
-  // Rows print "Jul 30" without a year; the statement date supplies it (December rows on a
-  // January statement belong to the year before).
+ 
   const monthIndex = m => 'janfebmaraprmayjunjulaugsepoctnovdec'.indexOf(m.slice(0, 3).toLowerCase()) / 3 + 1;
   const stated = text.match(/\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s+\d{1,2},?\s+(20\d{2})\b/i);
   const endMonth = stated ? monthIndex(stated[1]) : new Date().getMonth() + 1;
@@ -2025,9 +1974,7 @@ function parseBankPdfText(text){
     if(Number.isFinite(balance)) previousBalance=balance;
   }
   const rows=candidates.map(r=>{
-    // Never assume a positive amount is income. Bank statements often print
-    // both deposits and withdrawals as positive numbers; keywords or balance
-    // movement are used first, with Expense as the conservative final fallback.
+   
     const type=r.typeHint || 'Expense';
     return {date:r.date,desc:r.desc,signedAmount:type==='Income'?Math.abs(r.signedAmount):-Math.abs(r.signedAmount),type};
   });
@@ -2035,10 +1982,7 @@ function parseBankPdfText(text){
   return rows.filter(r=>{const k=`${r.date}|${r.desc}|${r.signedAmount}`;if(seen.has(k))return false;seen.add(k);return true;});
 }
 
-// CSV statement import. Handles the usual bank exports: a header row with a date, a
-// description and either one signed amount or separate withdrawal/deposit (debit/credit)
-// columns, optionally a Debit/Credit type column; or no header at all
-// (date, description, withdrawal, deposit, balance). Dates may be year-, month- or day-first.
+
 function parseCsvTable(text){
   text = text.replace(/^﻿/, '');
   const firstLine = text.split(/\r?\n/).find(l=>l.trim()) || '';
@@ -2081,10 +2025,7 @@ function csvIsoDate(raw, dayFirst){
   m = t.match(BANK_DATE_AT_START);
   return m && m[0] === t ? bankLineIsoDate(m[1]) : null;
 }
-// Budget-tracker spreadsheets saved as CSV: months across the top (Mar, Apr, …), a row of
-// Week 1 / Week 2 / Month Total under each month, and one row per category. Title rows with
-// "INCOME" or "EXPENSE" set the type. Each filled week becomes one transaction (bi-weekly
-// sheets: week 1 on the 1st, week 2 on the 15th); totals, "-" and blank cells are skipped.
+
 const TRACKER_MONTHS = ['january','february','march','april','may','june','july','august','september','october','november','december'];
 const TRACKER_CATEGORY_WORDS = [
   ['Housing', /\brent\b|housing|mortgage/], ['Groceries', /grocer|\bfood\b/], ['Transportation', /transport|transit|\bbus\b|\bcar\b|\bgas\b|\bfuel\b/],
@@ -2207,8 +2148,7 @@ document.getElementById('bankConfirmBtn').addEventListener('click', async ()=>{
   try{
     const entries=bankPreviewRows.map(r=>r.type==='Expense'?{kind:'expense',entry:{id:crypto.randomUUID(),date:r.date,category:r.category||'Other',amount:Math.abs(Number(r.amount)),description:r.desc||null}}:{kind:'income',entry:{id:crypto.randomUUID(),date:r.date,source:r.desc||'(bank transaction)',amount:Math.abs(Number(r.amount)),description:r.desc||null}}).filter(x=>x.entry.date&&Number.isFinite(x.entry.amount)&&x.entry.amount>0);
     const result=await addEntriesToDatabase(entries);
-    // Every row keeps its own date, so each month gets its own entries. Show the latest
-    // imported month (not "All months") and say which months were added.
+    
     const dates=entries.map(x=>x.entry.date).sort();
     const monthName=iso=>longDate(iso,{month:'long',year:'numeric'});
     const monthSel=document.getElementById('monthSel'), yearSel=document.getElementById('yearSel');
@@ -2242,13 +2182,10 @@ populateSelectors();
 setAppEnabled(false);
 initDatabase();
 
-/* =========================
-   BUDGET STATS USED BY GOALS AND THE ASSISTANT
-   ========================= */
+
 function advisorMonthlyStats(){const rows=mlMonthlyData();const recent=rows.slice(-3);const n=recent.length||1;const avgIncome=recent.reduce((a,x)=>a+x.income,0)/n;const avgExpense=recent.reduce((a,x)=>a+x.expense,0)/n;return {rows,recent,avgIncome,avgExpense,avgNet:avgIncome-avgExpense};}
 function advisorCategoryTotals(){const totals={};(state.expenses||[]).forEach(e=>{const c=e.category||'Other';totals[c]=(totals[c]||0)+Math.abs(Number(e.amount)||0);});return totals;}
-// What is actually left in the account for the month on screen — the same arithmetic as the
-// "Left in account" line on the Budget tab (money paid on someone else's behalf still left).
+
 function leftThisMonth(){
   const {year, month} = currentPeriod();
   const income = state.income.filter(e=>inPeriod(e.date, year, month)).reduce((t,e)=>t + (Number(e.amount)||0), 0);
@@ -2259,9 +2196,7 @@ function leftThisMonth(){
 
 function advisorGoalMonthlyNeed(){const today=new Date();let need=0;(state.goals||[]).forEach(g=>{const remaining=Math.max(0,(Number(g.target_amount)||0)-(Number(g.saved_amount)||0));if(!remaining)return;const end=new Date(String(g.target_date)+'T00:00:00');const months=Math.max(1,(end.getFullYear()-today.getFullYear())*12+(end.getMonth()-today.getMonth()));need+=remaining/months;});return need;}
 
-/* =========================
-   NEXT-MONTH FORECAST (TensorFlow.js, runs in the browser)
-   ========================= */
+
 let mlShownKey = '';     // the monthly totals the Next month card currently reflects
 let mlTraining = false;
 const round2 = n => Math.round((Number(n)||0) * 100) / 100;
@@ -2280,8 +2215,7 @@ function mlMonthlyData(){
     byMonth.get(k).expense += Math.abs(Number(x.amount)||0) + (x.shared ? Math.max(0,(Number(x.grossAmount)||0)-(Number(x.amount)||0)) : 0);
   });
   const all=[...byMonth.entries()].sort((a,b)=>a[0].localeCompare(b[0])).map(([month,v])=>({month,income:v.income,expense:v.expense,net:v.income-v.expense}));
-  // The month in progress is only part-way through, so counting it as a whole month drags
-  // averages and the model down. It is left out unless it is the only month with data.
+ 
   const complete=all.filter(r=>r.month < String(calToday()).slice(0,7));
   return complete.length ? complete : all;
 }
@@ -2305,8 +2239,7 @@ function mlFallbackForecast(rows){
     : `Based on your average over the last ${n} complete month${n===1?'':'s'}. An estimate, not a guarantee.`;
 }
 
-// Keeps the Next month card current without a button: an average until there are four months
-// of history, then a small neural network trained in the browser whenever monthly totals change.
+
 function refreshForecast(){
   const rows=mlMonthlyData(), key=JSON.stringify(rows);
   if(key===mlShownKey || mlTraining) return;
@@ -2319,7 +2252,7 @@ async function trainLedgerML(rows, key){
   mlTraining=true;
   try{
     const inputs=[],targets=[];
-    // Three-month rolling window: [income, expense, net] for each month.
+  
     for(let i=3;i<rows.length;i++){
       const win=rows.slice(i-3,i);
       inputs.push(win.flatMap(r=>[r.income,r.expense,r.net]));
@@ -2346,7 +2279,7 @@ async function trainLedgerML(rows, key){
     document.getElementById('mlForecastNote').textContent='Based on your recent complete months. An estimate, not a guarantee.';
   }catch(err){console.error('Forecast training failed:', err);mlFallbackForecast(rows);}
   finally{mlShownKey=key;mlTraining=false;}
-  refreshForecast();   // totals may have changed while training
+  refreshForecast();   
 }
 
 initLedgerChatbot();
@@ -2358,16 +2291,10 @@ assistantClose.addEventListener('click',closeLedgerAssistant);
 
 function escapeHtml(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
 
-/* ========================= GOAL SHARING =========================
-   Any savings goal can be shared. The owner either emails an invite (through the
-   invite-partner Edge Function) or copies a link. Opening a link and signing in calls
-   the join_goal database function, which adds the visitor to that one goal only.
-*/
-// captureJoinToken() runs during start-up, before this part of the script has executed,
-// so the pending token uses `var` without an initializer and the storage key is inlined.
+
 var pendingJoinToken;
 
-// Remember a ?join=<token> link through sign-in or email confirmation, then tidy the URL.
+
 function captureJoinToken(){
   const params = new URLSearchParams(window.location.search);
   const token = params.get('join');
@@ -2437,7 +2364,7 @@ async function sendGoalInvite(goalId, email){
     : `Invite sent to ${email} ✓ Once they accept and sign in, the goal appears in their savings goals.`};
 }
 
-// Reuses the goal's active invite link, or creates one.
+
 async function getInviteLink(goalId){
   const {data, error} = await dbClient.from('goal_invites').select('token').eq('goal_id', goalId).is('revoked_at', null).order('created_at', {ascending:false}).limit(1);
   if(error) throw error;
@@ -2466,10 +2393,7 @@ function copilotStats(){
   const totals=advisorCategoryTotals(); const ranked=Object.entries(totals).sort((a,b)=>b[1]-a[1]);
   return {rows,recent,avgIncome,avgExpense,avgNet,totals,ranked};
 }
-/* ---- What Ledger noticed, told in the Assistant ----
-   The Copilot has no card of its own: ask the Assistant and it reports what it observed,
-   what it learned, and what it suggests. Anything you hide can always be brought back with
-   "show hidden" or "reset alerts", so a decision is never final. */
+
 function copilotMonthContext(){
   const {year, month} = currentPeriod();
   const thisMonth = monthOf(calToday());
@@ -2481,7 +2405,7 @@ function copilotAllInsights(ym, isCurrentMonth){
   const spend = spendingInsights(ym, decisions, isCurrentMonth);
   const subs = subscriptionInsight(isCurrentMonth);
   const all = [...spend.insights, ...(subs ? [subs] : [])];
-  // "Ignore this" hides an insight until it is reset; the other choices hide it for that month.
+  
   const isHidden = i=>{ const d = decisions[i.id]; return !!d && (d.action === 'ignore' || d.month === ym); };
   return {spend, shown: all.filter(i=>!isHidden(i)), hidden: all.filter(isHidden)};
 }
@@ -2526,7 +2450,7 @@ function copilotSubsText(){
   const subs = subscriptionInsight(copilotMonthContext().isCurrentMonth);
   return subs ? `${subs.title}\n${subs.why}${subs.goal ? '\n' + subs.goal : ''}` : 'I have not spotted any charge that repeats every month yet.';
 }
-// Returns null when the question isn't one of these, so the Assistant's other answers run.
+
 function copilotChatAnswer(text){
   if(/reset (alerts|insights)|unignore|un-ignore|bring .*back|restore|show everything/.test(text)) return copilotResetText();
   if(/show hidden|what.*hidden|hidden|ignored/.test(text)) return copilotHiddenText();
@@ -2543,8 +2467,7 @@ function copilotAnswer(q){
   if(noticed) return noticed;
   if(!s.rows.length)return 'I need some transaction history before I can give you a useful financial answer. Start by adding a few income and expense records or importing a statement.';
   const amountMatch=text.match(/(?:\$|cad\s*)?(\d+(?:\.\d{1,2})?)/); const amount=amountMatch?Number(amountMatch[1]):null;
-  // Affordability is answered from what is actually left this month, then goal money, then a
-  // small buffer — so a $10 question never comes back as a flat "no" while money is sitting there.
+ 
   if(/afford|buy|purchase|spend .*\$/.test(text)){
     const month = leftThisMonth();
     const goalNeed = round2(advisorGoalMonthlyNeed());
@@ -2593,9 +2516,7 @@ function initShortcutsAndOffline(){
 
 initShortcutsAndOffline();
 
-/* ========================= DONUT ========================= */
-// A ring split into rounded segments with a small gap between them; each segment's
-// length is that part's share of the total.
+
 function renderDonut(parts, total){
   const r = 52, stroke = 12, circumference = 2 * Math.PI * r, gap = 8;
   const shown = parts.filter(([, value])=>value > 0);
@@ -2617,9 +2538,7 @@ function renderDonut(parts, total){
     : 'No spending tracked yet');
 }
 
-/* ========================= TARGET BARS ========================= */
-// Needs and Wants: dollars spent against their limit. Savings: dollars saved against the target.
-// A full orange bar means that part went over.
+
 function renderTargetBars(income, byType, target){
   const box = document.getElementById('targetBars');
   box.hidden = income <= 0;
@@ -2729,7 +2648,7 @@ function renderCalendarYear(){
   box.querySelectorAll('[data-month]').forEach(b=>b.addEventListener('click', ()=>{ cal.mode = 'month'; setCalMonth(cal.year, +b.dataset.month); }));
 }
 
-// Moving the calendar also moves the month shown at the top, when it shows a single month.
+
 function setCalMonth(year, month){
   const d = new Date(year, month-1, 1);
   cal.year = d.getFullYear(); cal.month = d.getMonth()+1; cal.selected = null;
@@ -2748,9 +2667,7 @@ document.querySelectorAll('[data-cal-add]').forEach(b=>b.addEventListener('click
   document.getElementById(income ? 'incSource' : 'expAmount').focus({preventScroll:true});
 }));
 
-/* ========================= INCOME PATTERNS & REMINDERS ========================= */
-// Learns regular income: the same source arriving on a steady schedule (weekly, every two
-// weeks or monthly) at least 3 times. Predicts the next date and a typical amount.
+
 function incomePatterns(){
   const groups = {};
   state.income.forEach(e=>{
@@ -2785,8 +2702,7 @@ function incomePatterns(){
 function readStore(key){ try{ return localStorage.getItem(key); }catch(e){ return null; } }
 function writeStore(key, value){ try{ localStorage.setItem(key, value); }catch(e){} }
 
-// A reminder shows from the day before expected income until 10 days after, unless it has
-// been logged (which moves the next expected date) or snoozed with "Not yet" for today.
+
 function renderIncomeReminders(){
   const patterns = incomePatterns(), today = calToday();
   const due = patterns.filter(p=>{
@@ -2800,7 +2716,7 @@ function renderIncomeReminders(){
     writeStore('ledgerSnooze:' + due[b.dataset.remindSnooze].key, today);
     renderIncomeReminders();
   }));
-  // The learned patterns are told through the Ledger Assistant, so this box may not exist.
+
   const patternBox = document.getElementById('incomePatterns');
   if(patternBox) patternBox.innerHTML = patterns.length
     ? `<ul class="pattern-list">${patterns.map(p=>`<li><strong>${escapeHtml(p.source)}</strong> · ${p.schedule} · about ${fmt(p.amount)}<small>Next expected ${longDate(p.next, {weekday:'short', month:'short', day:'numeric'})} (${whenText(p.next)})</small></li>`).join('')}</ul>`
@@ -2809,12 +2725,7 @@ function renderIncomeReminders(){
   return patterns;
 }
 
-/* ========================= LEDGER COPILOT ========================= */
-// Observes transactions, learns what's normal in each category, detects changes, checks them
-// against savings goals and suggests what to do. The user decides, and those decisions are
-// remembered in this browser: ignored insights stay hidden, "Got it" and "Remind me next
-// month" hide an insight for that month, and each ignored spending alert raises the bar for
-// the next one, so Ledger learns how much of a change is worth mentioning.
+
 const monthOf = iso => String(iso).slice(0, 7);
 function copilotStoreKey(){ return 'ledgerCopilot:' + (currentUser ? currentUser.id : 'guest'); }
 function copilotDecisions(){ try{ return JSON.parse(readStore(copilotStoreKey()) || '{}'); }catch(e){ return {}; } }
@@ -2824,7 +2735,7 @@ function saveCopilotDecision(id, action, ym){
   writeStore(copilotStoreKey(), JSON.stringify(all));
 }
 
-// What each spending category usually costs per month, from up to three earlier months with activity.
+
 function learnSpending(ym){
   const earlier = [...new Set([...state.income, ...state.expenses].map(e=>monthOf(e.date)))].filter(m=>m < ym).sort().slice(-3);
   const byCat = {};
@@ -2851,7 +2762,7 @@ function usualText(c){
   return steady ? `${fmt(c.low)}–${fmt(c.high)}` : `about ${fmt(c.usual)}`;
 }
 
-// How a monthly change would move the savings goal with the nearest target date.
+
 function goalImpactText(extraPerMonth, saving){
   const today = new Date();
   const next = (state.goals || []).map(g=>{
@@ -2995,7 +2906,7 @@ function longestStreak(){
   for(let i = 1; i < days.length; i++){ run = days[i] - days[i-1] === 1 ? run + 1 : 1; best = Math.max(best, run); }
   return best;
 }
-// A finished month where Needs + Wants stayed within the target share of income.
+
 function stayedUnderBudget(){
   const limit = (parseFloat(document.getElementById('tgtNeed').value)||0) + (parseFloat(document.getElementById('tgtWant').value)||0);
   const thisMonth = calToday().slice(0,7), months = {};
@@ -3004,7 +2915,7 @@ function stayedUnderBudget(){
   state.expenses.forEach(e=>{ if(CAT_TYPE[e.category] !== 'Savings') month(e.date).spent += e.amount; });
   return Object.entries(months).some(([m, t])=>m < thisMonth && t.income > 0 && t.spent <= t.income * limit / 100);
 }
-// Flat gold icons for the badge medallions (48 × 48).
+
 const GOLD = '#F6B93B', GOLD_DARK = '#D98E1A';
 const BADGE_ICONS = {
   thumbsUp: `<rect x="8" y="22" width="8" height="17" rx="1.5" fill="#fff"/><path d="M18 22l7-10c1.4-2 4.6-1.2 4.6 1.5V20H37a3 3 0 0 1 2.9 3.7l-3 11.3A3 3 0 0 1 34 37.3H18z" fill="${GOLD}"/>`,
@@ -3038,7 +2949,7 @@ function renderBadges(){
     + `<strong>${name}</strong><small>${earned ? 'Earned' : hint}</small></div>`).join('');
 }
 
-/* ========================= TAB NAVIGATION ========================= */
+
 function showTab(name){
   const panels=[...document.querySelectorAll('[data-panel]')];
   if(!panels.some(p=>p.dataset.panel===name)) name=panels[0].dataset.panel;
