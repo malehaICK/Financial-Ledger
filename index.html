@@ -272,6 +272,8 @@
       <div>
         <div class="chat-messages" id="chatMessages"></div>
         <div class="chat-input-row">
+          <button class="btn-secondary chat-attach" id="chatAttachBtn" type="button" title="Upload a receipt, pay stub or statement" aria-label="Upload a receipt, pay stub or statement"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m21 11-8.6 8.6a5 5 0 0 1-7-7l8.5-8.6a3.3 3.3 0 0 1 4.7 4.7l-8.6 8.6a1.7 1.7 0 0 1-2.4-2.4l7.9-7.9"/></svg></button>
+          <input type="file" id="chatFile" accept="image/*,application/pdf,.pdf,text/csv,.csv">
           <input id="chatInput" type="text" placeholder="Type your message…" autocomplete="off">
           <button class="btn-primary" id="chatSendBtn" type="button">Send</button>
         </div>

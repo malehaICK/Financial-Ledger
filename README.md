@@ -1,4 +1,4 @@
-# Ledger — Finance Management
+# Ledger — Secure Personal Finance Management Platform
 
 Ledger is a personal finance management application that helps users track income, expenses, savings, shared expenses, savings goals, and monthly budgets in one place.
 
@@ -9,8 +9,20 @@ The platform is built with a focus on **multi-user support, secure data separati
 ### Income & Expense Tracking
 
 * Add income and expenses manually, with an optional store name or note.
+* Fix a mistake with the ✎ pencil on any row: change the date, amount, source, category, or note in place (✓ saves, ✕ cancels). The ✕ on a normal row deletes it.
+* Lists show the newest 4 transactions for the month; **Show more** reveals the rest.
 * Organize expenses into categories such as groceries, housing, transportation, subscriptions, and more. Each category counts as a Need, Want, or Savings.
 * Automatically calculate total income, expenses, savings, and what is left in the account.
+
+### Upload: Receipts, Pay Stubs, Statements, and CSVs
+
+* One upload box on the Budget tab (also **Upload receipt or statement** in the profile) takes photos, PDFs, and CSV files. Several files can be chosen or dragged in at once.
+* Ledger works out whether each file is **income or an expense**. Pay stubs, deposits, "you received" transfer confirmations, and refunds count as income; receipts, bills, and purchases count as expenses.
+* A single document (one receipt or one pay stub) is added straight away with its date, amount, and a category or source. The result message has **Undo**, and a receipt with several items can be **split by category**.
+* A statement with many rows opens a review table first, so each row's type and category can be checked before saving.
+* Credit card statements (Visa, Mastercard, Amex) are recognized: purchases and interest or fees become expenses, refunds become income, and payments to the card are left out because that money already left the bank account. The card's own spend category (for example Restaurants) helps pick the category.
+* Scanned PDFs without a text layer are read with OCR, like photos.
+* The classification is rule-based (keywords, amounts, and statement columns), not a cloud AI model, so files never leave the browser.
 
 ### Monthly Budget Dashboard
 
@@ -27,11 +39,23 @@ The platform is built with a focus on **multi-user support, secure data separati
 * Tap a day to see its transactions; **Add expense** and **Add income** open the form with that date filled in.
 * A **Year** view shows income, spending, and what was left for each month.
 
+### Ledger Copilot
+
+Built into the **Ledger Assistant**, following a simple loop: **observe → learn patterns → detect changes → check goals → predict → suggest → you decide**. Ask it "What did you notice?", "What's normal for me?", "What is my income pattern?" or "Any subscriptions?" — nothing is buried in a panel that can be dismissed for good.
+
+* **Learns what's normal:** what each spending category usually costs per month, from up to three earlier months ("Groceries · usually $140–$160 a month").
+* **Detects changes and explains them:** flags a category that is noticeably higher than usual and says why, for example "you made 6 purchases in Groceries (usually about 3), and one purchase at Costco ($120.00) was much bigger than your typical $35.00".
+* **Finds recurring charges:** flexible charges that repeat every month at about the same amount, with their monthly total.
+* **Connects to goals:** estimates how a change affects the savings goal with the nearest target date ("could be pushed back by about 2 weeks").
+* **You decide, and nothing is lost:** hidden insights can always be brought back — ask **"show hidden"** to see them, or **"reset alerts"** to restore everything.
+* **Learns from your choices:** each ignored spending alert raises how big a jump must be before Ledger mentions it, and "reset alerts" puts that back to normal. Decisions are stored in the browser.
+* Rule-based and explainable: every number shown comes from the user's own transactions.
+
 ### Income Pattern Reminders
 
-* Learns regular income (the same source arriving weekly, every two weeks, or monthly) and marks the next expected day on the calendar. The learned patterns are listed on the Goals tab.
+* Learns regular income (the same source arriving weekly, every two weeks, or monthly) and marks the next expected day on the calendar. Ask the Ledger Assistant “What is my income pattern?” to see what it learned.
 * Around payday, the Budget tab asks "Did your paycheck arrive?" with a one-tap **Yes, add it**.
-* Optional browser notifications. There is no push server, so they appear when Ledger is opened around payday.
+* Optional browser notifications, turned on from the profile. There is no push server, so they appear when Ledger is opened around payday.
 
 ### Bank Statement Import (PDF or CSV)
 
@@ -71,18 +95,22 @@ The platform is built with a focus on **multi-user support, secure data separati
 
 ### Next-Month Forecast
 
-* Predicted income, expenses, and remainder for next month.
-* Starts with a baseline from recent months; with four or more months of history, a small neural network (TensorFlow.js) is trained in the browser.
+* Predicted income, expenses, and remainder for next month, shown on the Goals tab.
+* Updates by itself: an average of recent months at first, then, with four or more months of history, a small neural network (TensorFlow.js) trained in the browser whenever the monthly totals change. The model details are not shown in the app.
+* Only **complete** months count. The month in progress is half-finished, so including it would drag the estimate down; it is used only when it is the only month with data, and the card says so.
+* Income and expense are rounded before the remainder is worked out, so the three numbers always add up.
 
 ### Ledger Assistant
 
 * A floating assistant that answers questions such as "Can I afford $100?", "How can I save $500?", or "Where am I spending the most?" using the user's own Ledger data.
+* **Affordability** is answered from what is actually left this month (the same figure as "Left in account"), then what the goals need this month, then a small safety buffer. The reply shows each step and says plainly when a purchase fits what's left but takes from goal money, or when the goals were already short before the purchase. With nothing recorded yet this month, it falls back to the recent average and says so.
 * Rule-based: nothing typed into it is sent to an AI service.
 
 ### Profile
 
 * A profile sheet with the user's initial, name, email, and three numbers: left this month, saved in goals, and goals reached.
-* Rename, change password, export data, import a bank statement, delete account, and log out.
+* Rename, change password, export data (CSV or PDF), upload a receipt or statement, turn on notifications, delete account, and log out.
+* Save and delete confirmations appear as a short message at the top of the screen.
 * **Delete account** asks the user to type DELETE, then removes the account and all of its transactions and goals.
 
 ### Authentication & Data Isolation
@@ -93,6 +121,8 @@ The platform is built with a focus on **multi-user support, secure data separati
 * Database-level Row Level Security prevents users from accessing another user's financial records. Shared goals are visible only to the owner and the people they share with.
 
 ### Data Export
+
+From **Export data** in the profile:
 
 * Export transactions as CSV.
 * Export a PDF report for the selected month.
@@ -203,9 +233,25 @@ This prevents August and September transactions from being overwritten or accide
 ## Project Structure
 
 ```text
-index.html                                   the app
+index.html                                   the page (markup)
+styles.css                                   all styling
+app.js                                       all behaviour
+manifest.webmanifest, sw.js, icon.svg        install and offline support
 Ledger-database-schema.sql                   full database setup for a new Supabase project
+supabase/migrations/20260913_goal_sharing.sql   goal sharing, for projects created earlier
+supabase/migrations/20260915_delete_account.sql Delete account, for projects created earlier
+supabase/functions/invite-partner/index.ts   Edge Function that emails goal invites
 ```
+
+## Setup
+
+1. Create a Supabase project.
+2. In the Supabase SQL Editor, run `Ledger-database-schema.sql`. For a project set up with an earlier version, run the files in `supabase/migrations/` that it doesn't have yet instead.
+3. In `app.js`, set `SUPABASE_URL` and `SUPABASE_ANON_KEY` to your project URL and **publishable** key.
+4. Host `index.html`, `styles.css`, `app.js`, `sw.js`, `manifest.webmanifest` and `icon.svg` together over HTTPS (for example GitHub Pages or Netlify). All of them must sit in the same folder, or the page loads unstyled and does nothing.
+5. **Authentication → Sign In / Providers → Email**: uncheck **Confirm email**. Accounts then work the moment they are created, with no confirmation message to open. Leave it on only if step 7 (your own email sender) is set up.
+6. **Authentication → URL Configuration**: set **Site URL** to the hosted address and add `<address>/**` under **Redirect URLs**. Password reset links point at `http://localhost:3000` until this is done.
+7. Optional, for password resets to reach anyone and for goal invite emails: set up a custom SMTP provider (Resend, Brevo, SendGrid) under **Authentication → Emails → SMTP Settings**, then deploy `supabase/functions/invite-partner`. Without it, Supabase's built-in test mailer only delivers to addresses on the project's Supabase team, and goals can still be shared with **Copy invite link**.
 
 ## Current Status
 

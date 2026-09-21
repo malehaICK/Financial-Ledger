@@ -418,6 +418,12 @@ thead th{border-bottom-color:var(--line);font-weight:800;}
 .chat-msg.user .chat-bubble{background:var(--accent);border-color:var(--accent);}
 .copilot-chip{border-radius:999px;background:var(--paper);}
 .chat-bubble{white-space:pre-line;}   /* keeps the line breaks in lists the Copilot sends */
+.chat-actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;white-space:normal;}
+.chat-attach{display:grid;place-items:center;flex-shrink:0;padding:0 10px;}
+.chat-attach svg.ic{width:18px;height:18px;color:var(--ink);}
+.chat-edit{display:grid;gap:7px;margin-top:10px;white-space:normal;}
+.chat-edit label{display:grid;gap:3px;font-size:11.5px;font-weight:700;color:var(--ink-soft);}
+.chat-edit label[hidden]{display:none;}
 .auth-card{border-radius:var(--radius);box-shadow:var(--shadow);}
 .auth-card h1{font-weight:800;}
 footer{margin-top:26px;}

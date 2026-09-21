@@ -1,4 +1,19 @@
+-- ============================================================================
+-- Ledger — COMPLETE database schema.
+--
+-- Run this ONCE in the Supabase SQL Editor on a new project. It creates
+-- everything the app needs from scratch: the transactions table, savings
+-- goals, shared goals, and Row Level Security on all of them.
+--
+-- This file supersedes Ledger-database-schema.sql, which was a migration that
+-- assumed public.transactions already existed and therefore failed on a fresh
+-- project. Every statement here is idempotent, so re-running it is safe.
+-- ============================================================================
 
+
+-- ----------------------------------------------------------------------------
+-- 1. Transactions — the core table. One row per income or expense entry.
+-- ----------------------------------------------------------------------------
 create table if not exists public.transactions (
   id                uuid primary key default gen_random_uuid(),
   user_id           uuid not null references auth.users(id) on delete cascade,
@@ -9,10 +24,12 @@ create table if not exists public.transactions (
   description       text,
   amount            numeric(12,2) not null check (amount >= 0),
 
-
+  -- Duplicate protection for re-imported bank statements. Built in the browser
+  -- as: type | date | label | amount. See makeFingerprint() in the HTML.
   fingerprint       text,
 
-
+  -- Phase 1: shared/split expenses. amount always holds the user's own share,
+  -- so month totals stay correct without special-casing the reporting queries.
   gross_amount      numeric(12,2),
   user_share        numeric(12,2),
   reimbursement_due numeric(12,2) not null default 0,
@@ -21,9 +38,12 @@ create table if not exists public.transactions (
   created_at        timestamptz not null default now()
 );
 
+-- The app orders by (transaction_date, created_at) inside a single user.
 create index if not exists transactions_user_date_idx
   on public.transactions(user_id, transaction_date, created_at);
 
+-- Per-user duplicate guard. Partial, so rows written before fingerprinting
+-- existed (fingerprint is null) never collide with each other.
 create unique index if not exists transactions_user_fingerprint_idx
   on public.transactions(user_id, fingerprint)
   where fingerprint is not null;
@@ -45,7 +65,10 @@ create policy transactions_delete_own on public.transactions
   for delete to authenticated using (auth.uid() = user_id);
 
 
-
+-- ----------------------------------------------------------------------------
+-- 2. Backfill — only does anything on a database that predates the Phase 1
+--    split-expense columns. A no-op on a fresh install.
+-- ----------------------------------------------------------------------------
 update public.transactions
 set gross_amount      = coalesce(gross_amount, amount),
     user_share        = coalesce(user_share, amount),
@@ -54,6 +77,9 @@ set gross_amount      = coalesce(gross_amount, amount),
 where gross_amount is null or user_share is null;
 
 
+-- ----------------------------------------------------------------------------
+-- 3. Personal savings goals (Phase 1).
+-- ----------------------------------------------------------------------------
 create table if not exists public.savings_goals (
   id            uuid primary key default gen_random_uuid(),
   user_id       uuid not null references auth.users(id) on delete cascade,
@@ -84,6 +110,21 @@ create policy savings_goals_update_own on public.savings_goals
 create policy savings_goals_delete_own on public.savings_goals
   for delete to authenticated using (auth.uid() = user_id);
 
+
+-- ----------------------------------------------------------------------------
+-- 4. Goal sharing: invite by email or by link.
+--    Same SQL as supabase/migrations/20260913_goal_sharing.sql.
+-- ----------------------------------------------------------------------------
+-- Ledger: goal sharing (Sept 2026)
+--
+-- Adds sharing to savings goals:
+--   * any savings goal can be shared by email or by an invite link;
+--   * members can see the goal and add money to it; only the owner edits or deletes it.
+--
+-- Nothing is deleted. The older shared_goals / shared_goal_members /
+-- shared_goal_contributions tables are left in place but are no longer used
+-- (their policies referenced each other and could never be read).
+
 create table if not exists public.goal_members (
   id         uuid primary key default gen_random_uuid(),
   goal_id    uuid not null references public.savings_goals(id) on delete cascade,
@@ -107,6 +148,8 @@ create table if not exists public.goal_invites (
 );
 create index if not exists goal_invites_goal_idx on public.goal_invites(goal_id);
 
+-- Ownership / membership checks run as SECURITY DEFINER so policies never query
+-- each other's tables directly (the cause of the old recursion error).
 create or replace function public.is_goal_owner(p_goal uuid)
 returns boolean language sql stable security definer set search_path = ''
 as $$
@@ -123,6 +166,7 @@ as $$
   );
 $$;
 
+-- savings_goals: owners manage their goals; members can read goals shared with them.
 drop policy if exists savings_goals_select_own on public.savings_goals;
 create policy savings_goals_select_own on public.savings_goals
   for select to authenticated using (auth.uid() = user_id or public.is_goal_member(id));
@@ -153,6 +197,7 @@ create policy goal_invites_owner_insert on public.goal_invites
 create policy goal_invites_owner_update on public.goal_invites
   for update to authenticated using (public.is_goal_owner(goal_id)) with check (public.is_goal_owner(goal_id));
 
+-- Join by invite link: adds only the caller, only to the goal of a valid, active token.
 create or replace function public.join_goal(p_token text)
 returns uuid language plpgsql security definer set search_path = ''
 as $$
@@ -179,6 +224,7 @@ begin
 end;
 $$;
 
+-- Add money to a goal: allowed for the owner and members; increments atomically.
 create or replace function public.add_to_goal(p_goal uuid, p_amount numeric)
 returns numeric language plpgsql security definer set search_path = ''
 as $$
@@ -212,6 +258,13 @@ grant execute on function public.add_to_goal(uuid, numeric) to authenticated;
 grant select, insert, delete on public.goal_members to authenticated;
 grant select, insert, update on public.goal_invites to authenticated;
 
+
+-- ----------------------------------------------------------------------------
+-- 5b. Delete account. Every table above references auth.users with
+--     ON DELETE CASCADE, so deleting the user removes their transactions, goals,
+--     and those goals' members and invite links. Memberships added by email
+--     before the person signed in have no user_id, so they are removed by email.
+-- ----------------------------------------------------------------------------
 create or replace function public.delete_my_account()
 returns void
 language plpgsql
@@ -238,12 +291,18 @@ revoke all on function public.delete_my_account() from public, anon;
 grant execute on function public.delete_my_account() to authenticated;
 
 
+-- ----------------------------------------------------------------------------
+-- 6. Grants. RLS still decides which rows each user can touch.
+-- ----------------------------------------------------------------------------
 grant select, insert, update, delete on public.transactions              to authenticated;
 grant select, insert, update, delete on public.savings_goals             to authenticated;
 grant select, insert,         delete on public.goal_members              to authenticated;
 grant select, insert, update         on public.goal_invites              to authenticated;
 
 
+-- ----------------------------------------------------------------------------
+-- 7. Verify. All four tables should come back with rowsecurity = true.
+-- ----------------------------------------------------------------------------
 select tablename, rowsecurity
 from pg_tables
 where schemaname = 'public'

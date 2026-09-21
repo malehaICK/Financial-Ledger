@@ -1108,14 +1108,16 @@ class LedgerAssistant {
   }
   start(){
     this.messagesEl.innerHTML='';
-    this.addMessage('bot','Hi! I\'m your Ledger Financial Copilot. Ask me about spending, saving, goals, forecasts, or whether a purchase fits your current cash flow.');
+    this.addMessage('bot','Hi! I\'m your Ledger Financial Copilot. Ask me about spending, saving, goals, forecasts, or whether a purchase fits your current cash flow. I can also add income or expenses for you, like “I spent $20 on groceries”.');
     this.inputEl.disabled=false;
     this.inputEl.value='';
+    this.pending=null;
   }
   async handle(raw){
     const text=String(raw??'').trim();
     if(!text) return;
     this.addMessage('user',text);
+    if(this.handleEntry(text)) return;
     const local=copilotAnswer(text);
     if(local) return this.addMessage('bot',local);
     // No keyword matched: ask the AI, falling back to the suggestion list if it's unavailable.
@@ -1133,6 +1135,187 @@ class LedgerAssistant {
     wrap.appendChild(bubble); this.messagesEl.appendChild(wrap); this.messagesEl.scrollTop=this.messagesEl.scrollHeight;
     return bubble;
   }
+  // "Add $50 income from work", "I spent $20 on groceries yesterday". Asks for anything
+  // missing, then confirms before saving. Returns true when the message was about an entry.
+  handleEntry(text){
+    const t=text.toLowerCase(), pending=this.pending;
+    this.pending=null;
+    if(pending && pending.entry){
+      if(CHAT_YES.test(t)){ this.saveEntry(pending); return true; }
+      if(CHAT_NO.test(t)){ this.addMessage('bot','Okay, I didn’t add it.'); return true; }
+    }
+    // A follow-up answer ("$800 from work") is read together with the earlier request.
+    const asking=pending && !pending.entry;
+    const followUp=asking && (CHAT_AMOUNT.test(t) || chatEntryKind(t));
+    const wantsAdd=CHAT_ADD.test(t) || CHAT_SAID_ENTRY.test(t);
+    if(!followUp && !wantsAdd) return false;
+    const draft=parseChatEntry(followUp ? pending.text + ' ' + text : text);
+    if(!draft.kind && !draft.amount) return false;
+    // "I spent too much on food" is a question, not an entry; only "add…" asks for missing details.
+    if(!draft.amount && !followUp && !CHAT_ADD.test(t)) return false;
+    if(!draft.kind){
+      this.pending={text:draft.text};
+      this.addMessage('bot',`Is ${fmt(draft.amount)} income or an expense?`);
+      return true;
+    }
+    if(!draft.amount){
+      this.pending={text:draft.text};
+      this.addMessage('bot',draft.kind==='income'
+        ? 'Sure! How much was it, and where did it come from? For example: “$500 from Paycheck”.'
+        : 'Sure! How much was it, and what was it for? For example: “$25 groceries at Walmart”.');
+      return true;
+    }
+    const entry=draft.kind==='income'
+      ? {id:crypto.randomUUID(), date:draft.date, source:draft.label||'Income', amount:draft.amount}
+      : {id:crypto.randomUUID(), date:draft.date, category:draft.category, amount:draft.amount, description:draft.label||null};
+    this.confirmEntry(draft.kind, entry, 'Add this to your ledger?');
+    return true;
+  }
+  // Shows the entry with Add it / Edit / Cancel. Typing "yes" or "no" works too.
+  confirmEntry(kind, entry, intro, bubble=this.addMessage('bot','')){
+    this.pending={kind, entry};
+    bubble.textContent=`${intro}\n\n${chatEntryText(kind, entry)}`;
+    const actions=document.createElement('div'); actions.className='chat-actions';
+    const done=()=>{ actions.querySelectorAll('button').forEach(x=>{x.disabled=true;}); const mine=this.pending && this.pending.entry===entry; if(mine) this.pending=null; return mine; };
+    [['Add it','btn-primary',()=>this.saveEntry({kind, entry})],
+     ['Edit','btn-secondary',()=>this.editEntry(kind, entry)],
+     ['Cancel','btn-secondary',()=>this.addMessage('bot','Okay, I didn’t add it.')]].forEach(([label,cls,run])=>{
+      const b=document.createElement('button'); b.type='button'; b.className=cls+' btn-small'; b.textContent=label;
+      b.addEventListener('click',()=>{ if(done()) run(); });
+      actions.appendChild(b);
+    });
+    bubble.appendChild(actions);
+    this.messagesEl.scrollTop=this.messagesEl.scrollHeight;
+  }
+  // A small form in the chat to fix the type, date, amount and source or category.
+  editEntry(kind, entry, intro='Change anything that’s wrong, then save:'){
+    const bubble=this.addMessage('bot',intro);
+    const form=document.createElement('form'); form.className='chat-edit';
+    const field=(label, control)=>{ const l=document.createElement('label'); l.textContent=label; l.appendChild(control); form.appendChild(l); return control; };
+    const input=(type, value, attrs={})=>{ const el=document.createElement('input'); el.type=type; el.className='edit-input'; el.value=value ?? ''; Object.assign(el, attrs); return el; };
+    const select=(options, value)=>{ const el=document.createElement('select'); el.className='edit-input'; options.forEach(o=>el.add(new Option(o, o, false, o===value))); return el; };
+    const type=field('Type', select(['Income','Expense'], kind==='income' ? 'Income' : 'Expense'));
+    const date=field('Date', input('date', entry.date));
+    const amount=field('Amount', input('number', entry.amount > 0 ? Number(entry.amount).toFixed(2) : '', {step:'0.01', min:'0.01', placeholder:'0.00'}));
+    const source=field('From', input('text', entry.source || '', {maxLength:80, placeholder:'e.g. Paycheck'}));
+    const category=field('Category', select(CATEGORIES.map(([c])=>c), entry.category || 'Other'));
+    const note=field('Store or note', input('text', entry.description && entry.description !== 'Receipt' ? entry.description : '', {maxLength:80, placeholder:'Optional'}));
+    const show=()=>{ const inc=type.value==='Income'; source.parentNode.hidden=!inc; category.parentNode.hidden=inc; note.parentNode.hidden=inc; };
+    type.addEventListener('change', show); show();
+    const save=document.createElement('button'); save.type='submit'; save.className='btn-primary btn-small'; save.textContent='Save';
+    const actions=document.createElement('div'); actions.className='chat-actions'; actions.appendChild(save); form.appendChild(actions);
+    form.addEventListener('submit', e=>{
+      e.preventDefault();
+      const value=round2(parseFloat(amount.value));
+      if(!/^\d{4}-\d{2}-\d{2}$/.test(date.value)){ date.reportValidity(); return; }
+      if(!(value > 0)){ amount.setCustomValidity('Enter an amount above $0.'); amount.reportValidity(); amount.addEventListener('input', ()=>amount.setCustomValidity(''), {once:true}); return; }
+      form.querySelectorAll('input, select, button').forEach(el=>{ el.disabled=true; });
+      const inc=type.value==='Income';
+      this.saveEntry(inc
+        ? {kind:'income', entry:{id:entry.id, date:date.value, source:source.value.trim() || 'Income', amount:value}}
+        : {kind:'expense', entry:{id:entry.id, date:date.value, category:category.value, amount:value, description:note.value.trim() || null}});
+    });
+    bubble.appendChild(form);
+    this.messagesEl.scrollTop=this.messagesEl.scrollHeight;
+    (entry.amount > 0 ? type : amount).focus();
+  }
+  // Receipts and pay stubs are confirmed here; statements open the review table in Budget.
+  async handleFile(file){
+    if(!file) return;
+    this.pending=null;
+    this.addMessage('user','📎 '+file.name);
+    if(!databaseMode || !currentUser) return this.addMessage('bot','Please sign in first, then I can read it.');
+    const bubble=this.addMessage('bot','Reading your file…');
+    this.inputEl.disabled=true;
+    let result;
+    try{ result=await readUpload(file, bubble, file.name); }
+    catch(err){ console.error('Chat upload failed:', err); result={kind:'unreadable', reason:err.message || 'it could not be read.'}; }
+    finally{ this.inputEl.disabled=false; }
+    if(result.kind==='unreadable'){ bubble.textContent=`I couldn’t read that file: ${result.reason}`; return; }
+    if(result.kind==='statement'){
+      const income=result.rows.filter(r=>r.type==='Income').length, expenses=result.rows.length-income;
+      bubble.textContent=`This looks like a statement with ${result.rows.length} transaction${result.rows.length===1?'':'s'}: ${income} income, ${expenses} expense${expenses===1?'':'s'}. I’ve opened them in Budget so you can check each row, then tap Add.${result.note ? '\n\n'+result.note : ''}`;
+      showTab('budget');
+      renderBankPreview(result.rows);
+      document.getElementById('bankPreviewWrap').scrollIntoView({block:'start', behavior:'smooth'});
+      return;
+    }
+    const kind=result.type==='Income' ? 'income' : 'expense';
+    const entry=kind==='income'
+      ? {id:crypto.randomUUID(), date:result.date, source:result.source || 'Income', amount:result.amount}
+      : {id:crypto.randomUUID(), date:result.date, category:result.category || 'Other', amount:result.amount, description:result.store || null};
+    const what=kind==='income' ? 'income' : 'an expense';
+    if(!(result.amount > 0)){
+      bubble.textContent=`This looks like ${what}, but I couldn’t read the amount.`;
+      this.editEntry(kind, entry, 'Please fill in the amount, check the rest, then save:');
+      return;
+    }
+    this.confirmEntry(kind, entry, `This looks like ${what}. Is this right?`, bubble);
+  }
+  async saveEntry({kind, entry}){
+    if(!databaseMode || !currentUser) return this.addMessage('bot','Please sign in first, then I can add it.');
+    if(hasTransaction(entry, kind)) return this.addMessage('bot',`That ${kind} is already in your ledger, so I didn’t add it again.`);
+    try{
+      await insertTransaction(entry, kind, makeFingerprint(kind, entry));
+      (kind==='income' ? state.income : state.expenses).push(entry);
+      jumpToDate(entry.date);
+      render();
+      updateStorageStatus(kind==='income' ? 'Income saved ✓' : 'Expense saved ✓');
+      this.addMessage('bot',`Done ✓ Added ${chatEntryText(kind, entry).replace(/^• /,'')}. Tap ✎ on the row in Budget if anything needs changing.`);
+    }catch(err){
+      console.error(err);
+      this.addMessage('bot','I couldn’t save it: '+(err.message||'Unknown error'));
+    }
+  }
+}
+
+const CHAT_ADD = /\b(add|log|record|enter)\b/;
+const CHAT_SAID_ENTRY = /\bi\s+(just\s+)?(spent|paid|bought|got paid|earned|received|made)\b/;
+const CHAT_INCOME = /\b(income|salary|paycheck|pay\s?cheque|wages?|earned|received|got paid|was paid|deposit|refund|bonus|made)\b/;
+const CHAT_EXPENSE = /\b(expenses?|spent|spend|bought|purchased?|paid|bill|cost)\b/;
+const CHAT_AMOUNT = /\d/;
+const CHAT_YES = /^(y|yes|yeah|yep|sure|ok|okay|confirm|add it|do it|please)\b/;
+const CHAT_NO = /^(n|no|nope|cancel|stop|never\s?mind|don'?t)\b/;
+const CHAT_MONTH_DAY = /\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+(\d{1,2})(?:st|nd|rd|th)?\b/i;
+
+function chatEntryKind(t){
+  if(/\b(income|expenses?)\b/.test(t)) return /\bincome\b/.test(t) ? 'income' : 'expense';
+  if(/\b(got|get|was|been)\s+paid\b/.test(t)) return 'income';
+  const inc = CHAT_INCOME.test(t), exp = CHAT_EXPENSE.test(t);
+  return inc && !exp ? 'income' : exp && !inc ? 'expense' : null;
+}
+
+function parseChatEntry(text){
+  const t = text.toLowerCase(), today = calToday();
+  let date = today, rest = text;
+  const iso = text.match(/\b(20\d{2}-\d{2}-\d{2})\b/), md = text.match(CHAT_MONTH_DAY);
+  if(iso){ date = iso[1]; rest = rest.replace(iso[0], ' '); }
+  else if(md){ date = toIsoDate(`${md[1]} ${md[2]}`) || today; rest = rest.replace(md[0], ' '); }
+  else if(/\byesterday\b/.test(t)) date = calAddDays(today, -1);
+  // Prefer a number written as money, else the first plain number left once dates are removed.
+  const money = rest.match(/\$\s?(\d[\d,]*(?:\.\d{1,2})?)|(\d[\d,]*(?:\.\d{1,2})?)\s*(?:\$|dollars?|bucks|cad)\b/i)
+    || rest.match(/(?:^|[^\w.\/-])(\d[\d,]*(?:\.\d{1,2})?)(?![\w\/-])/);
+  const amount = money ? round2(parseFloat((money[1] || money[2]).replace(/,/g, ''))) : null;
+  const named = CATEGORIES.find(([c])=>t.includes(c.toLowerCase()));
+  const category = named ? named[0] : trackerCategory(t, '');
+  // A spending category ("log $1,200 rent") means an expense even without the word.
+  const kind = chatEntryKind(t) || (category !== 'Other' ? 'expense' : null);
+  // "from my job" names the income source; "at Walmart" names the store.
+  const phrase = rest.match(kind === 'income' ? /\bfrom\s+(.+)/i : /\bat\s+(.+)/i);
+  const label = phrase ? phrase[1].split(/\s+(?:on|today|yesterday|for|at|from)\b|[.?!,]/i)[0]
+    .replace(/^(my|the|a)\s+/i, '').replace(/\$?\d[\d,.]*/g, '').trim().slice(0, 60) : '';
+  return {
+    text, kind, date, category,
+    amount: amount > 0 && amount < 1e7 ? amount : null,
+    label: label && label.charAt(0).toUpperCase() + label.slice(1),
+  };
+}
+
+function chatEntryText(kind, e){
+  const when = e.date === calToday() ? 'today' : longDate(e.date, {weekday:'short', month:'short', day:'numeric'});
+  return kind === 'income'
+    ? `• Income · ${fmt(e.amount)} from ${e.source} · ${when}`
+    : `• Expense · ${fmt(e.amount)} · ${e.category}${e.description ? ` (${e.description})` : ''} · ${when}`;
 }
 
 let ledgerChatbot=null;
@@ -1148,6 +1331,12 @@ function initLedgerChatbot(){
     if(e.key==='Enter') document.getElementById('chatSendBtn').click();
   });
   document.getElementById('chatResetBtn').addEventListener('click',()=>ledgerChatbot.start());
+  const chatFile=document.getElementById('chatFile');
+  document.getElementById('chatAttachBtn').addEventListener('click',()=>chatFile.click());
+  chatFile.addEventListener('change',async()=>{
+    try{ await ledgerChatbot.handleFile(chatFile.files[0]); }
+    finally{ chatFile.value=''; }
+  });
   ledgerChatbot.start();
 }
 

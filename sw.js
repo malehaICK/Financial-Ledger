@@ -1,6 +1,6 @@
 
 
-const CACHE = 'ledger-shell-v5';
+const CACHE = 'ledger-shell-v6';
 
 const SHELL = [
   './',
