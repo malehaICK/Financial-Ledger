@@ -8,10 +8,10 @@
     --ink:#2E2A24;
     --ink-soft:#736C5F;
     --line:#E6DDC6;
-    --teal:#5E9A6A;        
+    --teal:#5E9A6A;        /* success / positive */
     --teal-deep:#4A7F56;
     --gold:#E7AE48;
-    --orange:#C9700C;      
+    --orange:#C9700C;      /* watch out: profile numbers */
     --rust:#C4553A;
     --need:#7D9CC8;
     --want:#E7AE48;
@@ -21,6 +21,8 @@
     --radius:18px;
     --radius-sm:10px;
     --shadow:0 3px 14px rgba(80,64,30,.07);
+    --fab-bg:#E9F2EA;      /* assistant button: soft mint tint of --teal */
+    --fab-bg-hover:#DBEADE;
   }
   *{box-sizing:border-box;}
   body{
@@ -223,14 +225,19 @@
 .chat-input-row button{white-space:nowrap}
 
 @media(max-width:850px){.chatbot-body{grid-template-columns:1fr}}
- .assistant-fab{position:fixed;right:24px;bottom:24px;z-index:1200;border:1px solid var(--ink);background:var(--paper-raised);color:var(--ink);border-radius:999px;padding:11px 15px;display:flex;align-items:center;gap:8px;font:600 12px 'Nunito';cursor:pointer;box-shadow:0 8px 24px rgba(204, 197, 197, 0.12)}
-.assistant-fab:hover{background:var(--ink);color:#fff}
-.chatbot-card{display:none;position:fixed;right:24px;bottom:78px;width:min(390px,calc(100vw - 32px));z-index:1199;margin:0;border:1px solid var(--ink);border-radius:14px;background:var(--paper-raised);box-shadow:0 18px 45px rgba(0,0,0,.18);overflow:hidden}
+ .assistant-fab{position:fixed;right:24px;bottom:24px;z-index:1200;width:auto;height:auto;padding:0;border:0;background:transparent;color:var(--teal-deep);border-radius:0;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:none;-webkit-tap-highlight-color:transparent}
+.assistant-fab:hover{background:transparent}.assistant-fab:hover .assistant-fab-icon{transform:scale(1.07)}.assistant-fab:active .assistant-fab-icon{transform:scale(.96)}
+.assistant-fab-icon{width:58px;height:58px;flex:0 0 auto;display:block;transition:transform .15s ease;filter:drop-shadow(0 3px 6px rgba(80,64,30,.22));fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.assistant-fab-icon .bot-visor{fill:var(--ink);stroke:var(--ink);stroke-width:1.1}
+.assistant-fab-icon .bot-eye{fill:var(--gold);stroke:none;font:700 5.4px 'IBM Plex Mono',monospace}
+.assistant-fab-icon .bot-antenna{fill:currentColor;stroke:none}
+.assistant-fab:focus-visible{outline:2px solid var(--teal-deep);outline-offset:4px;border-radius:12px}
+.chatbot-card{display:none;position:fixed;right:24px;bottom:82px;width:min(390px,calc(100vw - 32px));z-index:1199;margin:0;border:1px solid var(--ink);border-radius:14px;background:var(--paper-raised);box-shadow:0 18px 45px rgba(0,0,0,.18);overflow:hidden}
 .chatbot-card.open{display:block}
 
 .chatbot-head{padding:12px 14px}.chatbot-head p{font-size:11.5px}.assistant-head-actions{display:flex;gap:6px;align-items:center}.assistant-reset{padding:5px 8px;font-size:11px}.assistant-close{border:0;background:transparent;color:var(--ink);font-size:23px;line-height:1;cursor:pointer;padding:2px 6px}.assistant-close:hover{color:var(--rust)}
-.chatbot-body{padding:12px;display:block}.chat-messages{min-height:180px;max-height:260px}.assistant-fab span{display:inline}
-@media(max-width:560px){.assistant-fab{right:14px;bottom:14px}.chatbot-card{right:12px;bottom:68px;width:calc(100vw - 24px)}}
+.chatbot-body{padding:12px;display:block}.chat-messages{min-height:180px;max-height:260px}
+@media(max-width:560px){.assistant-fab{right:14px;bottom:14px}.chatbot-card{right:12px;bottom:72px;width:calc(100vw - 24px)}}
 
     .goal-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
     .goal-form input{min-width:0;font:13px 'Nunito';padding:8px;border:1px solid var(--line);border-radius:4px;background:var(--paper-raised);color:var(--ink)}
@@ -292,8 +299,8 @@
   .entry-tools button, .bank-review-actions button{max-width:100%;}
 
   /* Floating assistant stays inside the phone viewport. */
-  .assistant-fab{right:14px !important; bottom:16px !important; width:50px; height:50px;}
-  .chatbot-card{right:10px !important; bottom:76px !important; width:calc(100vw - 20px) !important; max-width:none;}
+  .assistant-fab{right:14px !important; bottom:16px !important; width:auto; height:auto;}
+  .chatbot-card{right:10px !important; bottom:74px !important; width:calc(100vw - 20px) !important; max-width:none;}
 }
 @media (max-width:380px){
   .auth-card{padding:19px 15px;}
@@ -315,7 +322,7 @@
 #manualChatbot .copilot-chips{margin-top:8px;}
 #manualChatbot .copilot-chip{font-size:11.5px;padding:6px 9px;}
 
-@media(max-width:600px){.tabs{margin-bottom:18px;gap:0;}.tab{flex:1 1 auto;padding:10px 4px;font-size:13px;}.assistant-fab{justify-content:center;padding:0;font-size:22px;}.assistant-fab span{display:none;}}
+@media(max-width:600px){.tabs{margin-bottom:18px;gap:0;}.tab{flex:1 1 auto;padding:10px 4px;font-size:13px;}.assistant-fab .assistant-fab-icon{width:52px;height:52px;}}
 
 /* ========================= NOTEBOOK CREAM LAYOUT ========================= */
 body{background:var(--paper);color:var(--ink);font-family:'Nunito',system-ui,sans-serif;}
@@ -406,8 +413,7 @@ thead th{border-bottom-color:var(--line);font-weight:800;}
 .intel-grid > section{margin:0;}
 .ml-metrics div{border-bottom-color:var(--line);font-size:14.5px;}
 .ml-actions{margin-top:14px;}
-.assistant-fab{background:var(--accent);color:#fff;border-color:var(--accent);}
-.assistant-fab:hover{background:var(--accent-deep);color:#fff;}
+.assistant-fab{background:transparent;color:var(--teal-deep);border:0;}
 .chatbot-card{border-color:var(--line);border-radius:var(--radius);}
 .chat-msg.user .chat-bubble{background:var(--accent);border-color:var(--accent);}
 .copilot-chip{border-radius:999px;background:var(--paper);}
