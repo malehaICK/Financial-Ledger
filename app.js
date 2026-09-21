@@ -2421,7 +2421,10 @@ function copilotAnswer(q){
   const text=String(q||'').toLowerCase(); const s=copilotStats();
   const noticed = copilotChatAnswer(text);
   if(noticed) return noticed;
-  if(!s.rows.length)return 'I need some transaction history before I can give you a useful financial answer. Start by adding a few income and expense records or importing a statement.';
+  // Without history, only the number-crunching answers below are useless; anything else goes to the AI.
+  if(!s.rows.length)return /afford|buy|purchase|sav(e|ing)|goal|spend|categor|largest|next month|forecast|predict|future|best move|what should i do|advice|recommend|balance|leftover|cash flow|income|expense/.test(text)
+    ? 'I need some transaction history before I can give you a useful financial answer. Start by adding a few income and expense records or importing a statement.'
+    : null;
   const amountMatch=text.match(/(?:\$|cad\s*)?(\d+(?:\.\d{1,2})?)/); const amount=amountMatch?Number(amountMatch[1]):null;
   if(/afford|buy|purchase|spend .*\$/.test(text)){
     const month = leftThisMonth();
