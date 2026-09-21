@@ -5,11 +5,12 @@
 <meta charset="UTF-8">
 <link rel="manifest" href="./manifest.webmanifest">
 <meta name="theme-color" content="#1B3B36">
-<title>Ledger — Monthly Budget</title>
+<title>Ledger A Monthly Budget</title>
   <link rel="stylesheet" href="styles.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  <!-- pdf.js is loaded on demand by getPdfJs() via dynamic import(), so no static tag is needed here. -->
 </head>
 <body>
 <div id="authGate"><div class="auth-card"><h1>Ledger</h1><p class="auth-subtitle">Sign in to securely access your personal budget and transactions.</p><div class="auth-form"><label for="gateEmail">Email address</label><input type="email" id="gateEmail" placeholder="you@example.com" autocomplete="email"><label for="gatePassword">Password</label><div style="position:relative;">
@@ -30,7 +31,6 @@
   <header class="app-header">
     <div class="brand-block">
       <h1>Ledger</h1>
-      <p>Track what comes in and what goes out, and save toward what matters.</p>
       <div class="month-row">
         <select id="monthSel" aria-label="Month"></select>
         <select id="yearSel" aria-label="Year"></select>
@@ -241,7 +241,6 @@
   <div class="intel-grid">
     <section class="card">
       <h2 class="card-title"> Savings goals</h2>
-      <p class="mini-note">A trip, a laptop, an emergency fund — Ledger shows what it takes to reach each one. Tap Share on a goal to save for it with someone else.</p>
         <form class="goal-form" id="goalForm">
           <input id="goalName" type="text" placeholder="Goal name (e.g. Japan trip)" required>
           <input id="goalTarget" type="number" min="0.01" step="0.01" placeholder="Target amount" required>
@@ -293,7 +292,7 @@
     </div>
   </section>
 
-  <footer>Your transactions are stored securely in your account. Bank PDFs and receipt photos are read in your browser and never uploaded.<br><span class="build-stamp">Version 2026-09-15 · upload fix 2</span></footer>
+  <footer>Your transactions are stored securely in your account. <br><span class="build-stamp">Version 2026-09-15 · upload fix 2</span></footer>
 </div>
 
 <script src="app.js"></script>
