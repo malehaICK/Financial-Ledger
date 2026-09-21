@@ -1109,20 +1109,29 @@ class LedgerAssistant {
   start(){
     this.messagesEl.innerHTML='';
     this.addMessage('bot','Hi! I\'m your Ledger Financial Copilot. Ask me about spending, saving, goals, forecasts, or whether a purchase fits your current cash flow.');
-    this.addMessage('bot','I use the data Ledger currently has and clearly label estimates.');
     this.inputEl.disabled=false;
     this.inputEl.value='';
   }
-  handle(raw){
+  async handle(raw){
     const text=String(raw??'').trim();
     if(!text) return;
     this.addMessage('user',text);
-    this.addMessage('bot',copilotAnswer(text));
+    const local=copilotAnswer(text);
+    if(local) return this.addMessage('bot',local);
+    // No keyword matched: ask the AI, falling back to the suggestion list if it's unavailable.
+    const bubble=this.addMessage('bot','Thinking…');
+    this.inputEl.disabled=true;
+    const ai=await copilotAiAnswer(text);
+    this.inputEl.disabled=false;
+    this.inputEl.focus();
+    bubble.textContent=ai||COPILOT_FALLBACK;
+    this.messagesEl.scrollTop=this.messagesEl.scrollHeight;
   }
   addMessage(who,text){
     const wrap=document.createElement('div'); wrap.className='chat-msg '+who;
     const bubble=document.createElement('div'); bubble.className='chat-bubble'; bubble.textContent=text;
     wrap.appendChild(bubble); this.messagesEl.appendChild(wrap); this.messagesEl.scrollTop=this.messagesEl.scrollHeight;
+    return bubble;
   }
 }
 
@@ -2452,7 +2461,37 @@ function copilotAnswer(q){
     const top=s.ranked[0]; return `Your recent average leftover is about ${fmt(s.avgNet)}/month. Protect part of it for goals first; ${top?`your largest recorded category is ${top[0]} at ${fmt(top[1])}, so even a modest reduction there could create more room.`:''}`;
   }
   if(/balance|leftover|cash flow|income|expense/.test(text))return `Your recent average is about ${fmt(s.avgIncome)} income, ${fmt(s.avgExpense)} spending, and ${fmt(s.avgNet)} leftover per month. These are averages from your recorded history, not guaranteed future amounts.`;
-  return `I can help with affordability, saving targets, spending reductions, forecasts, anomalies, and your next best move. Try “Can I afford $100?” or “How can I save $500?”`;
+  return null;
+}
+const COPILOT_FALLBACK = `I can help with affordability, saving targets, spending reductions, forecasts, anomalies, and your next best move. Try “Can I afford $100?” or “How can I save $500?”`;
+
+// Totals only — no transaction descriptions, dates or account details leave the app.
+function copilotAiSummary(){
+  const s = copilotStats(), month = leftThisMonth(), r = round2;
+  return {
+    today: calToday(),
+    months: s.rows.slice(-6).map(x=>({month:x.month, income:r(x.income), spending:r(x.expense)})),
+    recent_average_per_month: {income:r(s.avgIncome), spending:r(s.avgExpense), leftover:r(s.avgNet)},
+    this_month: month.hasData ? {income:r(month.income), spent:r(month.out), left:month.left} : 'nothing recorded yet',
+    spending_by_category_all_time: Object.fromEntries(s.ranked.slice(0, 10).map(([c,v])=>[c, r(v)])),
+    savings_goals: (state.goals||[]).map(g=>({name:g.name, target:Number(g.target_amount)||0, saved:Number(g.saved_amount)||0, target_date:g.target_date, status:g.status})),
+    goal_money_needed_this_month: r(advisorGoalMonthlyNeed()),
+    regular_income: incomePatterns().map(p=>({source:p.source, schedule:p.schedule, amount:r(p.amount), next_expected:p.next})),
+  };
+}
+async function copilotAiAnswer(question){
+  if(!dbClient || !currentUser) return null;
+  try{
+    const {data, error} = await dbClient.functions.invoke('ledger-copilot', {body:{question, summary:copilotAiSummary()}});
+    if(error){
+      try{ const body = await error.context.json(); if(body && body.error) console.warn('Copilot AI:', body.error); }catch(e){}
+      return null;
+    }
+    return data && data.answer ? String(data.answer) : null;
+  }catch(e){
+    console.warn('Copilot AI unavailable', e);
+    return null;
+  }
 }
 function initShortcutsAndOffline(){
   document.querySelectorAll('[data-copilot]').forEach(b=>b.addEventListener('click',()=>{openLedgerAssistant();setTimeout(()=>{const v=b.dataset.copilot;ledgerChatbot.inputEl.value=v;document.getElementById('chatSendBtn').click();},50);}));
