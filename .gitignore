@@ -1,5 +1,4 @@
-# Personal financial data — never commit these.
-# Bank statements, budget spreadsheets, receipts and screenshots of real accounts.
+
 *.pdf
 *.csv
 *.xlsx
@@ -8,12 +7,10 @@
 *.jpg
 *.png
 
-# The app icon is icon.svg (a text file), so no image files ship at all.
 
-# Screenshots you deliberately add for the README belong here.
 !docs/screenshots/*.png
 
-# Local settings and OS clutter
+
 .vscode/
 .DS_Store
 Thumbs.db
