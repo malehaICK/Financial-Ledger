@@ -6,11 +6,10 @@
 <link rel="manifest" href="./manifest.webmanifest">
 <meta name="theme-color" content="#1B3B36">
 <title>Ledger A Monthly Budget</title>
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css?v=4">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-  <!-- pdf.js is loaded on demand by getPdfJs() via dynamic import(), so no static tag is needed here. -->
 </head>
 <body>
 <div id="authGate"><div class="auth-card"><h1>Ledger</h1><p class="auth-subtitle">Sign in to securely access your personal budget and transactions.</p><div class="auth-form"><label for="gateEmail">Email address</label><input type="email" id="gateEmail" placeholder="you@example.com" autocomplete="email"><label for="gatePassword">Password</label><div style="position:relative;">
@@ -26,8 +25,8 @@
   <input type="email" id="resetEmail" placeholder="you@example.com" autocomplete="email">
   <button class="btn-primary" id="sendResetBtn" type="button" style="margin-top:10px;">Send reset email</button>
   <div id="resetMessage" class="auth-feedback"></div>
-</div><div class="auth-switch">Your financial data stays tied to your account and is not shown until you sign in.</div></div></div>
-<div class="wrap">
+</div></div></div>
+  <div class="wrap">
   <header class="app-header">
     <div class="brand-block">
       <h1>Ledger</h1>
@@ -236,7 +235,6 @@
   <div id="storageStatus" class="storage-toast" role="status" aria-live="polite" hidden></div>
 </div>
 
-<!-- ===================== INTELLIGENCE ===================== -->
 <div class="tab-panel" data-panel="intelligence" role="tabpanel" hidden>
   <div class="intel-grid">
     <section class="card">
@@ -265,10 +263,9 @@
   </section>
 </div>
 
-<button class="assistant-fab" id="assistantFab" type="button" aria-label="Open Ledger Assistant">🤖<span>Ledger Assistant</span></button>
+<button class="assistant-fab" id="assistantFab" type="button" aria-label="Open Ledger Assistant"><svg class="assistant-fab-icon" viewBox="2.2 0.1 19.6 19.6" aria-hidden="true" focusable="false"><path d="M12 3.2v2.4" /><circle cx="12" cy="2.4" r="1.15" class="bot-antenna" /><rect x="3.6" y="5.6" width="16.8" height="13" rx="4.4" /><path d="M3.6 10.6H2.3M20.4 10.6h1.3M3.6 13.6H2.3M20.4 13.6h1.3" /><rect x="6.1" y="8.6" width="11.8" height="5.6" rx="2.8" class="bot-visor" /><text x="9.15" y="11.5" class="bot-eye" text-anchor="middle" dominant-baseline="central">$</text><text x="14.85" y="11.5" class="bot-eye" text-anchor="middle" dominant-baseline="central">$</text></svg></button>
   <section class="chatbot-card" id="manualChatbot" aria-label="Ledger Assistant">
     <div class="chatbot-head">
-      <div><h3> Ledger Assistant</h3><p>Ask about spending, saving, goals, forecasts, or affordability.</p></div>
       <div class="assistant-head-actions"><button class="btn-secondary assistant-reset" id="chatResetBtn" type="button">Reset</button><button class="assistant-close" id="assistantCloseBtn" type="button" aria-label="Close Ledger Assistant">×</button></div>
     </div>
     <div class="chatbot-body">
@@ -279,20 +276,20 @@
           <button class="btn-primary" id="chatSendBtn" type="button">Send</button>
         </div>
     <div class="copilot-chips">
-      <button class="copilot-chip" type="button" data-copilot="What did you notice?">What did you notice?</button>
+    <!--  <button class="copilot-chip" type="button" data-copilot="What did you notice?">What did you notice?</button>
       <button class="copilot-chip" type="button" data-copilot="What is normal for me?">What's normal for me?</button>
       <button class="copilot-chip" type="button" data-copilot="What is my income pattern?">My income pattern</button>
       <button class="copilot-chip" type="button" data-copilot="Can I afford $100?">Can I afford $100?</button>
       <button class="copilot-chip" type="button" data-copilot="How can I save $500?">How can I save $500?</button>
       <button class="copilot-chip" type="button" data-copilot="Where am I spending the most?">Where am I spending the most?</button>
       <button class="copilot-chip" type="button" data-copilot="What will next month look like?">What will next month look like?</button>
-      <button class="copilot-chip" type="button" data-copilot="What is my next best move?">What is my next best move?</button>
+      <button class="copilot-chip" type="button" data-copilot="What is my next best move?">What is my next best move?</button>-->
     </div>
       </div>
     </div>
   </section>
 
-  <footer>Your transactions are stored securely in your account. <br><span class="build-stamp">Version 2026-09-15 · upload fix 2</span></footer>
+  <footer>Your transactions are stored securely in your account. <br><span class="build-stamp"></span></footer>
 </div>
 
 <script src="app.js"></script>
