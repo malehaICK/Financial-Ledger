@@ -1111,11 +1111,21 @@ class LedgerAssistant {
     this.pending=null;
     this.history=[];       // recent messages, sent to the AI so follow-ups make sense
     this.lastUpload=null;  // what the most recent file contained
-    this.addMessage('bot','Hi! I\'m your Ledger Financial Copilot. Ask me about spending, saving, goals, forecasts, or whether a purchase fits your current cash flow. I can also add income or expenses for you, like “I spent $20 on groceries”.');
+    this.addMessage('bot','Hi! I\'m your Ledger Financial Copilot. Ask me about spending, saving, goals, forecasts, or whether a purchase fits your current cash flow.');
     this.inputEl.disabled=false;
     this.inputEl.value='';
   }
+  // A failure while answering shows a message and leaves the chat usable, instead of going silent.
   async handle(raw){
+    try{ await this.answer(raw); }
+    catch(err){
+      console.error('Copilot failed to answer:', err);
+      this.addMessage('bot','Sorry, something went wrong while answering that. Please try again.');
+    }finally{
+      this.inputEl.disabled=false;
+    }
+  }
+  async answer(raw){
     const text=String(raw??'').trim();
     if(!text) return;
     this.addMessage('user',text);
@@ -1129,9 +1139,9 @@ class LedgerAssistant {
     // No keyword matched: ask the AI, falling back to a local answer if it's unavailable.
     const bubble=this.addMessage('bot','Thinking…');
     this.inputEl.disabled=true;
-    const ai=await copilotAiAnswer(text, this.history.slice(0, -1), this.lastUpload);
-    this.inputEl.disabled=false;
-    this.inputEl.focus();
+    let ai=null;
+    try{ ai=await copilotAiAnswer(text, this.history.slice(0, -1), this.lastUpload); }
+    finally{ this.inputEl.disabled=false; this.inputEl.focus(); }
     bubble.textContent=ai || (aboutUpload ? uploadFallbackText(this.lastUpload) : COPILOT_FALLBACK);
     this.remember('bot', bubble.textContent);
     this.messagesEl.scrollTop=this.messagesEl.scrollHeight;
@@ -1362,7 +1372,10 @@ function initLedgerChatbot(){
   document.getElementById('chatAttachBtn').addEventListener('click',()=>chatFile.click());
   chatFile.addEventListener('change',async()=>{
     try{ await ledgerChatbot.handleFile(chatFile.files[0]); }
-    finally{ chatFile.value=''; }
+    catch(err){
+      console.error('Chat upload failed:', err);
+      ledgerChatbot.addMessage('bot','Sorry, something went wrong while reading that file. Please try again.');
+    }finally{ chatFile.value=''; ledgerChatbot.inputEl.disabled=false; }
   });
   ledgerChatbot.start();
 }
@@ -2745,7 +2758,10 @@ async function copilotAiAnswer(question, history = [], upload = null){
   try{
     const summary = copilotAiSummary();
     if(upload){ const {at, ...details} = upload; summary.recent_upload = details; }
-    const {data, error} = await dbClient.functions.invoke('ledger-copilot', {body:{question, summary, history:history.slice(-10)}});
+    const timeout = new Promise(resolve=>setTimeout(()=>resolve({data:null, error:null, timedOut:true}), 30000));
+    const {data, error, timedOut} = await Promise.race([
+      dbClient.functions.invoke('ledger-copilot', {body:{question, summary, history:history.slice(-10)}}), timeout]);
+    if(timedOut){ console.warn('Copilot AI took too long to answer'); return null; }
     if(error){
       try{ const body = await error.context.json(); if(body && body.error) console.warn('Copilot AI:', body.error); }catch(e){}
       return null;
