@@ -312,6 +312,9 @@ async function initDatabase(){
     // Supabase can read a reset link before the listener below exists, so check the link itself too.
     const arrivedFromRecovery = /(^|[#&?])type=recovery(&|$)/.test(window.location.hash + window.location.search);
     let recoveryAsked = false;
+    // An expired or already-used email link comes back with an error instead of a session.
+    const linkError = new URLSearchParams(window.location.hash.slice(1) || window.location.search);
+    const linkFailed = linkError.get('error_code') || linkError.get('error');
     dbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     databaseMode = true;
 
@@ -325,6 +328,12 @@ async function initDatabase(){
       recoveryAsked = true;
       history.replaceState(null, '', window.location.pathname);
       openPasswordReset();
+    }else if(linkFailed && !session){
+      history.replaceState(null, '', window.location.pathname);
+      setAuthGateMessage(/expired|otp/i.test(linkFailed + (linkError.get('error_description') || ''))
+        ? 'That email link has expired or was already used. Links work once and only for about an hour. Tap “Forgot password?” to get a new one.'
+        : 'That email link didn’t work (' + (linkError.get('error_description') || linkFailed) + '). Tap “Forgot password?” to get a new one.', 'err');
+      document.getElementById('resetPanel').classList.add('visible');
     }
 
     dbClient.auth.onAuthStateChange((event, session)=>{
