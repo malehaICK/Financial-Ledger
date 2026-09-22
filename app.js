@@ -530,7 +530,7 @@ function populateSelectors(){
   allYearOpt.value = 0;
   allYearOpt.textContent = 'All years';
   yearSel.appendChild(allYearOpt);
-  for(let y=thisYear-2; y<=thisYear+1; y++){
+  for(let y=thisYear-2; y<=2127; y++){
     const opt = document.createElement('option'); opt.value = y; opt.textContent = y;
     yearSel.appendChild(opt);
   }
