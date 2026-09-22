@@ -1,11 +1,4 @@
-// invite-partner — emails someone who was added to a shared Ledger savings goal.
-//
-// Ledger calls this with the signed-in user's session. It only sends an email when
-// the caller owns the goal AND that address is already listed as a member of it,
-// so the function can't be used to email arbitrary people.
-//
-// New person       -> Supabase "invite user" email (they set a password, then sign in).
-// Existing account -> a sign-in link email; the goal is already visible to them.
+
 import { createSupabaseContext } from 'npm:@supabase/server'
 import { createClient } from 'npm:@supabase/supabase-js@2'
 
@@ -24,8 +17,7 @@ const json = (body: unknown, status = 200) =>
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
-// Only real web addresses may be used as the link target. Anything else (such as a
-// file:// page opened from disk) falls back to the Site URL configured in Supabase Auth.
+
 function safeRedirect(value: unknown): string | undefined {
   if (typeof value !== 'string') return undefined
   try {
@@ -101,7 +93,7 @@ export default {
       /already (been )?registered/i.test(inviteError.message)
     if (!alreadyRegistered) return json({ error: inviteError.message }, 502)
 
-    // They already have a Ledger account: send a sign-in link instead of an invite.
+
     const publicClient = createClient(Deno.env.get('SUPABASE_URL')!, publishableKey(), {
       auth: { persistSession: false },
     })
