@@ -1,12 +1,4 @@
--- Ledger: goal sharing (Sept 2026)
---
--- Adds sharing to savings goals:
---   * any savings goal can be shared by email or by an invite link;
---   * members can see the goal and add money to it; only the owner edits or deletes it.
---
--- Nothing is deleted. The older shared_goals / shared_goal_members /
--- shared_goal_contributions tables are left in place but are no longer used
--- (their policies referenced each other and could never be read).
+
 
 create table if not exists public.goal_members (
   id         uuid primary key default gen_random_uuid(),
@@ -49,7 +41,7 @@ as $$
   );
 $$;
 
--- savings_goals: owners manage their goals; members can read goals shared with them.
+
 drop policy if exists savings_goals_select_own on public.savings_goals;
 create policy savings_goals_select_own on public.savings_goals
   for select to authenticated using (auth.uid() = user_id or public.is_goal_member(id));
@@ -80,7 +72,7 @@ create policy goal_invites_owner_insert on public.goal_invites
 create policy goal_invites_owner_update on public.goal_invites
   for update to authenticated using (public.is_goal_owner(goal_id)) with check (public.is_goal_owner(goal_id));
 
--- Join by invite link: adds only the caller, only to the goal of a valid, active token.
+
 create or replace function public.join_goal(p_token text)
 returns uuid language plpgsql security definer set search_path = ''
 as $$
@@ -107,7 +99,7 @@ begin
 end;
 $$;
 
--- Add money to a goal: allowed for the owner and members; increments atomically.
+
 create or replace function public.add_to_goal(p_goal uuid, p_amount numeric)
 returns numeric language plpgsql security definer set search_path = ''
 as $$
