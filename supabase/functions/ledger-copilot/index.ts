@@ -1,12 +1,4 @@
-// ledger-copilot — answers Copilot questions the in-app keyword answers can't handle.
-//
-// Ledger sends the question plus a short summary of the user's numbers (monthly totals,
-// top categories, goals). No raw transactions or account details are sent. Only signed-in
-// users can call this, so the free Gemini quota can't be used by strangers.
-//
-// Secrets (Supabase dashboard -> Edge Functions -> Secrets):
-//   GEMINI_API_KEY  required, from https://aistudio.google.com/apikey
-//   GEMINI_MODEL    optional, defaults to gemini-flash-latest
+
 import { createSupabaseContext } from 'npm:@supabase/server'
 
 const corsHeaders = {
@@ -44,7 +36,7 @@ export default {
 
     const apiKey = Deno.env.get('GEMINI_API_KEY')
     if (!apiKey) {
-      // Names only, never values: helps spot a secret saved under the wrong name.
+ 
       const custom = Object.keys(Deno.env.toObject()).filter((k) => !/^(SUPABASE_|SB_|DENO_|PATH$|HOME$|HOSTNAME$)/.test(k))
       console.error('GEMINI_API_KEY is not set. Other custom secrets:', custom.join(', ') || '(none)')
       return json({ error: 'The Copilot AI isn’t set up yet.' }, 503)
