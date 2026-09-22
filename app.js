@@ -1960,15 +1960,26 @@ let bankPreviewRows=[];
 function renderBankPreview(rows){
   bankPreviewRows=rows.map((r,i)=>({...r,id:i,amount:Math.abs(Number(r.signedAmount)),category:r.category||guessCategory(r.desc)}));
   // Open the review on a month the statement covers, so its rows are visible straight away.
+  const {year, month}=reviewPeriod();
+  if(bankPreviewRows.length && !bankPreviewRows.some(r=>inPeriod(r.date, year, month))) showMonth(bankPreviewRows[bankPreviewRows.length-1].date.slice(0,7));
+  else drawBankPreview();
+}
+// The month on screen: the one picked at the top, or with "All months" the calendar's month.
+function reviewPeriod(){
   const {year, month}=currentPeriod();
-  if(bankPreviewRows.length && !bankPreviewRows.some(r=>inPeriod(r.date, year, month))){
-    jumpToDate(bankPreviewRows[bankPreviewRows.length-1].date);
-    render();
-  }else drawBankPreview();
+  if(year && month) return {year, month};
+  return cal.mode==='month' && cal.year ? {year:cal.year, month:cal.month} : {year, month};
+}
+// Moves both the month picker and the calendar to a month ("2026-08").
+function showMonth(ym){
+  const [y, m]=ym.split('-').map(Number);
+  jumpToDate(ym+'-01');
+  cal.mode='month'; cal.year=y; cal.month=m; cal.selected=null;
+  render();
 }
 // Each row belongs to the month of its date, so the review shows only the month being viewed.
 function bankRowsShown(){
-  const {year, month}=currentPeriod();
+  const {year, month}=reviewPeriod();
   return bankPreviewRows.filter(r=>inPeriod(r.date, year, month));
 }
 function drawBankPreview(){
@@ -1999,7 +2010,7 @@ function drawBankPreview(){
   const waiting={};
   bankPreviewRows.filter(r=>!shownIds.has(r.id)).forEach(r=>{ const ym=r.date.slice(0,7); waiting[ym]=(waiting[ym]||0)+1; });
   const months=Object.keys(waiting).sort();
-  const {year, month}=currentPeriod();
+  const {year, month}=reviewPeriod();
   const here=!month ? (year ? String(year) : 'all months') : longDate(calIso(year || 2000, month, 1), year ? {month:'long', year:'numeric'} : {month:'long'});
   const links=months.map(ym=>`<button type="button" class="link-btn" data-bank-month="${ym}">${longDate(ym+'-01', {month:'long', year:'numeric'})} (${waiting[ym]})</button>`).join(' · ');
   const note=document.getElementById('bankPreviewMonths');
@@ -2007,7 +2018,7 @@ function drawBankPreview(){
   note.innerHTML=!months.length ? '' : shown.length
     ? `Showing the ${shown.length} from ${here}. Also waiting: ${links}`
     : `Nothing to review for ${here}. The rest belong to: ${links}`;
-  note.querySelectorAll('[data-bank-month]').forEach(b=>b.addEventListener('click',()=>{ jumpToDate(b.dataset.bankMonth+'-01'); render(); }));
+  note.querySelectorAll('[data-bank-month]').forEach(b=>b.addEventListener('click',()=>showMonth(b.dataset.bankMonth)));
 }
 
 let pdfjsReady = null;
