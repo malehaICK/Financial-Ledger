@@ -332,6 +332,9 @@ body{background:var(--paper);color:var(--ink);font-family:'Nunito',system-ui,san
 header h1{font-style:normal;font-weight:800;font-size:38px;letter-spacing:-.02em;}
 header p{margin-top:2px;}
 .month-row{margin-top:14px;gap:8px;align-items:center;font-family:'Nunito',sans-serif;}
+.month-row .reset-period{padding:8px 12px;color:var(--rust);}
+.month-row .reset-period:hover{background:var(--rust);border-color:var(--rust);color:#fff;}
+.month-row .reset-period:disabled:hover{background:var(--paper-raised);border-color:var(--line);color:var(--rust);}
 .month-row select{font-family:'Nunito',sans-serif;font-weight:700;border-radius:var(--radius-sm);padding:8px 12px;background:var(--paper-raised);border-color:var(--line);}
 .period-hint{font-size:12.5px;color:var(--ink-soft);}
 .ledger-topbar{margin:8px 0 0;gap:10px;align-items:center;flex-shrink:0;}

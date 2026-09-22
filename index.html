@@ -33,6 +33,7 @@
       <div class="month-row">
         <select id="monthSel" aria-label="Month"></select>
         <select id="yearSel" aria-label="Year"></select>
+        <button type="button" class="btn-secondary btn-small reset-period" id="resetPeriodBtn">Reset month</button>
         <span id="periodHint" class="period-hint"></span>
       </div>
     </div>
@@ -200,7 +201,8 @@
         <div><strong>Review imported statement</strong><span id="bankConfirmStatus"></span></div>
         <span>Ledger classified each row as Income or Expense automatically. You can correct any row before saving.</span>
       </div>
-      <div class="bank-review-table">
+      <p class="bank-review-months mini-note" id="bankPreviewMonths" hidden></p>
+      <div class="bank-review-table" id="bankPreviewTable">
         <table>
           <thead><tr><th>Date</th><th>Description</th><th style="text-align:right">Amount</th><th>Type</th><th>Category</th></tr></thead>
           <tbody id="bankPreviewBody"></tbody>

@@ -780,9 +780,37 @@ function render(){
   renderGoals();
   renderCalendar(renderIncomeReminders());
   refreshForecast();
+  drawBankPreview();
+  updateResetButton();
 
   document.querySelectorAll('.got-back').forEach(btn=>btn.addEventListener('click',()=>markPaidBack(btn.dataset.id)));
 }
+
+// Reset deletes every transaction in the month being viewed, or the whole year under "All months".
+function updateResetButton(){
+  const {year, month} = currentPeriod(), btn = document.getElementById('resetPeriodBtn');
+  btn.textContent = month ? 'Reset month' : 'Reset year';
+  btn.disabled = !year;
+  btn.title = year ? '' : 'Pick a year to reset';
+}
+document.getElementById('resetPeriodBtn').addEventListener('click', async ()=>{
+  if(!requireSignedIn()) return;
+  const {year, month} = currentPeriod();
+  if(!year) return;
+  const income = state.income.filter(e=>inPeriod(e.date, year, month)), expenses = state.expenses.filter(e=>inPeriod(e.date, year, month));
+  const total = income.length + expenses.length;
+  const label = month ? longDate(calIso(year, month, 1), {month:'long', year:'numeric'}) : `all of ${year}`;
+  if(!total){ updateStorageStatus(`Nothing to reset in ${label}`); return; }
+  if(!confirm(`Delete all ${total} transaction${total === 1 ? '' : 's'} in ${label}?\n\n${income.length} income · ${expenses.length} expense${expenses.length === 1 ? '' : 's'}\n\nThis can’t be undone. Savings goals are not affected.`)) return;
+  const from = calIso(year, month || 1, 1), to = month ? calIso(year, month, new Date(year, month, 0).getDate()) : calIso(year, 12, 31);
+  const btn = document.getElementById('resetPeriodBtn');
+  btn.disabled = true;
+  const {error} = await dbClient.from('transactions').delete().eq('user_id', currentUser.id).gte('transaction_date', from).lte('transaction_date', to);
+  btn.disabled = false;
+  if(error){ alert('Could not reset ' + label + ': ' + error.message); return; }
+  await loadState();
+  updateStorageStatus(`${label.charAt(0).toUpperCase() + label.slice(1)} reset ✓ ${total} deleted`);
+});
 
 const LIST_PREVIEW = 4;
 const listExpanded = {income:false, expense:false};
@@ -1269,7 +1297,7 @@ class LedgerAssistant {
       this.lastUpload={at:this.history.length, name:file.name, kind:'statement', rows:result.rows.length, income, expenses,
         months:[...new Set(result.rows.map(r=>r.date.slice(0,7)))].sort(),
         sample:result.rows.slice(0, 12).map(r=>({date:r.date, type:r.type, amount:Math.abs(r.signedAmount), description:r.desc}))};
-      say(`This looks like a statement with ${result.rows.length} transaction${result.rows.length===1?'':'s'}: ${income} income, ${expenses} expense${expenses===1?'':'s'}. I’ve opened them in Budget so you can check each row, then tap Add.${hint}${result.note ? '\n\n'+result.note : ''}`);
+      say(`This looks like a statement with ${result.rows.length} transaction${result.rows.length===1?'':'s'}: ${income} income, ${expenses} expense${expenses===1?'':'s'}. I’ve opened them in Budget: each one is listed under its own month, so check each month’s rows and tap Add.${hint}${result.note ? '\n\n'+result.note : ''}`);
       showTab('budget');
       renderBankPreview(result.rows);
       document.getElementById('bankPreviewWrap').scrollIntoView({block:'start', behavior:'smooth'});
@@ -1929,7 +1957,58 @@ function looksLikeExpense(desc){const d=desc.toLowerCase();return EXPENSE_KEYWOR
 function findDirectionFromText(desc){const d=desc.toLowerCase();if(/\b(cr|credit)\b/.test(d)||looksLikeIncome(d))return 'Income';if(/\b(dr|debit)\b/.test(d)||looksLikeExpense(d))return 'Expense';return null;}
 function toIsoDate(raw){if(!raw)return null;raw=raw.trim();if(/^\d{4}-\d{2}-\d{2}$/.test(raw))return raw;let m=raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);if(m){let[_,mo,da,yr]=m;if(yr.length===2)yr='20'+yr;return `${yr}-${mo.padStart(2,'0')}-${da.padStart(2,'0')}`;}m=raw.match(/^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+(\d{1,2})(?:,?\s+(\d{2,4}))?$/i);if(m){const months={jan:1,feb:2,mar:3,apr:4,may:5,jun:6,jul:7,aug:8,sep:9,oct:10,nov:11,dec:12};const mo=months[m[1].slice(0,3).toLowerCase()];const da=+m[2];const yr=m[3]?(m[3].length===2?'20'+m[3]:m[3]):new Date().getFullYear();return `${yr}-${String(mo).padStart(2,'0')}-${String(da).padStart(2,'0')}`;}const d=new Date(raw);if(!isNaN(d.getTime()))return d.toISOString().slice(0,10);return null;}
 let bankPreviewRows=[];
-function renderBankPreview(rows){const body=document.getElementById('bankPreviewBody');if(!body)return;body.innerHTML='';bankPreviewRows=rows.map((r,i)=>({...r,id:i,amount:Math.abs(Number(r.signedAmount)),category:r.category||guessCategory(r.desc)}));bankPreviewRows.forEach(r=>{const tr=document.createElement('tr');const typeOpts=['Expense','Income'].map(t=>`<option value="${t}" ${t===r.type?'selected':''}>${t}</option>`).join('');const catOpts=CATEGORIES.map(([name])=>`<option value="${name}" ${name===r.category?'selected':''}>${name}</option>`).join('');tr.innerHTML=`<td>${r.date}</td><td class="td-text">${escapeHtml(r.desc)}</td><td class="amt">${fmt(r.amount)}</td><td><select data-id="${r.id}" data-field="type" style="font-size:12px;">${typeOpts}</select></td><td><select data-id="${r.id}" data-field="category" style="font-size:12px;" ${r.type==='Income'?'disabled':''}>${catOpts}</select></td>`;body.appendChild(tr);});body.querySelectorAll('select').forEach(sel=>{sel.addEventListener('change',()=>{const row=bankPreviewRows.find(r=>r.id===parseInt(sel.dataset.id));if(!row)return;row[sel.dataset.field]=sel.value;if(sel.dataset.field==='type'){const catSelect=sel.closest('tr').querySelector('select[data-field="category"]');catSelect.disabled=(sel.value==='Income');}});});document.getElementById('bankPreviewWrap').style.display=rows.length?'block':'none';}
+function renderBankPreview(rows){
+  bankPreviewRows=rows.map((r,i)=>({...r,id:i,amount:Math.abs(Number(r.signedAmount)),category:r.category||guessCategory(r.desc)}));
+  // Open the review on a month the statement covers, so its rows are visible straight away.
+  const {year, month}=currentPeriod();
+  if(bankPreviewRows.length && !bankPreviewRows.some(r=>inPeriod(r.date, year, month))){
+    jumpToDate(bankPreviewRows[bankPreviewRows.length-1].date);
+    render();
+  }else drawBankPreview();
+}
+// Each row belongs to the month of its date, so the review shows only the month being viewed.
+function bankRowsShown(){
+  const {year, month}=currentPeriod();
+  return bankPreviewRows.filter(r=>inPeriod(r.date, year, month));
+}
+function drawBankPreview(){
+  const wrap=document.getElementById('bankPreviewWrap'), body=document.getElementById('bankPreviewBody');
+  if(!wrap || !body) return;
+  wrap.style.display=bankPreviewRows.length ? 'block' : 'none';
+  if(!bankPreviewRows.length) return;
+  const shown=bankRowsShown(), shownIds=new Set(shown.map(r=>r.id));
+  body.innerHTML='';
+  shown.forEach(r=>{
+    const tr=document.createElement('tr');
+    const typeOpts=['Expense','Income'].map(t=>`<option value="${t}" ${t===r.type?'selected':''}>${t}</option>`).join('');
+    const catOpts=CATEGORIES.map(([name])=>`<option value="${name}" ${name===r.category?'selected':''}>${name}</option>`).join('');
+    tr.innerHTML=`<td>${r.date}</td><td class="td-text">${escapeHtml(r.desc)}</td><td class="amt">${fmt(r.amount)}</td><td><select data-id="${r.id}" data-field="type" style="font-size:12px;">${typeOpts}</select></td><td><select data-id="${r.id}" data-field="category" style="font-size:12px;" ${r.type==='Income'?'disabled':''}>${catOpts}</select></td>`;
+    body.appendChild(tr);
+  });
+  body.querySelectorAll('select').forEach(sel=>sel.addEventListener('change',()=>{
+    const row=bankPreviewRows.find(r=>r.id===parseInt(sel.dataset.id));
+    if(!row) return;
+    row[sel.dataset.field]=sel.value;
+    if(sel.dataset.field==='type') sel.closest('tr').querySelector('select[data-field="category"]').disabled=(sel.value==='Income');
+  }));
+  document.getElementById('bankPreviewTable').hidden=!shown.length;
+  const btn=document.getElementById('bankConfirmBtn');
+  btn.hidden=!shown.length;
+  btn.textContent=`Add ${shown.length} transaction${shown.length===1?'':'s'}`;
+  // The other months this statement covers, as links to go and review them.
+  const waiting={};
+  bankPreviewRows.filter(r=>!shownIds.has(r.id)).forEach(r=>{ const ym=r.date.slice(0,7); waiting[ym]=(waiting[ym]||0)+1; });
+  const months=Object.keys(waiting).sort();
+  const {year, month}=currentPeriod();
+  const here=!month ? (year ? String(year) : 'all months') : longDate(calIso(year || 2000, month, 1), year ? {month:'long', year:'numeric'} : {month:'long'});
+  const links=months.map(ym=>`<button type="button" class="link-btn" data-bank-month="${ym}">${longDate(ym+'-01', {month:'long', year:'numeric'})} (${waiting[ym]})</button>`).join(' · ');
+  const note=document.getElementById('bankPreviewMonths');
+  note.hidden=!months.length;
+  note.innerHTML=!months.length ? '' : shown.length
+    ? `Showing the ${shown.length} from ${here}. Also waiting: ${links}`
+    : `Nothing to review for ${here}. The rest belong to: ${links}`;
+  note.querySelectorAll('[data-bank-month]').forEach(b=>b.addEventListener('click',()=>{ jumpToDate(b.dataset.bankMonth+'-01'); render(); }));
+}
 
 let pdfjsReady = null;
 async function getPdfJs(){
@@ -2337,40 +2416,33 @@ function parseBankCsv(text){
 }
 
 document.getElementById('bankConfirmBtn').addEventListener('click', async ()=>{
-  if(!bankPreviewRows.length || !requireSignedIn()) return;
+  const shown=bankRowsShown();
+  if(!shown.length || !requireSignedIn()) return;
   const status=document.getElementById('bankConfirmStatus');
   try{
-    const entries=bankPreviewRows.map(r=>r.type==='Expense'?{kind:'expense',entry:{id:crypto.randomUUID(),date:r.date,category:r.category||'Other',amount:Math.abs(Number(r.amount)),description:r.desc||null}}:{kind:'income',entry:{id:crypto.randomUUID(),date:r.date,source:r.desc||'(bank transaction)',amount:Math.abs(Number(r.amount)),description:r.desc||null}}).filter(x=>x.entry.date&&Number.isFinite(x.entry.amount)&&x.entry.amount>0);
+    // Only the month being viewed is added; each row is saved on its own date.
+    const entries=shown.map(r=>r.type==='Expense'?{kind:'expense',entry:{id:crypto.randomUUID(),date:r.date,category:r.category||'Other',amount:Math.abs(Number(r.amount)),description:r.desc||null}}:{kind:'income',entry:{id:crypto.randomUUID(),date:r.date,source:r.desc||'(bank transaction)',amount:Math.abs(Number(r.amount)),description:r.desc||null}}).filter(x=>x.entry.date&&Number.isFinite(x.entry.amount)&&x.entry.amount>0);
     const result=await addEntriesToDatabase(entries);
-    // Every row keeps its own date, so each month gets its own entries. Show the latest
-    // imported month (not "All months") and say which months were added.
-    const dates=entries.map(x=>x.entry.date).sort();
-    const monthName=iso=>longDate(iso,{month:'long',year:'numeric'});
-    const monthSel=document.getElementById('monthSel'), yearSel=document.getElementById('yearSel');
-    if(dates.length){
-      if(monthSel.value==='0') monthSel.value='1';
-      if(yearSel.value==='0') yearSel.value=String(new Date().getFullYear());
-      jumpToDate(dates[dates.length-1]);
-    }
-    await loadState();
+    const done=new Set(shown.map(r=>r.id));
+    bankPreviewRows=bankPreviewRows.filter(r=>!done.has(r.id));
+    drawBankPreview();
     const added=`Added ${result.added} transaction${result.added===1?'':'s'}${result.skipped?`; skipped ${result.skipped} duplicate${result.skipped===1?'':'s'}`:''}.`;
-    const range=dates.length?(monthName(dates[0])===monthName(dates[dates.length-1])?monthName(dates[0]):`${monthName(dates[0])} to ${monthName(dates[dates.length-1])}`):'';
+    const left=bankPreviewRows.length;
     status.textContent=added;
     const importStatus=document.getElementById('pdfBankStatus');
     importStatus.className='inline-import-status ok';
-    importStatus.textContent=range?`${added} They cover ${range}, each saved in its own month. Showing ${monthName(dates[dates.length-1])}; pick another month at the top to see the rest.`:added;
-    window.scrollTo({top:0,behavior:'smooth'});
+    importStatus.textContent=left ? `${added} ${left} more from other months ${left===1?'is':'are'} still waiting below.` : added;
     updateStorageStatus(`Statement import: ${result.added} added ✓`);
-    setTimeout(()=>{document.getElementById('bankPreviewWrap').style.display='none';status.textContent='';},3500);
+    setTimeout(()=>{status.textContent='';},3500);
   }catch(err){
     console.error(err);status.textContent='Could not save imported transactions.';status.style.color='var(--rust)';
   }
 });
 
 document.getElementById('bankCancelBtn').addEventListener('click',()=>{
-  document.getElementById('bankPreviewWrap').style.display='none';
   document.getElementById('pdfBankStatus').textContent='';
   bankPreviewRows=[];
+  drawBankPreview();
 });
 
 populateSelectors();
