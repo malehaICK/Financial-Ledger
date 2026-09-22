@@ -1,4 +1,4 @@
-# Ledger — Secure Personal Finance Management Platform
+# Ledger A Finance Management Platform
 
 Ledger is a personal finance management application that helps users track income, expenses, savings, shared expenses, savings goals, and monthly budgets in one place.
 
