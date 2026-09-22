@@ -1108,12 +1108,12 @@ class LedgerAssistant {
   }
   start(){
     this.messagesEl.innerHTML='';
-    this.addMessage('bot','Hi! I\'m your Ledger Financial Copilot. Ask me about spending, saving, goals, forecasts, or whether a purchase fits your current cash flow. I can also add income or expenses for you, like “I spent $20 on groceries”.');
-    this.inputEl.disabled=false;
-    this.inputEl.value='';
     this.pending=null;
     this.history=[];       // recent messages, sent to the AI so follow-ups make sense
     this.lastUpload=null;  // what the most recent file contained
+    this.addMessage('bot','Hi! I\'m your Ledger Financial Copilot. Ask me about spending, saving, goals, forecasts, or whether a purchase fits your current cash flow. I can also add income or expenses for you, like “I spent $20 on groceries”.');
+    this.inputEl.disabled=false;
+    this.inputEl.value='';
   }
   async handle(raw){
     const text=String(raw??'').trim();
