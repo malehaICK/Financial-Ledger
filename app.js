@@ -309,6 +309,9 @@ async function initDatabase(){
     
     captureJoinToken();
     const arrivedFromInvite = /(^|[#&?])type=invite(&|$)/.test(window.location.hash + window.location.search);
+    // Supabase can read a reset link before the listener below exists, so check the link itself too.
+    const arrivedFromRecovery = /(^|[#&?])type=recovery(&|$)/.test(window.location.hash + window.location.search);
+    let recoveryAsked = false;
     dbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     databaseMode = true;
 
@@ -318,12 +321,16 @@ async function initDatabase(){
       history.replaceState(null, '', window.location.pathname);
       showTab('intelligence');
       await handlePasswordRecovery('Welcome to Ledger! Choose a password so you can sign in next time (at least 8 characters):');
+    }else if(arrivedFromRecovery && session){
+      recoveryAsked = true;
+      history.replaceState(null, '', window.location.pathname);
+      openPasswordReset();
     }
 
     dbClient.auth.onAuthStateChange((event, session)=>{
       setTimeout(()=>{
         if(event === 'PASSWORD_RECOVERY'){
-          handlePasswordRecovery();
+          if(!recoveryAsked){ recoveryAsked = true; openPasswordReset(); }
         }else{
           handleAuthSession(session);
         }
@@ -334,6 +341,13 @@ async function initDatabase(){
     setAuthGateMessage('Could not initialize the database connection.', 'err');
     setAppEnabled(false);
   }
+}
+
+// Arriving from a reset email: open the profile at its password field.
+function openPasswordReset(){
+  setProfileOpen(true);
+  setProfileSection('profilePassword');
+  document.getElementById('profileStatus').textContent = 'You’re signed in from your reset email. Type your new password below, then tap Update password.';
 }
 
 async function handlePasswordRecovery(promptText='Enter your new password (at least 8 characters):'){
@@ -542,7 +556,7 @@ function populateSelectors(){
     catSel.appendChild(opt);
   });
 
-  const today = new Date().toISOString().slice(0,10);
+  const today = calToday();
   document.getElementById('incDate').value = today;
   document.getElementById('expDate').value = today;
 
@@ -959,7 +973,7 @@ async function markPaidBack(expenseId){
     return;
   }
 
-  const today = new Date().toISOString().slice(0,10);
+  const today = calToday();
   const income = {id:crypto.randomUUID(), date:today, source:`Paid back · ${exp.category}`, amount, description:`reimbursement:${exp.id}`};
   try{
     await insertTransaction(income, 'income', `income|reimbursement|${exp.id}|${income.id}`);
@@ -1035,7 +1049,7 @@ document.getElementById('incomeForm').addEventListener('submit', async e=>{
     render();
     updateStorageStatus('Income saved ✓');
     e.target.reset();
-    document.getElementById('incDate').value = new Date().toISOString().slice(0,10);
+    document.getElementById('incDate').value = calToday();
   }catch(err){
     console.error(err);
     updateStorageStatus('Could not save income');
@@ -1086,7 +1100,7 @@ document.getElementById('expenseForm').addEventListener('submit', async e=>{
     jumpToDate(date);
     render();
     updateStorageStatus(shared ? `Shared expense saved ✓ — ${fmt(entry.grossAmount - entry.userShare)} owed back to you` : 'Expense saved ✓');
-    document.getElementById('expDate').value = new Date().toISOString().slice(0,10);
+    document.getElementById('expDate').value = calToday();
     ['expAmount','expTotal','expShare','expNote'].forEach(id=>{ document.getElementById(id).value=''; });
     if(shared) setSharedHint('Tap “Got it back” in the list when you’re repaid.');
   }catch(err){
@@ -1124,7 +1138,7 @@ sharedToggle.addEventListener('click', ()=>{
 
 document.getElementById('goalForm').addEventListener('submit',createGoal);
 function setDefaultGoalDates(){
-  const d=new Date().toISOString().slice(0,10); ['goalDate'].forEach(id=>{const el=document.getElementById(id);if(el&&!el.value)el.value=d;});
+  const d=calToday(); ['goalDate'].forEach(id=>{const el=document.getElementById(id);if(el&&!el.value)el.value=d;});
 }
 setDefaultGoalDates();
 
@@ -1955,7 +1969,7 @@ function guessCategory(desc){const words=s=>' '+String(s).toLowerCase().replace(
 function looksLikeIncome(desc){const d=desc.toLowerCase();return INCOME_KEYWORDS.some(w=>d.includes(w));}
 function looksLikeExpense(desc){const d=desc.toLowerCase();return EXPENSE_KEYWORDS.some(w=>d.includes(w));}
 function findDirectionFromText(desc){const d=desc.toLowerCase();if(/\b(cr|credit)\b/.test(d)||looksLikeIncome(d))return 'Income';if(/\b(dr|debit)\b/.test(d)||looksLikeExpense(d))return 'Expense';return null;}
-function toIsoDate(raw){if(!raw)return null;raw=raw.trim();if(/^\d{4}-\d{2}-\d{2}$/.test(raw))return raw;let m=raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);if(m){let[_,mo,da,yr]=m;if(yr.length===2)yr='20'+yr;return `${yr}-${mo.padStart(2,'0')}-${da.padStart(2,'0')}`;}m=raw.match(/^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+(\d{1,2})(?:,?\s+(\d{2,4}))?$/i);if(m){const months={jan:1,feb:2,mar:3,apr:4,may:5,jun:6,jul:7,aug:8,sep:9,oct:10,nov:11,dec:12};const mo=months[m[1].slice(0,3).toLowerCase()];const da=+m[2];const yr=m[3]?(m[3].length===2?'20'+m[3]:m[3]):new Date().getFullYear();return `${yr}-${String(mo).padStart(2,'0')}-${String(da).padStart(2,'0')}`;}const d=new Date(raw);if(!isNaN(d.getTime()))return d.toISOString().slice(0,10);return null;}
+function toIsoDate(raw){if(!raw)return null;raw=raw.trim();if(/^\d{4}-\d{2}-\d{2}$/.test(raw))return raw;let m=raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);if(m){let[_,mo,da,yr]=m;if(yr.length===2)yr='20'+yr;return `${yr}-${mo.padStart(2,'0')}-${da.padStart(2,'0')}`;}m=raw.match(/^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+(\d{1,2})(?:,?\s+(\d{2,4}))?$/i);if(m){const months={jan:1,feb:2,mar:3,apr:4,may:5,jun:6,jul:7,aug:8,sep:9,oct:10,nov:11,dec:12};const mo=months[m[1].slice(0,3).toLowerCase()];const da=+m[2];const yr=m[3]?(m[3].length===2?'20'+m[3]:m[3]):new Date().getFullYear();return `${yr}-${String(mo).padStart(2,'0')}-${String(da).padStart(2,'0')}`;}const d=new Date(raw);if(!isNaN(d.getTime()))return calIso(d.getFullYear(),d.getMonth()+1,d.getDate());return null;}
 let bankPreviewRows=[];
 function renderBankPreview(rows){
   bankPreviewRows=rows.map((r,i)=>({...r,id:i,amount:Math.abs(Number(r.signedAmount)),category:r.category||guessCategory(r.desc)}));
