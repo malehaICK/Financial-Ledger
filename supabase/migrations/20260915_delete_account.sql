@@ -1,10 +1,4 @@
--- Ledger: "Delete account" in the profile sheet (Sept 2026)
---
--- Lets a signed-in user permanently delete their own account. Every Ledger table
--- references auth.users with ON DELETE CASCADE, so the user's transactions, goals,
--- and those goals' members and invite links are removed with it.
--- Goal memberships added by email before the person ever signed in have no user_id,
--- so they are removed by email first.
+
 
 create or replace function public.delete_my_account()
 returns void
