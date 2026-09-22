@@ -15,6 +15,8 @@ const json = (body: unknown, status = 200) =>
 
 const MAX_QUESTION = 500
 const MAX_SUMMARY = 8000
+const MAX_HISTORY = 10
+const MAX_TURN = 1200
 
 const SYSTEM_PROMPT = `You are Ledger Financial Copilot, a friendly personal-finance helper inside the Ledger budgeting app.
 Answer using the user's financial summary provided below. Rules:
@@ -24,7 +26,15 @@ Answer using the user's financial summary provided below. Rules:
 - Keep answers short: 2 to 6 sentences, or a few "• " bullet lines. Plain text only, no markdown, no headings, no asterisks.
 - Be practical and non-judgmental. Give general guidance, not professional financial, tax or legal advice.
 - If the user just greets or thanks you, reply warmly in one sentence and suggest a question they could ask.
-- If the question is unrelated to money or budgeting, briefly say you can only help with finances.`
+- If the question is unrelated to money or budgeting, briefly say you can only help with finances.
+- You can see the recent conversation. Read the new question in that context: "it", "this" or "the file" usually means what was just discussed.
+- summary.recent_upload describes the file the user just uploaded in the chat: how many income and expense rows Ledger found, the months, and a sample of rows. Use it when they ask about the file.
+
+How Ledger works, for explaining things:
+- A CSV saved from a spreadsheet (Excel, Google Sheets) contains only the sheet that was open, so income on another sheet is not in the file. The fix is to save that sheet as CSV too and upload it.
+- Uploaded statements open in a review table in the Budget tab, where each row's Type (Income or Expense) and Category can be changed before tapping Add.
+- Saved entries can be edited with the pencil or deleted with the cross on their row in the Budget tab.
+- In this chat the user can type an entry ("I spent $20 on groceries") or upload a receipt, pay stub, statement or CSV with the paperclip button.`
 
 export default {
   fetch: async (req: Request) => {
@@ -35,14 +45,9 @@ export default {
     if (authError || !ctx) return json({ error: 'Please sign in again.' }, authError?.status ?? 401)
 
     const apiKey = Deno.env.get('GEMINI_API_KEY')
-    if (!apiKey) {
- 
-      const custom = Object.keys(Deno.env.toObject()).filter((k) => !/^(SUPABASE_|SB_|DENO_|PATH$|HOME$|HOSTNAME$)/.test(k))
-      console.error('GEMINI_API_KEY is not set. Other custom secrets:', custom.join(', ') || '(none)')
-      return json({ error: 'The Copilot AI isn’t set up yet.' }, 503)
-    }
+    if (!apiKey) return json({ error: 'The Copilot AI isn’t set up yet.' }, 503)
 
-    let body: { question?: unknown; summary?: unknown }
+    let body: { question?: unknown; summary?: unknown; history?: unknown }
     try {
       body = await req.json()
     } catch {
@@ -53,13 +58,25 @@ export default {
     const summary = JSON.stringify(body.summary ?? {}).slice(0, MAX_SUMMARY)
     if (!question) return json({ error: 'Ask a question first.' }, 400)
 
+    const turns: { role: 'user' | 'model'; parts: { text: string }[] }[] = []
+    for (const t of Array.isArray(body.history) ? body.history.slice(-MAX_HISTORY) : []) {
+      const role = (t as { role?: unknown })?.role === 'model' ? 'model' : 'user'
+      const text = String((t as { text?: unknown })?.text ?? '').trim().slice(0, MAX_TURN)
+      if (!text) continue
+      const last = turns[turns.length - 1]
+      if (last && last.role === role) last.parts[0].text += '\n\n' + text
+      else turns.push({ role, parts: [{ text }] })
+    }
+    if (turns[0]?.role === 'model') turns.unshift({ role: 'user', parts: [{ text: '(chat opened)' }] })
+    if (turns.length && turns[turns.length - 1].role === 'user') turns.push({ role: 'model', parts: [{ text: '(no reply)' }] })
+
     const model = Deno.env.get('GEMINI_MODEL') || 'gemini-flash-latest'
     const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
       body: JSON.stringify({
         systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
-        contents: [{ role: 'user', parts: [{ text: `My financial summary:\n${summary}\n\nMy question: ${question}` }] }],
+        contents: [...turns, { role: 'user', parts: [{ text: `My financial summary:\n${summary}\n\nMy question: ${question}` }] }],
         generationConfig: { temperature: 0.4, maxOutputTokens: 1024 },
       }),
     })

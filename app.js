@@ -1112,28 +1112,40 @@ class LedgerAssistant {
     this.inputEl.disabled=false;
     this.inputEl.value='';
     this.pending=null;
+    this.history=[];       // recent messages, sent to the AI so follow-ups make sense
+    this.lastUpload=null;  // what the most recent file contained
   }
   async handle(raw){
     const text=String(raw??'').trim();
     if(!text) return;
     this.addMessage('user',text);
     if(this.handleEntry(text)) return;
-    const local=copilotAnswer(text);
+    // Right after an upload, questions about it ("I can see income in the file") need the
+    // conversation, so they go to the AI instead of a keyword answer.
+    const aboutUpload=this.lastUpload && this.history.length - this.lastUpload.at <= 6
+      && /\b(file|upload|uploaded|statement|csv|pdf|sheet|spreadsheet|document|receipt|it|this|that|those|wrong|missing|income|expenses?|rows?)\b/i.test(text);
+    const local=aboutUpload ? null : copilotAnswer(text);
     if(local) return this.addMessage('bot',local);
-    // No keyword matched: ask the AI, falling back to the suggestion list if it's unavailable.
+    // No keyword matched: ask the AI, falling back to a local answer if it's unavailable.
     const bubble=this.addMessage('bot','Thinking…');
     this.inputEl.disabled=true;
-    const ai=await copilotAiAnswer(text);
+    const ai=await copilotAiAnswer(text, this.history.slice(0, -1), this.lastUpload);
     this.inputEl.disabled=false;
     this.inputEl.focus();
-    bubble.textContent=ai||COPILOT_FALLBACK;
+    bubble.textContent=ai || (aboutUpload ? uploadFallbackText(this.lastUpload) : COPILOT_FALLBACK);
+    this.remember('bot', bubble.textContent);
     this.messagesEl.scrollTop=this.messagesEl.scrollHeight;
   }
   addMessage(who,text){
     const wrap=document.createElement('div'); wrap.className='chat-msg '+who;
     const bubble=document.createElement('div'); bubble.className='chat-bubble'; bubble.textContent=text;
     wrap.appendChild(bubble); this.messagesEl.appendChild(wrap); this.messagesEl.scrollTop=this.messagesEl.scrollHeight;
+    if(text && text!=='Thinking…' && text!=='Reading your file…') this.remember(who, text);
     return bubble;
+  }
+  remember(who, text){
+    this.history.push({role: who==='user' ? 'user' : 'model', text: String(text).slice(0, 1200)});
+    if(this.history.length > 12){ const drop=this.history.length - 12; this.history.splice(0, drop); if(this.lastUpload) this.lastUpload.at -= drop; }
   }
   // "Add $50 income from work", "I spent $20 on groceries yesterday". Asks for anything
   // missing, then confirms before saving. Returns true when the message was about an entry.
@@ -1175,6 +1187,7 @@ class LedgerAssistant {
   confirmEntry(kind, entry, intro, bubble=this.addMessage('bot','')){
     this.pending={kind, entry};
     bubble.textContent=`${intro}\n\n${chatEntryText(kind, entry)}`;
+    this.remember('bot', bubble.textContent);
     const actions=document.createElement('div'); actions.className='chat-actions';
     const done=()=>{ actions.querySelectorAll('button').forEach(x=>{x.disabled=true;}); const mine=this.pending && this.pending.entry===entry; if(mine) this.pending=null; return mine; };
     [['Add it','btn-primary',()=>this.saveEntry({kind, entry})],
@@ -1231,10 +1244,22 @@ class LedgerAssistant {
     try{ result=await readUpload(file, bubble, file.name); }
     catch(err){ console.error('Chat upload failed:', err); result={kind:'unreadable', reason:err.message || 'it could not be read.'}; }
     finally{ this.inputEl.disabled=false; }
-    if(result.kind==='unreadable'){ bubble.textContent=`I couldn’t read that file: ${result.reason}`; return; }
+    const say=text=>{ bubble.textContent=text; this.remember('bot', text); };
+    if(result.kind==='unreadable'){
+      this.lastUpload={at:this.history.length, name:file.name, kind:'unreadable', reason:result.reason};
+      return say(`I couldn’t read that file: ${result.reason}`);
+    }
     if(result.kind==='statement'){
       const income=result.rows.filter(r=>r.type==='Income').length, expenses=result.rows.length-income;
-      bubble.textContent=`This looks like a statement with ${result.rows.length} transaction${result.rows.length===1?'':'s'}: ${income} income, ${expenses} expense${expenses===1?'':'s'}. I’ve opened them in Budget so you can check each row, then tap Add.${result.note ? '\n\n'+result.note : ''}`;
+      const sheet=/\.csv$/i.test(file.name) || /\bxlsx?\b/i.test(file.name);
+      const hint=!income && sheet
+        ? '\n\nI didn’t find any income in this file. A CSV holds only one sheet of a spreadsheet, so if your income is on another sheet, save that sheet as CSV and upload it too.'
+        : !income ? '\n\nI didn’t find any income in this file. If a row is really income, change its Type to Income in the review table before adding.'
+        : !expenses ? '\n\nI didn’t find any expenses in this file.' : '';
+      this.lastUpload={at:this.history.length, name:file.name, kind:'statement', rows:result.rows.length, income, expenses,
+        months:[...new Set(result.rows.map(r=>r.date.slice(0,7)))].sort(),
+        sample:result.rows.slice(0, 12).map(r=>({date:r.date, type:r.type, amount:Math.abs(r.signedAmount), description:r.desc}))};
+      say(`This looks like a statement with ${result.rows.length} transaction${result.rows.length===1?'':'s'}: ${income} income, ${expenses} expense${expenses===1?'':'s'}. I’ve opened them in Budget so you can check each row, then tap Add.${hint}${result.note ? '\n\n'+result.note : ''}`);
       showTab('budget');
       renderBankPreview(result.rows);
       document.getElementById('bankPreviewWrap').scrollIntoView({block:'start', behavior:'smooth'});
@@ -1245,8 +1270,10 @@ class LedgerAssistant {
       ? {id:crypto.randomUUID(), date:result.date, source:result.source || 'Income', amount:result.amount}
       : {id:crypto.randomUUID(), date:result.date, category:result.category || 'Other', amount:result.amount, description:result.store || null};
     const what=kind==='income' ? 'income' : 'an expense';
+    this.lastUpload={at:this.history.length, name:file.name, kind:'single', type:kind, amount:result.amount || null, date:result.date,
+      label:kind==='income' ? entry.source : `${entry.category}${entry.description ? ' at '+entry.description : ''}`};
     if(!(result.amount > 0)){
-      bubble.textContent=`This looks like ${what}, but I couldn’t read the amount.`;
+      say(`This looks like ${what}, but I couldn’t read the amount.`);
       this.editEntry(kind, entry, 'Please fill in the amount, check the rest, then save:');
       return;
     }
@@ -2596,11 +2623,37 @@ function copilotSubsText(){
   return subs ? `${subs.title}\n${subs.why}${subs.goal ? '\n' + subs.goal : ''}` : 'I have not spotted any charge that repeats every month yet.';
 }
 
+// "Can you see the multiple entries in expense?", "list my income", "any duplicates?"
+function copilotEntriesText(text){
+  const income = /\bincome|earning|paycheck|salary\b/.test(text) && !/\bexpense|spending|spent\b/.test(text);
+  const all = income ? state.income : state.expenses;
+  const noun = income ? 'income entr' : 'expense';
+  if(!all.length) return `You don't have any ${income ? 'income' : 'expenses'} recorded yet.`;
+  const {ym, label} = copilotMonthContext();
+  const inMonth = all.filter(e=>monthOf(e.date) === ym);
+  const list = (inMonth.length ? inMonth : all).slice().sort((a,b)=>b.date.localeCompare(a.date));
+  const where = inMonth.length ? `in ${label}` : 'in total';
+  const total = list.reduce((t,e)=>t + e.amount, 0);
+  const name = e => income ? e.source : e.category + (e.description && !/^(receipt|shared expense)$/i.test(e.description) ? ` (${e.description})` : '');
+  const line = e => `• ${longDate(e.date, {month:'short', day:'numeric'})} · ${name(e)} · ${fmt(e.amount)}`;
+  const shown = list.slice(0, 8).map(line).join('\n');
+  const more = list.length > 8 ? `\n…and ${list.length - 8} more. The full list is in the Budget tab.` : '';
+  // Same day and same amount is the usual sign of a double entry or an overlapping import.
+  const groups = {};
+  list.forEach(e=>{ (groups[`${e.date}|${Number(e.amount).toFixed(2)}`] ||= []).push(e); });
+  const dupes = Object.values(groups).filter(g=>g.length > 1);
+  const dupeText = dupes.length
+    ? `\n\nPossible duplicates (same day, same amount):\n${dupes.map(g=>`${line(g[0])} × ${g.length}`).join('\n')}\nIf one is a mistake, delete it with ✕ in the Budget tab.`
+    : '\n\nI don’t see any duplicates (nothing with the same day and amount).';
+  return `Yes, I can see them. You have ${list.length} ${noun}${list.length === 1 ? (income ? 'y' : '') : (income ? 'ies' : 's')} ${where}, totalling ${fmt(total)}:\n\n${shown}${more}${dupeText}`;
+}
+
 function copilotChatAnswer(text){
   if(/reset (alerts|insights)|unignore|un-ignore|bring .*back|restore|show everything/.test(text)) return copilotResetText();
   if(/show hidden|what.*hidden|hidden|ignored/.test(text)) return copilotHiddenText();
   if(/notice|unusual|anomal|what changed|changed this month|insight|alert/.test(text)) return copilotNoticedText();
   if(/income pattern|payday|when .*(paid|paycheck|income)/.test(text)) return copilotPatternsText();
+  if(/duplicate|double|twice|\b(entries|entry|transactions?|items)\b|\b(list|show|see|view)\b.*\b(expenses?|spending|income)\b/.test(text)) return copilotEntriesText(text);
   if(/subscription|recurring|repeat/.test(text)) return copilotSubsText();
   if(/normal|usual|typical/.test(text)) return copilotNormalsText();
   return null;
@@ -2652,12 +2705,19 @@ function copilotAnswer(q){
     if(s.avgNet<0)return `Your recent average cash flow is negative by ${fmt(Math.abs(s.avgNet))}/month. Your best first move is to review the largest flexible category and recurring costs.`;
     const top=s.ranked[0]; return `Your recent average leftover is about ${fmt(s.avgNet)}/month. Protect part of it for goals first; ${top?`your largest recorded category is ${top[0]} at ${fmt(top[1])}, so even a modest reduction there could create more room.`:''}`;
   }
-  if(/balance|leftover|cash flow|income|expense/.test(text))return `Your recent average is about ${fmt(s.avgIncome)} income, ${fmt(s.avgExpense)} spending, and ${fmt(s.avgNet)} leftover per month. These are averages from your recorded history, not guaranteed future amounts.`;
+  // Only clear money-summary questions; anything else about income or expenses goes to the AI.
+  if(/\b(balance|leftover|left over|cash flow|net)\b|\b(total|average|monthly)\s+(income|expenses?|spending)\b|income (vs|and|or) (expenses?|spending)|how much (do|did) i (earn|make|spend)/.test(text)){
+    const month = leftThisMonth();
+    const now = month.hasData ? `This month so far: ${fmt(month.income)} in, ${fmt(month.out)} out, ${fmt(month.left)} left.\n\n` : '';
+    const n = s.recent.length;
+    return `${now}Over your last ${n} finished month${n === 1 ? '' : 's'}, you averaged ${fmt(s.avgIncome)} income, ${fmt(s.avgExpense)} spending and ${fmt(s.avgNet)} leftover a month. These averages only count months that have ended, so income recorded only in this month isn’t in them yet.`;
+  }
   return null;
 }
 const COPILOT_FALLBACK = `I can help with affordability, saving targets, spending reductions, forecasts, anomalies, and your next best move. Try “Can I afford $100?” or “How can I save $500?”`;
 
 // Totals only — no transaction descriptions, dates or account details leave the app.
+// (copilotAiAnswer adds a summary of a file just uploaded in the chat, with up to 12 sample rows.)
 function copilotAiSummary(){
   const s = copilotStats(), month = leftThisMonth(), r = round2;
   return {
@@ -2671,10 +2731,21 @@ function copilotAiSummary(){
     regular_income: incomePatterns().map(p=>({source:p.source, schedule:p.schedule, amount:r(p.amount), next_expected:p.next})),
   };
 }
-async function copilotAiAnswer(question){
+// Used when the AI can't answer a question about the file that was just uploaded.
+function uploadFallbackText(u){
+  if(u.kind === 'statement') return `The file I read, ${u.name}, has ${u.rows} rows: ${u.income} income and ${u.expenses} expense${u.expenses === 1 ? '' : 's'}.`
+    + (u.income ? '' : ' It has no income rows in it. A CSV saved from a spreadsheet holds only the sheet that was open, so income on another sheet isn’t included: save that sheet as CSV and upload it too.')
+    + ' If a row has the wrong type, change it in the review table in Budget before tapping Add.';
+  if(u.kind === 'single') return `I read ${u.name} as ${u.type === 'income' ? 'income' : 'an expense'}${u.amount ? ` of ${fmt(u.amount)}` : ''}. If that’s wrong, tap Edit on my message to change the type, amount or date.`;
+  return `I couldn’t read ${u.name}: ${u.reason}`;
+}
+
+async function copilotAiAnswer(question, history = [], upload = null){
   if(!dbClient || !currentUser) return null;
   try{
-    const {data, error} = await dbClient.functions.invoke('ledger-copilot', {body:{question, summary:copilotAiSummary()}});
+    const summary = copilotAiSummary();
+    if(upload){ const {at, ...details} = upload; summary.recent_upload = details; }
+    const {data, error} = await dbClient.functions.invoke('ledger-copilot', {body:{question, summary, history:history.slice(-10)}});
     if(error){
       try{ const body = await error.context.json(); if(body && body.error) console.warn('Copilot AI:', body.error); }catch(e){}
       return null;
