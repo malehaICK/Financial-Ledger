@@ -230,28 +230,7 @@ Transactions are separated by:
 
 This prevents August and September transactions from being overwritten or accidentally merged.
 
-## Project Structure
 
-```text
-index.html                                   the page (markup)
-styles.css                                   all styling
-app.js                                       all behaviour
-manifest.webmanifest, sw.js, icon.svg        install and offline support
-Ledger-database-schema.sql                   full database setup for a new Supabase project
-supabase/migrations/20260913_goal_sharing.sql   goal sharing, for projects created earlier
-supabase/migrations/20260915_delete_account.sql Delete account, for projects created earlier
-supabase/functions/invite-partner/index.ts   Edge Function that emails goal invites
-```
-
-## Setup
-
-1. Create a Supabase project.
-2. In the Supabase SQL Editor, run `Ledger-database-schema.sql`. For a project set up with an earlier version, run the files in `supabase/migrations/` that it doesn't have yet instead.
-3. In `app.js`, set `SUPABASE_URL` and `SUPABASE_ANON_KEY` to your project URL and **publishable** key.
-4. Host `index.html`, `styles.css`, `app.js`, `sw.js`, `manifest.webmanifest` and `icon.svg` together over HTTPS (for example GitHub Pages or Netlify). All of them must sit in the same folder, or the page loads unstyled and does nothing.
-5. **Authentication → Sign In / Providers → Email**: uncheck **Confirm email**. Accounts then work the moment they are created, with no confirmation message to open. Leave it on only if step 7 (your own email sender) is set up.
-6. **Authentication → URL Configuration**: set **Site URL** to the hosted address and add `<address>/**` under **Redirect URLs**. Password reset links point at `http://localhost:3000` until this is done.
-7. Optional, for password resets to reach anyone and for goal invite emails: set up a custom SMTP provider (Resend, Brevo, SendGrid) under **Authentication → Emails → SMTP Settings**, then deploy `supabase/functions/invite-partner`. Without it, Supabase's built-in test mailer only delivers to addresses on the project's Supabase team, and goals can still be shared with **Copy invite link**.
 
 ## Current Status
 
@@ -279,5 +258,5 @@ Current functionality includes:
 
 **Maleha Israt Chowdhury**
 
-Computer Engineering / Computer Science
+Computer Engineering |
 Canada
