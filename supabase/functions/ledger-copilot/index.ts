@@ -58,6 +58,14 @@ export default {
     const summary = JSON.stringify(body.summary ?? {}).slice(0, MAX_SUMMARY)
     if (!question) return json({ error: 'Ask a question first.' }, 400)
 
+    const dailyLimit = Number(Deno.env.get('COPILOT_DAILY_LIMIT')) || 50
+    const { data: allowed, error: quotaError } = await ctx.supabase.rpc('use_copilot_quota', { p_limit: dailyLimit })
+    if (quotaError) {
+      console.error('Quota check failed', quotaError.message)
+      return json({ error: 'The Copilot couldn’t answer right now.' }, 503)
+    }
+    if (!allowed) return json({ error: `You’ve reached today’s limit of ${dailyLimit} Copilot questions. Try again tomorrow.` }, 429)
+
     const turns: { role: 'user' | 'model'; parts: { text: string }[] }[] = []
     for (const t of Array.isArray(body.history) ? body.history.slice(-MAX_HISTORY) : []) {
       const role = (t as { role?: unknown })?.role === 'model' ? 'model' : 'user'

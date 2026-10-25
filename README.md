@@ -50,6 +50,7 @@ Built into the **Ledger Assistant**, following a simple loop: **observe → lear
 * **You decide, and nothing is lost:** hidden insights can always be brought back — ask **"show hidden"** to see them, or **"reset alerts"** to restore everything.
 * **Learns from your choices:** each ignored spending alert raises how big a jump must be before Ledger mentions it, and "reset alerts" puts that back to normal. Decisions are stored in the browser.
 * Rule-based and explainable: every number shown comes from the user's own transactions.
+* **Daily limit on AI answers:** each account can ask the AI Copilot up to 50 questions a day (set `COPILOT_DAILY_LIMIT` on the `ledger-copilot` function to change it), so one account can't use up the Gemini quota. After that, the built-in rule-based answers still work.
 
 ### Income Pattern Reminders
 
